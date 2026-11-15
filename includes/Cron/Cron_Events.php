@@ -102,7 +102,7 @@ class Cron_Events {
 			}
 		);
 
-		return array_values( $rows );
+		return $rows;
 	}
 
 	/**
@@ -163,7 +163,7 @@ class Cron_Events {
 	 * @param string $schedule Schedule slug.
 	 */
 	public static function get_schedule_label( string $schedule ): string {
-		if ( '' === $schedule || false === $schedule ) {
+		if ( '' === $schedule ) {
 			return \__( 'Non-repeating', 'updatebee' );
 		}
 

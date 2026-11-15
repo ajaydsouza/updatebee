@@ -788,7 +788,7 @@ class Logs {
 					break;
 				}
 				foreach ( $this->log_messages['core'] as $core_type => $data ) {
-					$entry_notes = $notes ? $notes : ( $data['notes'] ?? '' );
+					$entry_notes = $data['notes'] ?? '';
 					$this->commit_manual_log(
 						(string) $data['name'],
 						'core',
@@ -1066,7 +1066,7 @@ class Logs {
 	private function capture_stacktrace(): string {
 		try {
 			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_debug_backtrace -- Used for manual update diagnostics.
-			$backtrace  = debug_backtrace( false );
+			$backtrace  = debug_backtrace( 0 );
 			$normalized = apply_filters(
 				'updatebee_normalized_call_stack_args',
 				$this->normalise_call_stack_args( $backtrace )

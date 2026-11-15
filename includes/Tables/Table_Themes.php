@@ -59,7 +59,7 @@ class Table_Themes extends Tables {
 	/**
 	 * Table columns and their schema.
 	 *
-	 * @var array
+	 * @var array<string, array<string, mixed>>
 	 */
 	protected static $columns = array(
 		'id'                     => array(
@@ -127,10 +127,15 @@ class Table_Themes extends Tables {
 	/**
 	 * Initialize the table.
 	 */
-	public function init() {
+	public function init(): void {
 
 		// Drop the table when action is triggered.
-		add_action( 'updatebee_drop_table_themes', array( self::class, 'drop_table' ) );
+		add_action(
+			'updatebee_drop_table_themes',
+			static function (): void {
+				self::drop_table();
+			}
+		);
 
 		// Filter the resource count.
 		add_filter( 'updatebee_get_count_themes', array( self::class, 'get_count' ) );
@@ -692,7 +697,7 @@ class Table_Themes extends Tables {
 	 * Get a theme by its stylesheet key.
 	 *
 	 * @param string $theme_slug Theme stylesheet slug.
-	 * @return array|false Theme row or false if not found.
+	 * @return array<string, mixed>|false Theme row or false if not found.
 	 */
 	public static function get_theme_by_slug( string $theme_slug ) {
 		return self::get_by( 'theme_slug', $theme_slug );

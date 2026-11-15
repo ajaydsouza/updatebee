@@ -217,7 +217,7 @@ class Init {
 	 * Run on the init action.
 	 */
 	public function init(): void {
-		if ( ! $this->is_core_version_check_valid() && ! ( defined( 'DOING_AJAX' ) && DOING_AJAX ) ) {
+		if ( ! $this->is_core_version_check_valid() && ! wp_doing_ajax() ) {
 			add_action( 'wp_update_plugins', array( $this, 'auto_update' ), 20 );
 		}
 	}

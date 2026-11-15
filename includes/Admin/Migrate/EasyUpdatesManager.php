@@ -648,7 +648,7 @@ class EasyUpdatesManager {
 		$values = array();
 
 		foreach ( $items as $key => $value ) {
-			if ( is_int( $key ) || ( is_string( $key ) && is_numeric( $key ) ) ) {
+			if ( is_numeric( $key ) ) {
 				$identifier = $value;
 			} elseif ( is_string( $value ) && ! self::is_toggle_value( $value ) ) {
 				$identifier = $value;

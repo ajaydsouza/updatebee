@@ -47,9 +47,9 @@ class Functions {
 	/**
 	 * Array data that must be sanitized.
 	 *
-	 * @param array $data Data to be sanitized.
+	 * @param array<array-key, mixed> $data Data to be sanitized.
 	 *
-	 * @return array Sanitized data.
+	 * @return array<array-key, mixed> Sanitized data.
 	 */
 	public static function sanitize_array_recursive( array $data ) {
 		$sanitized_data = array();
@@ -146,9 +146,9 @@ class Functions {
 	 * the querystring parsing - you must pass arrays).
 	 *
 	 * @since 1.0.0
-	 * @param array $a Array of arguments.
-	 * @param array $b Array of arguments.
-	 * @return array Array of arguments.
+	 * @param array<array-key, mixed> $a Array of arguments.
+	 * @param array<array-key, mixed> $b Array of arguments.
+	 * @return array<array-key, mixed> Array of arguments.
 	 */
 	public static function parse_args_r( array &$a, array $b ): array {
 		$a = (array) $a;
@@ -366,7 +366,7 @@ class Functions {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return array A list of plugin paths (relative to the plugin directory)
+	 * @return array<int|string, mixed> Plugin paths relative to the plugin directory.
 	 */
 	public static function get_active_plugins() {
 
@@ -389,7 +389,7 @@ class Functions {
 	 *
 	 * @param string $type Type of asset to retrieve stats for.
 	 *
-	 * @return array Asset stats count (enabled, disabled, blocked).
+	 * @return array{enabled: int, disabled: int, blocked: int} Asset stats count.
 	 */
 	public static function get_auto_update_stats( $type = 'plugins' ) {
 
@@ -434,7 +434,7 @@ class Functions {
 	 *
 	 * @param string $mode active|inactive.
 	 *
-	 * @return array A list of plugin paths (relative to the plugin directory)
+	 * @return array<string, mixed> Plugin file => plugin data for the requested mode.
 	 */
 	public static function get_auto_updates_plugins( $mode = 'active' ) {
 
@@ -462,13 +462,7 @@ class Functions {
 	 * @param string $message The message to display in a modal.
 	 * @param string $title   The title to display in a modal.
 	 *
-	 * @return array {
-	 *    @type string $type        The type of message. Accepts 'critical', 'warning', 'success', 'info'.
-	 *    @type string $message     The message to display in a modal.
-	 *    @type string $title       The title to display in a modal.
-	 *    @type bool   $dismissable Whether the message can be dismissed.
-	 *    @type bool   $persistent  Whether the message is persistent.
-	 * }
+	 * @return array{type: string, message: string, title: string, isDismissable: bool, isPersistent: bool}
 	 */
 	public static function get_ajax_error_response( $message = '', $title = '' ) {
 		return array(
@@ -486,12 +480,7 @@ class Functions {
 	 *
 	 * @param string $message The message to display in a snackbar.
 	 *
-	 * @return array {
-	 *   @type string $type        The type of message. Accepts 'critical', 'warning', 'success', 'info'.
-	 *   @type string $message     The message to display in a snackbar.
-	 *   @type bool   $dismissable Whether the message can be dismissed.
-	 *   @type bool   $persistent  Whether the message is persistent.
-	 * }
+	 * @return array{type: string, message: string, isDismissable: bool, isPersistent: bool}
 	 */
 	public static function get_ajax_success_response( $message ) {
 		return array(
@@ -510,7 +499,7 @@ class Functions {
 	 * @param string $mode  active|inactive.
 	 * @param bool   $force Retrieve without caching.
 	 *
-	 * @return array A list of translation slugs.
+	 * @return array<string, mixed> Locale => translation data for the requested mode.
 	 */
 	public static function get_auto_updates_translations( $mode = 'active', $force = false ) {
 
@@ -539,7 +528,7 @@ class Functions {
 	 *
 	 * @param string $mode active|inactive.
 	 *
-	 * @return array A list of stylesheet paths (relative to the theme directory)
+	 * @return array<string, mixed> Stylesheet => theme data for the requested mode.
 	 */
 	public static function get_auto_updates_themes( $mode = 'active' ) {
 
@@ -582,13 +571,32 @@ class Functions {
 	}
 
 	/**
+	 * Coerce a scalar into the boolean rest_sanitize_boolean() would return.
+	 *
+	 * Arrays and objects are false. bool, int, and string values are passed through.
+	 *
+	 * @param mixed $value Value to sanitize.
+	 */
+	public static function sanitize_rest_boolean( $value ): bool {
+		if ( is_bool( $value ) || is_int( $value ) ) {
+			return rest_sanitize_boolean( $value );
+		}
+
+		if ( is_string( $value ) ) {
+			return rest_sanitize_boolean( $value );
+		}
+
+		return false;
+	}
+
+	/**
 	 * Clears update cache and re-checks version information.
 	 *
 	 * @since 1.0.0
 	 *
 	 * @param bool $force_check Whether to force check updates.
 	 */
-	public static function clear_update_cache( bool $force_check = false ) {
+	public static function clear_update_cache( bool $force_check = false ): void {
 		wp_clean_update_cache();
 		wp_update_plugins();
 		wp_update_themes();
@@ -685,7 +693,6 @@ class Functions {
 
 				// Return active or inactive state.
 				return $is_active_update;
-				break; // phpcs:ignore
 			case 'theme':
 				if ( Version_Controlled::is_theme( $path ) ) {
 					return false;
@@ -718,7 +725,6 @@ class Functions {
 
 				// Return active or inactive state.
 				return $is_active_update;
-				break; // phpcs:ignore
 			case 'translation':
 				$translation_auto_updates_enabled = isset( $options['translation_auto_updates'] ) ? $options['translation_auto_updates'] : 'on';
 				$translation_custom               = isset( $options['translation_auto_updates_custom'] ) ? $options['translation_auto_updates_custom'] : 'off';
@@ -747,7 +753,6 @@ class Functions {
 
 				// Return active or inactive state.
 				return $is_active_update;
-				break; // phpcs:ignore
 		}
 		return false;
 	}
