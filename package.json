@@ -13,7 +13,7 @@
 		"start": "wp-scripts start",
 		"lint:js": "wp-scripts lint-js src/js",
 		"lint:css": "wp-scripts lint-style src/scss",
-		"test:js": "wp-scripts test-unit-js --watchAll=false",
+		"test:js": "wp-scripts test-unit-js",
 		"typecheck": "tsc --noEmit"
 	},
 	"prettier": "@wordpress/prettier-config",
@@ -25,7 +25,10 @@
 		"@types/react-dom": "^19.3.0",
 		"@wordpress/scripts": "^37.1.0",
 		"@wordpress/url": "^4.56.0",
-		"typescript": "^5.9.2"
+		"jsdom": "^26.1.0",
+		"typescript": "^5.9.2",
+		"vite": "^8.3.8",
+		"vitest": "^5.1.0"
 	},
 	"dependencies": {
 		"@wordpress/components": "^40.1.0",
