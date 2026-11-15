@@ -324,15 +324,8 @@ class Ajax {
 			$auto_updated_plugins = array();
 		}
 
-		$plugin_notes = Table_Plugins::get_all_notes();
-		if ( ! is_array( $plugin_notes ) ) {
-			$plugin_notes = array();
-		}
-
+		$plugin_notes  = Table_Plugins::get_all_notes();
 		$plugin_delays = Table_Plugins::get_all_delay_settings();
-		if ( ! is_array( $plugin_delays ) ) {
-			$plugin_delays = array();
-		}
 
 		foreach ( $all_plugins as $file => $plugin ) {
 			if ( ! is_string( $file ) ) {
@@ -670,15 +663,8 @@ class Ajax {
 			$auto_updated_themes = array();
 		}
 
-		$theme_notes = Table_Themes::get_all_notes();
-		if ( ! is_array( $theme_notes ) ) {
-			$theme_notes = array();
-		}
-
+		$theme_notes  = Table_Themes::get_all_notes();
 		$theme_delays = Table_Themes::get_all_delay_settings();
-		if ( ! is_array( $theme_delays ) ) {
-			$theme_delays = array();
-		}
 
 		$current_stylesheet = get_stylesheet();
 		$all_themes         = array();
@@ -740,12 +726,10 @@ class Ajax {
 			}
 		);
 		foreach ( $all_themes as $stylesheet => $theme_data ) {
-			if ( ! is_string( $stylesheet ) || ! is_array( $theme_data ) ) {
+			if ( ! is_string( $stylesheet ) ) {
 				continue;
 			}
-			if ( isset( $theme_data['Description'] ) ) {
-				$theme_data['Description'] = wp_trim_words( wp_strip_all_tags( $theme_data['Description'] ), 20, '...' );
-			}
+			$theme_data['Description'] = wp_trim_words( wp_strip_all_tags( $theme_data['Description'] ), 20, '...' );
 
 			$extra = null;
 			if ( is_object( $theme_info ) ) {
@@ -1332,7 +1316,7 @@ class Ajax {
 		$slack_enabled = false;
 		if ( isset( $_POST['slack_enabled'] ) ) {
 			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Boolean is sanitized below.
-			$slack_enabled = rest_sanitize_boolean( wp_unslash( $_POST['slack_enabled'] ) );
+			$slack_enabled = Functions::sanitize_rest_boolean( wp_unslash( $_POST['slack_enabled'] ) );
 		}
 
 		$updated = Options::update_options(
@@ -1564,7 +1548,7 @@ class Ajax {
 			return null;
 		}
 
-		return rest_sanitize_boolean( $settings['allow_untested'] ) ? true : null;
+		return Functions::sanitize_rest_boolean( $settings['allow_untested'] ) ? true : null;
 	}
 
 	/**
@@ -2132,7 +2116,7 @@ class Ajax {
 		$skip_delay = false;
 		if ( isset( $_POST['skip_delay'] ) ) {
 			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Boolean is sanitized below.
-			$skip_delay = (bool) rest_sanitize_boolean( wp_unslash( $_POST['skip_delay'] ) );
+			$skip_delay = Functions::sanitize_rest_boolean( wp_unslash( $_POST['skip_delay'] ) );
 		}
 
 		Updates_Init::run_auto_updates( $skip_delay );
@@ -2350,9 +2334,7 @@ class Ajax {
 		);
 
 		foreach ( $selected as $item ) {
-			if ( isset( $handlers[ $item ] ) && is_callable( $handlers[ $item ] ) ) {
-				call_user_func( $handlers[ $item ] );
-			}
+			call_user_func( $handlers[ $item ] );
 		}
 
 		$message = __( 'Your selected options have been reset.', 'updatebee' );
@@ -2572,7 +2554,7 @@ class Ajax {
 
 		if ( isset( $_POST['block_untested_updates'] ) ) {
 			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Boolean is sanitized below.
-			$enabled                           = rest_sanitize_boolean( wp_unslash( $_POST['block_untested_updates'] ) );
+			$enabled                           = Functions::sanitize_rest_boolean( wp_unslash( $_POST['block_untested_updates'] ) );
 			$to_save['block_untested_updates'] = $enabled ? 'on' : 'off';
 		}
 
@@ -2584,7 +2566,7 @@ class Ajax {
 
 		if ( isset( $_POST['upgrade_notice_keywords_enabled'] ) ) {
 			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Boolean is sanitized below.
-			$enabled                                    = rest_sanitize_boolean( wp_unslash( $_POST['upgrade_notice_keywords_enabled'] ) );
+			$enabled                                    = Functions::sanitize_rest_boolean( wp_unslash( $_POST['upgrade_notice_keywords_enabled'] ) );
 			$to_save['upgrade_notice_keywords_enabled'] = $enabled;
 		}
 
@@ -2609,7 +2591,7 @@ class Ajax {
 				continue;
 			}
 
-			$to_save[ $admin_bar_key ] = (bool) rest_sanitize_boolean( $admin_bar_value );
+			$to_save[ $admin_bar_key ] = Functions::sanitize_rest_boolean( $admin_bar_value );
 		}
 
 		if ( empty( $to_save ) ) {
@@ -2708,7 +2690,7 @@ class Ajax {
 			return false;
 		}
 
-		return (bool) rest_sanitize_boolean( $value );
+		return Functions::sanitize_rest_boolean( $value );
 	}
 
 	/**
@@ -2742,7 +2724,7 @@ class Ajax {
 			return false;
 		}
 
-		return (bool) rest_sanitize_boolean( $value );
+		return Functions::sanitize_rest_boolean( $value );
 	}
 
 	/**

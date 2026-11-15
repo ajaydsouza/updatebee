@@ -11,6 +11,8 @@ parameters:
 		- phpstan
 	bootstrapFiles:
 		- tests/php/phpstan-bootstrap.php
+	stubFiles:
+		- phpstan/stubs/themes-api.stub
 
 services:
 	-

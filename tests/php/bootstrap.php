@@ -63,6 +63,28 @@ if ( ! function_exists( 'esc_sql' ) ) {
 	}
 }
 
+if ( ! function_exists( 'wp_doing_ajax' ) ) {
+	/**
+	 * Test stub for wp_doing_ajax().
+	 *
+	 * @return bool
+	 */
+	function wp_doing_ajax() {
+		return defined( 'DOING_AJAX' ) && DOING_AJAX;
+	}
+}
+
+if ( ! function_exists( 'wp_doing_cron' ) ) {
+	/**
+	 * Test stub for wp_doing_cron().
+	 *
+	 * @return bool
+	 */
+	function wp_doing_cron() {
+		return defined( 'DOING_CRON' ) && DOING_CRON;
+	}
+}
+
 if ( ! function_exists( 'rest_sanitize_boolean' ) ) {
 	/**
 	 * Test stub for rest_sanitize_boolean().

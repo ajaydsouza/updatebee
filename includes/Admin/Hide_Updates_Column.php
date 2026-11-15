@@ -19,26 +19,26 @@ class Hide_Updates_Column {
 	/**
 	 * Class runner.
 	 */
-	public function run() {
+	public function run(): void {
 		add_action( 'current_screen', array( $this, 'maybe_remove_update_columns' ), 100 );
 	}
 
 	/**
 	 * Force remove the auto-updates interface on certain screens.
 	 */
-	public function maybe_remove_update_columns() {
+	public function maybe_remove_update_columns(): void {
 		// Double-checking we're in the admin.
 		if ( ! is_admin() ) {
 			return;
 		}
 		// Skip on Ajax and Cron requests.
-		if ( ( defined( 'DOING_AJAX' ) && DOING_AJAX ) || ( defined( 'DOING_CRON' ) && DOING_CRON ) ) {
+		if ( wp_doing_ajax() || wp_doing_cron() ) {
 			return;
 		}
 
 		// Try to get the current screen.
 		$screen = get_current_screen();
-		if ( ! $screen || ! isset( $screen->id ) ) {
+		if ( ! $screen ) {
 			return;
 		}
 

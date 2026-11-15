@@ -1,0 +1,28 @@
+<?php
+
+/**
+ * Theme directory requests in UpdateBee pass plugin-style field flags.
+ *
+ * WordPress accepts those extra keys and ignores the ones this API does not use.
+ * The shipped stub lists a closed set of field names, which rejects that payload.
+ *
+ * @param string       $action API action to perform.
+ * @param array|object $args   Arguments for the Themes API.
+ * @return object|array<int|string, mixed>|WP_Error
+ * @phpstan-param 'query_themes'|'theme_information'|'hot_tags'|'feature_list' $action
+ * @phpstan-param object|array{
+ *   slug?: string,
+ *   per_page?: int,
+ *   page?: int,
+ *   number?: int,
+ *   search?: string,
+ *   tag?: string,
+ *   author?: string,
+ *   user?: string,
+ *   browse?: string,
+ *   locale?: string,
+ *   fields?: array<string, bool>
+ * } $args
+ */
+function themes_api( $action, $args = array() ) {
+}

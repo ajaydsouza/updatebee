@@ -59,7 +59,7 @@ class Table_Plugins extends Tables {
 	/**
 	 * Table columns and their schema.
 	 *
-	 * @var array
+	 * @var array<string, array<string, mixed>>
 	 */
 	protected static $columns = array(
 		'id'                     => array(
@@ -127,10 +127,15 @@ class Table_Plugins extends Tables {
 	/**
 	 * Initialize the table.
 	 */
-	public function init() {
+	public function init(): void {
 
 		// Drop the table when action is triggered.
-		add_action( 'updatebee_drop_table_plugins', array( self::class, 'drop_table' ) );
+		add_action(
+			'updatebee_drop_table_plugins',
+			static function (): void {
+				self::drop_table();
+			}
+		);
 
 		// Filter the resource count.
 		add_filter( 'updatebee_get_count_plugins', array( self::class, 'get_count' ) );
@@ -692,7 +697,7 @@ class Table_Plugins extends Tables {
 	 * Get a plugin by its file key.
 	 *
 	 * @param string $plugin_slug Plugin basename path.
-	 * @return array|false Plugin row or false if not found.
+	 * @return array<string, mixed>|false Plugin row or false if not found.
 	 */
 	public static function get_plugin_by_slug( string $plugin_slug ) {
 		return self::get_by( 'plugin_slug', $plugin_slug );

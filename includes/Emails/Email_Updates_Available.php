@@ -80,7 +80,6 @@ class Email_Updates_Available extends Email_Report {
 					'message' => $options->get_error_message(),
 				)
 			);
-			return;
 		}
 
 		$result = $this->deliver_report( $options, true, true );
@@ -90,7 +89,6 @@ class Email_Updates_Available extends Email_Report {
 					'message' => $result['message'],
 				)
 			);
-			return;
 		}
 
 		wp_send_json_success(
@@ -132,19 +130,19 @@ class Email_Updates_Available extends Email_Report {
 		$subject = isset( $_POST['subject'] ) ? sanitize_text_field( wp_unslash( $_POST['subject'] ) ) : (string) ( $saved['subject'] ?? '' );
 
 		$include_core         = isset( $_POST['includeCore'] )
-			? (bool) \rest_sanitize_boolean( wp_unslash( $_POST['includeCore'] ) )
+			? Functions::sanitize_rest_boolean( wp_unslash( $_POST['includeCore'] ) )
 			: (bool) ( $saved['include_core'] ?? true );
 		$include_plugins      = isset( $_POST['includePlugins'] )
-			? (bool) \rest_sanitize_boolean( wp_unslash( $_POST['includePlugins'] ) )
+			? Functions::sanitize_rest_boolean( wp_unslash( $_POST['includePlugins'] ) )
 			: (bool) ( $saved['include_plugins'] ?? true );
 		$include_themes       = isset( $_POST['includeThemes'] )
-			? (bool) \rest_sanitize_boolean( wp_unslash( $_POST['includeThemes'] ) )
+			? Functions::sanitize_rest_boolean( wp_unslash( $_POST['includeThemes'] ) )
 			: (bool) ( $saved['include_themes'] ?? true );
 		$include_translations = isset( $_POST['includeTranslations'] )
-			? (bool) \rest_sanitize_boolean( wp_unslash( $_POST['includeTranslations'] ) )
+			? Functions::sanitize_rest_boolean( wp_unslash( $_POST['includeTranslations'] ) )
 			: (bool) ( $saved['include_translations'] ?? true );
 		$notify_slack         = isset( $_POST['notifySlack'] )
-			? (bool) \rest_sanitize_boolean( wp_unslash( $_POST['notifySlack'] ) )
+			? Functions::sanitize_rest_boolean( wp_unslash( $_POST['notifySlack'] ) )
 			: (bool) ( $saved['notify_slack'] ?? false );
 
 		if ( $notify_slack && ! \UpdateBee\Slack\Slack_Webhook::is_configured() ) {

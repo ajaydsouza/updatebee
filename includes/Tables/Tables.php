@@ -31,30 +31,30 @@ abstract class Tables {
 	/**
 	 * Table Version.
 	 *
-	 * @var int
+	 * @var string|int
 	 */
 	protected static $table_version = -1;
 
 	/**
 	 * Table columns and their schema.
 	 *
-	 * @var array
+	 * @var array<string, array<string, mixed>>
 	 */
 	protected static $columns = array();
 
 	/**
 	 * Variable to hold all the registered tables.
 	 *
-	 * @var array Holds all the table instances.
+	 * @var array<int, Tables> Holds all the table instances.
 	 */
 	protected static $tables = array();
 
 	/**
 	 * Register the table.
 	 *
-	 * @param Tables $class_instance The class to register.
+	 * @param class-string<Tables> $class_instance The class to register.
 	 *
-	 * @return Tables|\WP_Error The registered table or WP_Error if the table registration is invalid.
+	 * @return Tables|class-string<Tables> The registered table, or the class name when it was already stored.
 	 */
 	public static function register_table( $class_instance ) {
 
@@ -62,19 +62,25 @@ abstract class Tables {
 			return $class_instance;
 		}
 
-		if ( ! is_callable( array( $class_instance, 'get_instance' ) ) ) {
-			return new \WP_Error( 'invalid_table', __( 'Table is not callable.', 'updatebee' ) );
-		}
-		$instance = call_user_func( array( $class_instance, 'get_instance' ) );
+		$instance = $class_instance::get_instance();
 
 		static::$tables[] = $instance;
 		return $instance;
 	}
 
 	/**
-	 * Initialize the tables.
+	 * Returns the table instance.
+	 *
+	 * @return static
 	 */
-	public static function init_tables() {
+	abstract public static function get_instance();
+
+	/**
+	 * Initialize the tables.
+	 *
+	 * @return array<int, Tables>
+	 */
+	public static function init_tables(): array {
 		foreach ( static::$tables as $table ) {
 
 			// Init the table.
@@ -89,12 +95,15 @@ abstract class Tables {
 	/**
 	 * Get the registered tables.
 	 *
-	 * @return array
+	 * @return array<int, Tables>
 	 */
 	public static function get_tables() {
-		$tables = array_unique( static::$tables );
+		$tables = array();
+		foreach ( static::$tables as $table ) {
+			$tables[ spl_object_id( $table ) ] = $table;
+		}
 
-		return $tables;
+		return array_values( $tables );
 	}
 
 	/**
@@ -258,7 +267,7 @@ abstract class Tables {
 	/**
 	 * Get the table version.
 	 *
-	 * @return int
+	 * @return string|int
 	 */
 	public static function get_table_version() {
 		return static::$table_version;
@@ -267,7 +276,7 @@ abstract class Tables {
 	/**
 	 * Placeholder for table initialization.
 	 */
-	abstract protected function init();
+	abstract protected function init(): void;
 
 	/**
 	 * Get the count of projects.
@@ -290,7 +299,7 @@ abstract class Tables {
 	/**
 	 * Batch insert records into the table.
 	 *
-	 * @param array $records Array of records to insert.
+	 * @param array<int, array<string, mixed>> $records Array of records to insert.
 	 * @return bool|\WP_Error True on success, WP_Error on failure.
 	 */
 	protected static function batch_insert( $records ) {
@@ -361,7 +370,7 @@ abstract class Tables {
 	/**
 	 * Batch update records in the table.
 	 *
-	 * @param array $records Array of records to update.
+	 * @param array<int, array<string, mixed>> $records Array of records to update.
 	 * @return bool|\WP_Error True on success, WP_Error on failure.
 	 */
 	protected static function batch_update( $records ) {
@@ -443,7 +452,7 @@ abstract class Tables {
 	/**
 	 * Batch delete records from the table.
 	 *
-	 * @param array $records Array of records to delete.
+	 * @param array<int, array<string, mixed>> $records Array of records to delete.
 	 * @return bool|\WP_Error True on success, WP_Error on failure.
 	 */
 	protected static function batch_delete( $records ) {
@@ -491,7 +500,7 @@ abstract class Tables {
 	 *
 	 * @param string $column Column name.
 	 * @param mixed  $value  Value to search for.
-	 * @return array|false Project data or false if not found.
+	 * @return array<string, mixed>|false Project data or false if not found.
 	 */
 	protected static function get_by( $column, $value ) {
 		global $wpdb;
@@ -536,7 +545,7 @@ abstract class Tables {
 	/**
 	 * Drop all the tables.
 	 */
-	public static function drop_tables() {
+	public static function drop_tables(): void {
 		foreach ( self::$tables as $table ) {
 			$table::drop_table();
 		}
@@ -545,7 +554,7 @@ abstract class Tables {
 	/**
 	 * Get all records from the table.
 	 *
-	 * @return array Array of records.
+	 * @return array<int, array<string, mixed>> Array of records.
 	 */
 	protected static function get_all() {
 		global $wpdb;
