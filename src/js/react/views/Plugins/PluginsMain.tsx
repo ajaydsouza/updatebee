@@ -1277,11 +1277,11 @@ const PluginsList = ( props: {
 																		? __(
 																				'Automatic updates enabled.',
 																				'updatebee'
-																		  )
+																			)
 																		: __(
 																				'Automatic updates disabled.',
 																				'updatebee'
-																		  ),
+																			),
 																	'success'
 																);
 															} )
@@ -1309,11 +1309,11 @@ const PluginsList = ( props: {
 														plugin.VersionControlled
 															? pluginVersionControlHelp(
 																	plugin.VersionControl
-															  )
+																)
 															: __(
 																	'Enable automatic updates for this plugin.',
 																	'updatebee'
-															  )
+																)
 													}
 													disabled={
 														plugin.VersionControlled ||
@@ -1367,11 +1367,11 @@ const PluginsList = ( props: {
 																		? __(
 																				'Patches only enabled.',
 																				'updatebee'
-																		  )
+																			)
 																		: __(
 																				'Patches only disabled.',
 																				'updatebee'
-																		  ),
+																			),
 																	'success'
 																);
 															} )
@@ -1399,11 +1399,11 @@ const PluginsList = ( props: {
 														plugin.VersionControlled
 															? pluginVersionControlHelp(
 																	plugin.VersionControl
-															  )
+																)
 															: __(
 																	'Limit automatic updates for this plugin to patch releases.',
 																	'updatebee'
-															  )
+																)
 													}
 													disabled={
 														plugin.VersionControlled ||
@@ -1463,11 +1463,11 @@ const PluginsList = ( props: {
 																					? __(
 																							'Plugin updates blocked.',
 																							'updatebee'
-																					  )
+																						)
 																					: __(
 																							'Plugin updates unblocked.',
 																							'updatebee'
-																					  ),
+																						),
 																				'success'
 																			);
 																		}
@@ -1549,7 +1549,7 @@ const PluginsList = ( props: {
 								id: rollbackPlugin.File,
 								name: rollbackPlugin.Name,
 								nonce: rollbackPlugin.RollbackNonce || '',
-						  }
+							}
 						: null
 				}
 				onClose={ () => {

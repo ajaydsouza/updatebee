@@ -226,11 +226,11 @@ const FatalEmailsCard = ( props: FatalEmailsCardProps ) => {
 									? __(
 											'Uses the Slack webhook saved under Advanced settings.',
 											'updatebee'
-									  )
+										)
 									: __(
 											'Add a Slack webhook URL in Advanced settings to enable this.',
 											'updatebee'
-									  )
+										)
 							}
 						/>
 					</>

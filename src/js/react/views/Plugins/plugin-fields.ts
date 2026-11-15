@@ -3,10 +3,7 @@
  */
 
 export type PluginField =
-	| 'auto_update'
-	| 'patches_only'
-	| 'block_updates'
-	| 'selected';
+	'auto_update' | 'patches_only' | 'block_updates' | 'selected';
 
 type PluginFileRow = {
 	File: string;

@@ -621,11 +621,11 @@ const LogsMain = () => {
 								? __(
 										'No logs are currently available.',
 										'updatebee'
-								  )
+									)
 								: __(
 										'No logs match the current filters.',
 										'updatebee'
-								  ) }
+									) }
 						</p>
 					}
 				>

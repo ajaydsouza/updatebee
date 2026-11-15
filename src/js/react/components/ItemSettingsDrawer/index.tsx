@@ -88,9 +88,8 @@ const ItemSettingsDrawer = ( props: ItemSettingsDrawerProps ) => {
 		null === delayDays
 	);
 	const [ customDelayDays, setCustomDelayDays ] = useState( delayDays ?? 0 );
-	const [ useUntestedDefault, setUseUntestedDefault ] = useState(
-		! allowUntested
-	);
+	const [ useUntestedDefault, setUseUntestedDefault ] =
+		useState( ! allowUntested );
 
 	const title =
 		'plugin' === kind
@@ -102,12 +101,12 @@ const ItemSettingsDrawer = ( props: ItemSettingsDrawerProps ) => {
 					/* translators: %s: plugin name. */
 					__( 'Plugin settings for %s', 'updatebee' ),
 					assetName
-			  )
+				)
 			: sprintf(
 					/* translators: %s: theme name. */
 					__( 'Theme settings for %s', 'updatebee' ),
 					assetName
-			  );
+				);
 	const siteDefaultLabel = sprintf(
 		/* translators: %d: number of days. */
 		_n(
@@ -189,11 +188,11 @@ const ItemSettingsDrawer = ( props: ItemSettingsDrawerProps ) => {
 							? __(
 									'Plugin settings have been saved.',
 									'updatebee'
-							  )
+								)
 							: __(
 									'Theme settings have been saved.',
 									'updatebee'
-							  ) ),
+								) ),
 					'success'
 				);
 				setIsOpen( false );
@@ -204,11 +203,11 @@ const ItemSettingsDrawer = ( props: ItemSettingsDrawerProps ) => {
 						? __(
 								'Plugin settings could not be saved.',
 								'updatebee'
-						  )
+							)
 						: __(
 								'Theme settings could not be saved.',
 								'updatebee'
-						  ),
+							),
 					'error'
 				);
 			} )

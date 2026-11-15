@@ -324,11 +324,11 @@ const CronEventsMain = ( props: CronEventsMainProps ) => {
 										? __(
 												'No cron events are currently scheduled.',
 												'updatebee'
-										  )
+											)
 										: __(
 												'No cron events match the current filters.',
 												'updatebee'
-										  ) }
+											) }
 								</p>
 							}
 						>

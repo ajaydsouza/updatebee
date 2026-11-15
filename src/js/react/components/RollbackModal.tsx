@@ -84,7 +84,7 @@ const RollbackModal = ( props: RollbackModalProps ) => {
 					Array.isArray( next )
 						? next.filter(
 								( version ) => 'string' === typeof version
-						  )
+							)
 						: []
 				);
 			} )
@@ -117,11 +117,11 @@ const RollbackModal = ( props: RollbackModalProps ) => {
 			? __(
 					'This replaces the installed copy with an older WordPress.org release. The plugin stays active.',
 					'updatebee'
-			  )
+				)
 			: __(
 					'This replaces the installed copy with an older WordPress.org release. The theme stays active.',
 					'updatebee'
-			  );
+				);
 
 	const requestClose = () => {
 		if ( isInstalling ) {

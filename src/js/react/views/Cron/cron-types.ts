@@ -3,9 +3,7 @@
  */
 
 export type CronContextSlug =
-	| 'plugin_updates'
-	| 'theme_updates'
-	| 'core_updates';
+	'plugin_updates' | 'theme_updates' | 'core_updates';
 
 export type CronFrequency =
 	| 'hourly'

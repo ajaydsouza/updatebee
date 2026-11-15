@@ -332,7 +332,7 @@ const TranslationsMain = () => {
 					getTranslationActionMessage( actionId, items ),
 					'success'
 				);
-			} catch ( error ) {
+			} catch {
 				showSnackbar(
 					__(
 						'The translation update could not be saved. Please try again.',

@@ -13,12 +13,7 @@ type LogsExportDrawerProps = {
 type UpdateOfferFilter = 'all' | 'automatic' | 'manual';
 type UpdateTypeFilter = 'all' | 'core' | 'plugin' | 'theme' | 'translation';
 type UpdateStatusFilter =
-	| 'all'
-	| 'success'
-	| 'failure'
-	| 'blocked'
-	| 'skipped'
-	| 'delayed';
+	'all' | 'success' | 'failure' | 'blocked' | 'skipped' | 'delayed';
 
 type ExportFilters = {
 	updateOffer: UpdateOfferFilter;

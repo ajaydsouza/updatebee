@@ -3,10 +3,7 @@
  */
 
 export type ThemeField =
-	| 'auto_update'
-	| 'patches_only'
-	| 'block_updates'
-	| 'selected';
+	'auto_update' | 'patches_only' | 'block_updates' | 'selected';
 
 type ThemeStylesheetRow = {
 	Stylesheet: string;
