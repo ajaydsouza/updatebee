@@ -186,6 +186,8 @@ const CronEventsMain = ( props: CronEventsMainProps ) => {
 				return;
 			}
 
+			// Deleting a cron event is destructive, so the admin confirms first.
+			// eslint-disable-next-line no-alert
 			const confirmed = window.confirm(
 				__(
 					'Delete this cron event? This cannot be undone.',
