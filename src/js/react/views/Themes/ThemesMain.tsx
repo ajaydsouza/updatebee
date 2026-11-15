@@ -1274,11 +1274,11 @@ const ThemesList = ( props: {
 																		? __(
 																				'Automatic updates enabled.',
 																				'updatebee'
-																		  )
+																			)
 																		: __(
 																				'Automatic updates disabled.',
 																				'updatebee'
-																		  ),
+																			),
 																	'success'
 																);
 															} )
@@ -1306,11 +1306,11 @@ const ThemesList = ( props: {
 														theme.VersionControlled
 															? themeVersionControlHelp(
 																	theme.VersionControl
-															  )
+																)
 															: __(
 																	'Enable automatic updates for this theme.',
 																	'updatebee'
-															  )
+																)
 													}
 													disabled={
 														theme.VersionControlled ||
@@ -1365,11 +1365,11 @@ const ThemesList = ( props: {
 																		? __(
 																				'Patches only enabled.',
 																				'updatebee'
-																		  )
+																			)
 																		: __(
 																				'Patches only disabled.',
 																				'updatebee'
-																		  ),
+																			),
 																	'success'
 																);
 															} )
@@ -1397,11 +1397,11 @@ const ThemesList = ( props: {
 														theme.VersionControlled
 															? themeVersionControlHelp(
 																	theme.VersionControl
-															  )
+																)
 															: __(
 																	'Limit automatic updates for this theme to patch releases.',
 																	'updatebee'
-															  )
+																)
 													}
 													disabled={
 														theme.VersionControlled ||
@@ -1462,11 +1462,11 @@ const ThemesList = ( props: {
 																					? __(
 																							'Theme updates blocked.',
 																							'updatebee'
-																					  )
+																						)
 																					: __(
 																							'Theme updates unblocked.',
 																							'updatebee'
-																					  ),
+																						),
 																				'success'
 																			);
 																		}
@@ -1551,7 +1551,7 @@ const ThemesList = ( props: {
 								id: rollbackTheme.Stylesheet,
 								name: rollbackTheme.Name,
 								nonce: rollbackTheme.RollbackNonce || '',
-						  }
+							}
 						: null
 				}
 				onClose={ () => {

@@ -4,12 +4,7 @@
 import { __ } from '@wordpress/i18n';
 
 export type LogUpdateStatus =
-	| 'success'
-	| 'failure'
-	| 'fatal'
-	| 'blocked'
-	| 'skipped'
-	| 'delayed';
+	'success' | 'failure' | 'fatal' | 'blocked' | 'skipped' | 'delayed';
 
 type LogUpdateStatusOption = {
 	value: LogUpdateStatus;

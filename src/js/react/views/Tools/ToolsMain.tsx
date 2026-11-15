@@ -474,7 +474,7 @@ const ToolsMain = () => {
 				),
 				updatebeeTools.pluginName,
 				importFile.name
-		  )
+			)
 		: '';
 
 	return (

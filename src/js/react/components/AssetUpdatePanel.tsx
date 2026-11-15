@@ -70,11 +70,11 @@ const AssetUpdatePanel = ( props: AssetUpdatePanelProps ) => {
 				? __(
 						'Unblock updates before updating this plugin.',
 						'updatebee'
-				  )
+					)
 				: __(
 						'Unblock updates before updating this theme.',
 						'updatebee'
-				  );
+					);
 	} else if ( ! update.has_package ) {
 		reason = __( 'This update has no installable package.', 'updatebee' );
 	}
@@ -121,7 +121,7 @@ const AssetUpdatePanel = ( props: AssetUpdatePanelProps ) => {
 							: __(
 									'This version is scheduled again.',
 									'updatebee'
-							  ) ),
+								) ),
 					'success'
 				);
 			} )
@@ -195,7 +195,7 @@ const AssetUpdatePanel = ( props: AssetUpdatePanelProps ) => {
 							: __(
 									'Theme could not be updated.',
 									'updatebee'
-							  ) ),
+								) ),
 					'error'
 				);
 			} )

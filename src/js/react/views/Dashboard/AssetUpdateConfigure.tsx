@@ -25,16 +25,13 @@ export type AssetKind = 'plugin' | 'theme' | 'translation';
 
 type AssetFieldConfig = {
 	autoUpdates:
-		| 'pluginAutoUpdates'
-		| 'themeAutoUpdates'
-		| 'translationAutoUpdates';
+		'pluginAutoUpdates' | 'themeAutoUpdates' | 'translationAutoUpdates';
 	autoUpdatesCustom:
 		| 'pluginAutoUpdatesCustom'
 		| 'themeAutoUpdatesCustom'
 		| 'translationAutoUpdatesCustom';
 	autoUpdatesPatchesOnly?:
-		| 'pluginAutoUpdatesPatchesOnly'
-		| 'themeAutoUpdatesPatchesOnly';
+		'pluginAutoUpdatesPatchesOnly' | 'themeAutoUpdatesPatchesOnly';
 	updatesDisabled:
 		| 'pluginUpdatesDisabled'
 		| 'themeUpdatesDisabled'

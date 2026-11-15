@@ -138,7 +138,7 @@ const AdvancedReset = ( props: AdvancedResetProps ) => {
 			? [ 'all' as const ]
 			: ( Object.keys( selection ) as ResetItem[] ).filter(
 					( key ) => 'all' !== key && selection[ key ]
-			  );
+				);
 
 		onReset( items ).then( ( didSucceed ) => {
 			if ( didSucceed ) {

@@ -1,8 +1,5 @@
-/**
- * Types for the admin command palette.
- *
- * WordPress provides this package at runtime as `wp-commands`.
- */
+// Types for the admin command palette.
+// WordPress provides this package at runtime as `wp-commands`.
 declare module '@wordpress/commands' {
 	export type CommandCallback = ( args: { close: () => void } ) => void;
 
@@ -18,5 +15,10 @@ declare module '@wordpress/commands' {
 		icon?: React.ReactNode;
 	}
 
+	/**
+	 * Register a command with the palette.
+	 *
+	 * @param command Command configuration.
+	 */
 	export function useCommand( command: CommandConfig ): void;
 }

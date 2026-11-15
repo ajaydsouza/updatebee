@@ -444,11 +444,11 @@ const UpcomingUpdates = () => {
 							? __(
 									'No plugin or theme updates are available.',
 									'updatebee'
-							  )
+								)
 							: __(
 									'No updates match the current search.',
 									'updatebee'
-							  ) }
+								) }
 					</p>
 				}
 			>

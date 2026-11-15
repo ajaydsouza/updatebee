@@ -456,11 +456,11 @@ const EmailReportFormFields = ( props: EmailReportFormFieldsProps ) => {
 							? __(
 									'Uses the Slack webhook saved under Advanced settings. Applies to scheduled runs and Send now.',
 									'updatebee'
-							  )
+								)
 							: __(
 									'Add a Slack webhook URL in Advanced settings to enable this.',
 									'updatebee'
-							  )
+								)
 					}
 				/>
 			) }

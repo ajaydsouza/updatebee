@@ -226,7 +226,7 @@ const CronScheduleFields = ( props: CronScheduleFieldsProps ) => {
 								: __(
 										'No valid run days are configured for this schedule.',
 										'updatebee'
-								  ) }
+									) }
 						</p>
 					) }
 				</div>

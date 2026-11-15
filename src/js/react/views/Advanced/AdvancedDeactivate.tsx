@@ -140,7 +140,7 @@ const AdvancedDeactivate = ( props: AdvancedDeactivateProps ) => {
 								? __(
 										'Clearing data and deactivating…',
 										'updatebee'
-								  )
+									)
 								: __( 'Deactivating…', 'updatebee' )
 						}
 						onClick={ handleDeactivate }
