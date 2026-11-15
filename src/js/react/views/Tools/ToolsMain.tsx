@@ -675,7 +675,7 @@ const ToolsMain = () => {
 						<Card.Content className="updatebee-tools-card-content">
 							<p className="updatebee-tools-card-description">
 								{ sprintf(
-									/* translators: %s: Plugin name. */
+									/* translators: %1$s: Plugin name. */
 									__(
 										'Import core, plugin, theme, and translation settings from Companion Auto Update. Overlapping %1$s settings will be replaced. Deactivate Companion Auto Update afterward so its update filters do not override %1$s.',
 										'updatebee'

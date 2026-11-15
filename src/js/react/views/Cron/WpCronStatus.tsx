@@ -58,7 +58,7 @@ const getStatusCopy = ( status: CronStatus ): CronStatusCopy => {
 				'updatebee'
 			),
 			instructions: __(
-				'There\'s no need to change anything unless you want Cron to run from your server via a crontab..',
+				"There's no need to change anything unless you want Cron to run from your server via a crontab..",
 				'updatebee'
 			),
 		};

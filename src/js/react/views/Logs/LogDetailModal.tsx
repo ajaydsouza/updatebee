@@ -2,7 +2,7 @@
  * Modal for log notes and stack trace.
  */
 import { Button, Modal, TabPanel } from '@wordpress/components';
-import { __, sprintf } from '@wordpress/i18n';
+import { __ } from '@wordpress/i18n';
 import type { LogItem } from './LogsMain';
 
 export type LogDetailPayload = {
@@ -22,8 +22,8 @@ type LogDetailModalProps = {
 /**
  * Render notes body text.
  *
- * @param notes.notes
- * @param notes       Raw notes.
+ * @param props       Component props.
+ * @param props.notes Raw notes.
  */
 const NotesContent = ( { notes }: { notes: string } ) => (
 	<div className="updatebee-log-detail updatebee-log-detail--notes">
@@ -34,8 +34,8 @@ const NotesContent = ( { notes }: { notes: string } ) => (
 /**
  * Render stack trace body text.
  *
- * @param stacktrace.stacktrace
- * @param stacktrace            Formatted stack trace.
+ * @param props            Component props.
+ * @param props.stacktrace Formatted stack trace.
  */
 const StacktraceContent = ( { stacktrace }: { stacktrace: string } ) => (
 	<pre className="updatebee-log-detail updatebee-log-detail--stacktrace">
