@@ -490,7 +490,7 @@ class Schedules {
 	 * Resolve the WordPress root filesystem path for crontab examples.
 	 */
 	private static function get_wordpress_root_path(): string {
-		if ( defined( 'ABSPATH' ) && is_string( ABSPATH ) && '' !== ABSPATH ) {
+		if ( defined( 'ABSPATH' ) && '' !== ABSPATH ) {
 			return rtrim( str_replace( '\\', '/', ABSPATH ), '/' );
 		}
 

@@ -85,7 +85,7 @@ class Days_Schedule {
 	 * @param bool  $update Whether to update.
 	 * @param mixed $item   Update item.
 	 */
-	public function maybe_auto_update_on_scheduled_days( $update, $item ) {
+	public function maybe_auto_update_on_scheduled_days( $update, $item ): bool {
 		unset( $item );
 
 		if ( ! $update ) {

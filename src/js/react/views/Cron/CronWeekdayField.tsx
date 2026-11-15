@@ -70,8 +70,10 @@ const CronWeekdayField = ( props: CronWeekdayFieldProps ) => {
 					<label
 						key={ day.value }
 						className="updatebee-cron-weekday-option"
+						htmlFor={ `updatebee-cron-weekday-${ day.value }` }
 					>
 						<input
+							id={ `updatebee-cron-weekday-${ day.value }` }
 							type="checkbox"
 							checked={ value.includes( day.value ) }
 							onChange={ ( event ) => {

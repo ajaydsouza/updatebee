@@ -132,7 +132,7 @@ class Rollback {
 			if ( is_int( $version ) ) {
 				$version = (string) $version;
 			}
-			if ( ! is_string( $version ) || ! is_string( $url ) ) {
+			if ( ! is_string( $url ) ) {
 				continue;
 			}
 
@@ -517,7 +517,7 @@ class Rollback {
 			if ( is_int( $version ) ) {
 				$version = (string) $version;
 			}
-			if ( ! is_string( $version ) || ! is_string( $url ) ) {
+			if ( ! is_string( $url ) ) {
 				continue;
 			}
 			$map[ $version ] = $url;

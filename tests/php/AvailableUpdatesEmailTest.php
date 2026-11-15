@@ -195,7 +195,6 @@ class AvailableUpdatesEmailTest extends TestCase {
 	 * Send now rejects requests with no delivery channel.
 	 */
 	public function test_send_now_requires_recipients_or_slack(): void {
-		$this->expectNotToPerformAssertions();
 		MonkeyFunctions\when( 'check_ajax_referer' )->justReturn( true );
 		MonkeyFunctions\when( 'is_multisite' )->justReturn( false );
 		MonkeyFunctions\when( 'is_network_admin' )->justReturn( false );
@@ -207,7 +206,11 @@ class AvailableUpdatesEmailTest extends TestCase {
 			}
 		);
 		MonkeyFunctions\when( 'get_site_option' )->justReturn( array() );
-		MonkeyFunctions\expect( 'wp_send_json_error' )->once();
+		MonkeyFunctions\when( 'wp_send_json_error' )->alias(
+			static function (): void {
+				throw new \RuntimeException( 'json-error' );
+			}
+		);
 
 		$_POST = array(
 			'toField'     => array(),
@@ -216,6 +219,10 @@ class AvailableUpdatesEmailTest extends TestCase {
 		);
 
 		$report = new Email_Updates_Available();
+
+		// WordPress ends the request inside wp_send_json_error(). The test double stops the same way.
+		$this->expectException( \RuntimeException::class );
+		$this->expectExceptionMessage( 'json-error' );
 		$report->ajax_send_now();
 	}
 

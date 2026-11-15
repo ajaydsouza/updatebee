@@ -159,7 +159,7 @@ class Options {
 	 * Save options for the plugin.
 	 *
 	 * @param string                      $key     Key to update.
-	 * @param array<string, mixed>|string $options Options to save.
+	 * @param array<int|string, mixed>|string $options Options to save.
 	 * @param bool                        $force   True to forcefully retrieve fresh options.
 	 * @return array<string, mixed>|null Options.
 	 */

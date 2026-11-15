@@ -59,7 +59,7 @@ class Table_Logs extends Tables {
 	/**
 	 * Table columns and their schema.
 	 *
-	 * @var array
+	 * @var array<string, array<string, mixed>>
 	 */
 	protected static $columns = array(
 		'id'            => array(
@@ -173,10 +173,15 @@ class Table_Logs extends Tables {
 	/**
 	 * Initialize the table.
 	 */
-	public function init() {
+	public function init(): void {
 
 		// Drop the table when action is triggered.
-		add_action( 'updatebee_drop_table_logs', array( self::class, 'drop_table' ) );
+		add_action(
+			'updatebee_drop_table_logs',
+			static function (): void {
+				self::drop_table();
+			}
+		);
 
 		// Filter the resource count.
 		add_filter( 'updatebee_get_count_logs', array( self::class, 'get_count' ) );

@@ -182,6 +182,11 @@ class AdminBarMenuTest extends TestCase {
 				return $value;
 			}
 		);
+		MonkeyFunctions\when( 'esc_attr' )->alias(
+			static function ( $text ) {
+				return htmlspecialchars( (string) $text, ENT_QUOTES, 'UTF-8' );
+			}
+		);
 		MonkeyFunctions\when( 'esc_html' )->alias(
 			static function ( $text ) {
 				return htmlspecialchars( (string) $text, ENT_QUOTES, 'UTF-8' );
@@ -210,11 +215,9 @@ class AdminBarMenuTest extends TestCase {
 		$this->assertStringContainsString( 'class="ab-icon"', $title );
 		$this->assertStringContainsString( 'aria-hidden="true"', $title );
 		$this->assertStringContainsString( '<svg ', $title );
-		$this->assertStringContainsString( 'viewBox="0 0 475 451"', $title );
-		$this->assertStringContainsString( 'fill="rgb(3,4,4)"', $title );
-		$this->assertStringContainsString( 'fill="rgb(255,198,36)"', $title );
-		$this->assertStringContainsString( 'M2864.67,2149.02', $title );
-		$this->assertStringContainsString( 'M1355.87,2335.71', $title );
+		$this->assertStringContainsString( 'viewBox="0 0 26 26"', $title );
+		$this->assertStringContainsString( 'fill="currentColor"', $title );
+		$this->assertStringContainsString( 'M 12 0 L 12 2.25', $title );
 		$this->assertStringContainsString( '<span class="ab-label">100% &quot;Bee&quot; &lt;script&gt;</span>', $title );
 		$this->assertLessThan( strpos( $title, 'ab-label' ), strpos( $title, 'ab-icon' ) );
 		$this->assertStringNotContainsString( 'dashicons', $title );
