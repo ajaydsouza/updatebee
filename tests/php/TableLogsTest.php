@@ -341,4 +341,90 @@ class TableLogsTest extends TestCase {
 
 		$this->assertStringContainsString( "update_status = 'delayed'", $wpdb->query_ran );
 	}
+
+	/**
+	 * Paginated logs and exports accept the security status filter.
+	 */
+	public function test_log_queries_accept_security_status_filter(): void {
+		$this->stub_table_helpers();
+
+		$wpdb = new class() {
+			/**
+			 * Table prefix.
+			 *
+			 * @var string
+			 */
+			public $base_prefix = 'wp_';
+
+			/**
+			 * Last SQL query.
+			 *
+			 * @var string
+			 */
+			public $query_ran = '';
+
+			/**
+			 * Mock esc_like.
+			 *
+			 * @param string $text Text.
+			 * @return string
+			 */
+			public function esc_like( $text ) {
+				return $text;
+			}
+
+			/**
+			 * Mock prepare.
+			 *
+			 * @param string $query Query.
+			 * @param mixed  ...$args Args.
+			 * @return string
+			 */
+			public function prepare( $query, ...$args ) {
+				return vsprintf( str_replace( '%s', "'%s'", $query ), $args );
+			}
+
+			/**
+			 * Mock get_var.
+			 *
+			 * @param string $query Query.
+			 * @return int
+			 */
+			public function get_var( $query ) {
+				$this->query_ran = $query;
+				return 0;
+			}
+
+			/**
+			 * Mock get_results.
+			 *
+			 * @param string $query Query.
+			 * @return array<int, array<string, mixed>>
+			 */
+			public function get_results( $query ) {
+				$this->query_ran = $query;
+				return array();
+			}
+		};
+
+		$this->set_mock_wpdb( $wpdb );
+
+		Table_Logs::get_logs_paginated(
+			array(
+				'filters' => array(
+					'update_status' => 'security',
+				),
+			)
+		);
+
+		$this->assertStringContainsString( "update_status = 'security'", $wpdb->query_ran );
+
+		Table_Logs::get_logs_for_export(
+			array(
+				'update_status' => 'security',
+			)
+		);
+
+		$this->assertStringContainsString( "update_status = 'security'", $wpdb->query_ran );
+	}
 }

@@ -16,6 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 use UpdateBee\Tables\Table_Logs;
 use UpdateBee\Updates\Fatal_Detection;
+use UpdateBee\Updates\Upgrade_Notice_Keywords;
 
 /**
  * Class Logs
@@ -161,6 +162,9 @@ class Logs {
 						$status     = $resolved['status'];
 						$raw        = $resolved['raw'];
 						$stacktrace = $resolved['stacktrace'];
+						$marked     = $this->mark_security_release( $status, $plugin->item, $raw );
+						$status     = $marked['status'];
+						$raw        = $marked['raw'];
 						$this->insert_log( $name, $slug, $user_id, $prev_version, $new_version, 'automatic', $update_type, $status, $raw, $stacktrace );
 					}
 					break;
@@ -191,6 +195,9 @@ class Logs {
 						$status     = $resolved['status'];
 						$raw        = $resolved['raw'];
 						$stacktrace = $resolved['stacktrace'];
+						$marked     = $this->mark_security_release( $status, $theme->item, $raw );
+						$status     = $marked['status'];
+						$raw        = $marked['raw'];
 						$this->insert_log( $name, $slug, $user_id, $prev_version, $current_version, 'automatic', $update_type, $status, $raw, $stacktrace );
 					}
 					break;
@@ -307,7 +314,7 @@ class Logs {
 	 * @param string $current_version The current version for the upgrade.
 	 * @param string $update_offer    Manual or Automatic (manual|automatic).
 	 * @param string $update_type     The type of the update. plugin|theme|translation|core.
-	 * @param string $status          Status of the upgrade. success|failure|blocked|skipped|delayed|install|deactivate|delete|rollback|update.
+	 * @param string $status          Status of the upgrade. success|security|failure|blocked|skipped|delayed|install|deactivate|delete|rollback|update.
 	 * @param string $notes           Raw upgrade notes.
 	 * @param string $stacktrace      Serialized stack trace for manual debugging.
 	 */
@@ -414,6 +421,49 @@ class Logs {
 		}
 
 		self::$current_updates[] = $entry;
+	}
+
+	/**
+	 * Label a successful automatic update as a security release when the notice matches.
+	 *
+	 * Failures and fatals keep their resolved status. The plain-text upgrade notice
+	 * is stored ahead of the upgrader messages.
+	 *
+	 * @param string $status Resolved status.
+	 * @param mixed  $item   Plugin or theme update item.
+	 * @param string $raw    Accumulated upgrader notes.
+	 * @return array{status: string, raw: string}
+	 */
+	private function mark_security_release( string $status, $item, string $raw ): array {
+		if ( 'success' !== $status || ! Upgrade_Notice_Keywords::cuts_the_line( $item ) ) {
+			return array(
+				'status' => $status,
+				'raw'    => $raw,
+			);
+		}
+
+		$notice = '';
+		if ( is_object( $item ) && isset( $item->upgrade_notice ) && is_string( $item->upgrade_notice ) ) {
+			$notice = trim( wp_strip_all_tags( $item->upgrade_notice ) );
+		}
+
+		$note = __( 'Upgrade notice matched a configured security keyword.', 'updatebee' );
+		if ( '' !== $notice ) {
+			$note .= "\n" . sprintf(
+				/* translators: %s: Plain-text upgrade notice. */
+				__( 'Upgrade notice: %s', 'updatebee' ),
+				$notice
+			);
+		}
+
+		if ( '' !== $raw ) {
+			$note .= "\n" . $raw;
+		}
+
+		return array(
+			'status' => 'security',
+			'raw'    => $note,
+		);
 	}
 
 	/**
@@ -1216,7 +1266,7 @@ class Logs {
 	 * @return array<int, array<string, mixed>>
 	 */
 	public static function get_success_logs( array $supported = array(), $since_last_timestamp = '' ): array {
-		return self::get_logs_by_status( 'success', $supported, $since_last_timestamp );
+		return self::get_logs_by_status( array( 'success', 'security' ), $supported, $since_last_timestamp );
 	}
 
 	/**
@@ -1240,7 +1290,7 @@ class Logs {
 	/**
 	 * Query logs by status.
 	 *
-	 * @param string|array<int, string> $status               success|failure|fatal or a list of those.
+	 * @param string|array<int, string> $status               success|security|failure|fatal or a list of those.
 	 * @param array<string, bool>       $supported            Supported update types.
 	 * @param int|string                $since_last_timestamp Optional UNIX timestamp filter.
 	 * @return array<int, array<string, mixed>>
@@ -1274,7 +1324,7 @@ class Logs {
 			return array();
 		}
 
-		$allowed_statuses = array( 'success', 'failure', 'fatal', 'blocked', 'skipped', 'delayed' );
+		$allowed_statuses = array( 'success', 'security', 'failure', 'fatal', 'blocked', 'skipped', 'delayed' );
 		$statuses         = is_array( $status ) ? $status : array( $status );
 		$statuses         = array_values(
 			array_intersect(

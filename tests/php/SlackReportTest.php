@@ -247,6 +247,32 @@ class SlackReportTest extends TestCase {
 	}
 
 	/**
+	 * Security releases count as successes and use their display label.
+	 */
+	public function test_build_message_counts_security_release_as_success(): void {
+		$this->stub_helpers();
+		$report  = new Slack_Report();
+		$message = $report->build_message(
+			array(
+				array(
+					'name'          => 'Hello Dolly',
+					'update_type'   => 'plugin',
+					'from_version'  => '1.7.2',
+					'to_version'    => '1.7.3',
+					'update_status' => 'security',
+					'user_id'       => '0',
+				),
+			),
+			'automatic'
+		);
+
+		$fields = $message['blocks'][3]['fields'];
+		$this->assertSame( '*Succeeded:* 1', $fields[2]['text'] );
+		$this->assertSame( '*Failed:* 0', $fields[3]['text'] );
+		$this->assertSame( '*Hello Dolly* — Success - Security Release — 1.7.2 → 1.7.3', $message['blocks'][6]['text']['text'] );
+	}
+
+	/**
 	 * An empty webhook does not post.
 	 */
 	public function test_empty_webhook_skips_post(): void {
