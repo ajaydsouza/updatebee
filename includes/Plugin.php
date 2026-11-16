@@ -19,6 +19,7 @@ use UpdateBee\Admin\Network_Admin_Bar;
 use UpdateBee\Admin\Plugin_Settings_Links;
 use UpdateBee\Admin\Hide_Updates_Column;
 use UpdateBee\Admin\Register_Options_Page;
+use UpdateBee\Admin\Upcoming_Menu;
 use UpdateBee\Admin\Settings_Transfer;
 use UpdateBee\Cron\Clear_Logs as Clear_Logs_Cron;
 use UpdateBee\Cron\Schedules as Cron_Schedules;
@@ -63,6 +64,13 @@ class Plugin {
 	 * @var Register_Options_Page
 	 */
 	private Register_Options_Page $admin_register_options_page;
+
+	/**
+	 * Dashboard shortcut for upcoming updates.
+	 *
+	 * @var Upcoming_Menu
+	 */
+	private Upcoming_Menu $upcoming_menu;
 
 	/**
 	 * Script and style enqueue.
@@ -245,6 +253,9 @@ class Plugin {
 
 		$this->admin_register_options_page = new Register_Options_Page();
 		$this->admin_register_options_page->run();
+
+		$this->upcoming_menu = new Upcoming_Menu();
+		$this->upcoming_menu->run();
 
 		$this->network_admin_bar = new Network_Admin_Bar();
 		$this->network_admin_bar->run();

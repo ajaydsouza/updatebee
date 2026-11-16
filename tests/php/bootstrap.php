@@ -43,10 +43,29 @@ if ( ! function_exists( '__' ) ) {
 	/**
 	 * Test stub for WordPress i18n.
 	 *
-	 * @param string $text Text to translate.
+	 * @param string $text   Text to translate.
+	 * @param string $domain Text domain. Unused in tests.
 	 * @return string
 	 */
-	function __( $text ) {
+	function __( $text, $domain = 'default' ) {
+		unset( $domain );
+
+		return $text;
+	}
+}
+
+if ( ! function_exists( '_x' ) ) {
+	/**
+	 * Test stub for contextual translation.
+	 *
+	 * @param string $text    Text to translate.
+	 * @param string $context Context information for translators.
+	 * @param string $domain  Text domain.
+	 * @return string
+	 */
+	function _x( $text, $context, $domain = 'default' ) {
+		unset( $context, $domain );
+
 		return $text;
 	}
 }

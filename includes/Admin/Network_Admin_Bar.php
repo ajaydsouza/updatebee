@@ -65,6 +65,18 @@ class Network_Admin_Bar {
 			);
 		}
 
+		// --- "Upcoming Updates" directly under Updates once the flyout is reordered ---
+		if ( Functions::can_access_options() ) {
+			$wp_admin_bar->add_node(
+				array(
+					'id'     => 'updatebee-network-upcoming',
+					'parent' => 'network-admin',
+					'title'  => _x( 'Upcoming Updates', 'Toolbar menu item', 'updatebee' ),
+					'href'   => Functions::get_settings_url( 'dashboard', 'upcoming' ),
+				)
+			);
+		}
+
 		// --- "Automatic Updates" at the very bottom ---
 		if ( current_user_can( 'manage_network' ) ) {
 			$wp_admin_bar->add_node(
@@ -85,7 +97,8 @@ class Network_Admin_Bar {
 	 * Admin item in one callback, so hook priority cannot insert Updates
 	 * between Dashboard and Sites. When Updates is not already next to
 	 * Dashboard, remove the nodes registered after Dashboard and add Updates
-	 * back first through the public toolbar API.
+	 * back first through the public toolbar API. Upcoming Updates, when
+	 * present, is placed directly under Updates.
 	 *
 	 * @param WP_Admin_Bar $wp_admin_bar Admin bar instance.
 	 */
@@ -99,11 +112,13 @@ class Network_Admin_Bar {
 			return;
 		}
 
-		$ids              = array_keys( $nodes );
-		$dashboard_index  = array_search( 'network-admin-d', $ids, true );
-		$updates_index    = array_search( 'updatebee-network-updates', $ids, true );
-		$already_in_place = is_int( $dashboard_index ) && $updates_index === $dashboard_index + 1;
-		if ( $already_in_place ) {
+		$ids               = array_keys( $nodes );
+		$dashboard_index   = array_search( 'network-admin-d', $ids, true );
+		$updates_index     = array_search( 'updatebee-network-updates', $ids, true );
+		$upcoming_index    = array_search( 'updatebee-network-upcoming', $ids, true );
+		$updates_in_place  = is_int( $dashboard_index ) && $updates_index === $dashboard_index + 1;
+		$upcoming_in_place = ! is_int( $upcoming_index ) || ( is_int( $updates_index ) && $upcoming_index === $updates_index + 1 );
+		if ( $updates_in_place && $upcoming_in_place ) {
 			return;
 		}
 
@@ -112,10 +127,18 @@ class Network_Admin_Bar {
 			return;
 		}
 
+		$upcoming_args = array();
+		if ( isset( $nodes['updatebee-network-upcoming'] ) ) {
+			$upcoming_args = $this->node_to_args( $nodes['updatebee-network-upcoming'] );
+			if ( array() === $upcoming_args ) {
+				return;
+			}
+		}
+
 		$after            = array();
 		$passed_dashboard = false;
 		foreach ( $nodes as $id => $node ) {
-			if ( 'updatebee-network-updates' === $id ) {
+			if ( 'updatebee-network-updates' === $id || 'updatebee-network-upcoming' === $id ) {
 				continue;
 			}
 			if ( ! $passed_dashboard ) {
@@ -133,11 +156,15 @@ class Network_Admin_Bar {
 		}
 
 		$wp_admin_bar->remove_node( 'updatebee-network-updates' );
+		$wp_admin_bar->remove_node( 'updatebee-network-upcoming' );
 		foreach ( array_keys( $after ) as $id ) {
 			$wp_admin_bar->remove_node( $id );
 		}
 
 		$wp_admin_bar->add_node( $updates_args );
+		if ( array() !== $upcoming_args ) {
+			$wp_admin_bar->add_node( $upcoming_args );
+		}
 		foreach ( $after as $args ) {
 			$wp_admin_bar->add_node( $args );
 		}
