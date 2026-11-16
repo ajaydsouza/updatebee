@@ -10,6 +10,7 @@ namespace UpdateBee\Tests;
 use Brain\Monkey\Functions as MonkeyFunctions;
 use ReflectionClass;
 use UpdateBee\Logs;
+use UpdateBee\Options;
 use UpdateBee\Tables\Table_Logs;
 use UpdateBee\Updates\Fatal_Detection;
 
@@ -17,6 +18,14 @@ use UpdateBee\Updates\Fatal_Detection;
  * Logs test case.
  */
 class LogsTest extends TestCase {
+
+	/**
+	 * Clear cached options between tests.
+	 */
+	protected function tearDown(): void {
+		Options::flush_cache();
+		parent::tearDown();
+	}
 
 	/**
 	 * Assign a mock wpdb instance for table name resolution.
@@ -255,6 +264,166 @@ class LogsTest extends TestCase {
 		);
 
 		$this->assertSame( 'failure', $wpdb->inserted_status );
+	}
+
+	/**
+	 * A matching upgrade notice logs a successful plugin update as a security release.
+	 */
+	public function test_automatic_plugin_keyword_match_logs_security_release(): void {
+		$this->stub_security_release_log();
+		$this->stub_security_keywords( true, 'security' );
+
+		$wpdb = $this->create_status_wpdb_mock();
+		$this->set_mock_wpdb( $wpdb );
+
+		$logs = new Logs();
+		$logs->automatic_updates(
+			array(
+				'plugin' => array(
+					$this->plugin_update_result( '1.7.2', '1.7.3', '<p>This is a security release.</p>', array( 'Updated.' ) ),
+				),
+			)
+		);
+
+		$this->assertSame( 'security', $wpdb->inserted_status );
+		$this->assertStringContainsString( 'Upgrade notice matched a configured security keyword.', (string) $wpdb->inserted_raw );
+		$this->assertStringContainsString( 'Upgrade notice: This is a security release.', (string) $wpdb->inserted_raw );
+		$this->assertStringContainsString( 'Updated.', (string) $wpdb->inserted_raw );
+		$this->assertStringNotContainsString( '<p>', (string) $wpdb->inserted_raw );
+	}
+
+	/**
+	 * A matching upgrade notice logs a successful theme update as a security release.
+	 */
+	public function test_automatic_theme_keyword_match_logs_security_release(): void {
+		$this->stub_security_release_log();
+		$this->stub_security_keywords( true, 'security' );
+
+		$wpdb = $this->create_status_wpdb_mock();
+		$this->set_mock_wpdb( $wpdb );
+
+		$logs = new Logs();
+		$logs->automatic_updates(
+			array(
+				'theme' => array(
+					(object) array(
+						'name'     => 'Twenty Twenty-Four',
+						'messages' => array( 'Updated.' ),
+						'item'     => (object) array(
+							'theme'           => 'twentytwentyfour',
+							'current_version' => '1.0.0',
+							'new_version'     => '1.0.1',
+							'upgrade_notice'  => 'Security release.',
+						),
+					),
+				),
+			)
+		);
+
+		$this->assertSame( 'security', $wpdb->inserted_status );
+		$this->assertStringContainsString( 'Upgrade notice: Security release.', (string) $wpdb->inserted_raw );
+	}
+
+	/**
+	 * A matching notice does not relabel a failed automatic update.
+	 */
+	public function test_automatic_plugin_keyword_match_keeps_failure(): void {
+		$this->stub_security_release_log();
+		$this->stub_security_keywords( true, 'security' );
+		MonkeyFunctions\when( 'get_plugin_data' )->justReturn(
+			array(
+				'Version' => '1.7.2',
+			)
+		);
+
+		$wpdb = $this->create_status_wpdb_mock();
+		$this->set_mock_wpdb( $wpdb );
+
+		$logs = new Logs();
+		$logs->automatic_updates(
+			array(
+				'plugin' => array(
+					$this->plugin_update_result( '1.7.2', '1.7.2', 'This is a security release.' ),
+				),
+			)
+		);
+
+		$this->assertSame( 'failure', $wpdb->inserted_status );
+		$this->assertStringNotContainsString( 'Upgrade notice:', (string) $wpdb->inserted_raw );
+	}
+
+	/**
+	 * A successful update without a keyword match stays a success.
+	 */
+	public function test_automatic_plugin_without_keyword_match_stays_success(): void {
+		$this->stub_security_release_log();
+		$this->stub_security_keywords( true, 'security' );
+
+		$wpdb = $this->create_status_wpdb_mock();
+		$this->set_mock_wpdb( $wpdb );
+
+		$logs = new Logs();
+		$logs->automatic_updates(
+			array(
+				'plugin' => array(
+					$this->plugin_update_result( '1.7.2', '1.7.3', 'Bug fixes only.' ),
+				),
+			)
+		);
+
+		$this->assertSame( 'success', $wpdb->inserted_status );
+		$this->assertStringNotContainsString( 'Upgrade notice:', (string) $wpdb->inserted_raw );
+	}
+
+	/**
+	 * Success digests include security releases.
+	 */
+	public function test_get_success_logs_includes_security_status(): void {
+		$this->stub_log_helpers();
+
+		$wpdb = new class() {
+			/**
+			 * Table prefix.
+			 *
+			 * @var string
+			 */
+			public $base_prefix = 'wp_';
+
+			/**
+			 * Last SQL query.
+			 *
+			 * @var string
+			 */
+			public $query_ran = '';
+
+			/**
+			 * Mock wpdb prepare.
+			 *
+			 * @param string $query Query.
+			 * @param mixed  ...$args Args.
+			 * @return string
+			 */
+			public function prepare( $query, ...$args ) {
+				return vsprintf( str_replace( '%s', "'%s'", $query ), $args );
+			}
+
+			/**
+			 * Mock wpdb get_results.
+			 *
+			 * @param string $query Query.
+			 * @return array<int, array<string, string>>
+			 */
+			public function get_results( $query ) {
+				$this->query_ran = $query;
+				return array();
+			}
+		};
+		$this->set_mock_wpdb( $wpdb );
+
+		Logs::get_success_logs();
+
+		$this->assertStringContainsString( "'success'", $wpdb->query_ran );
+		$this->assertStringContainsString( "'security'", $wpdb->query_ran );
 	}
 
 	/**
@@ -1053,6 +1222,79 @@ class LogsTest extends TestCase {
 		);
 
 		$this->assertSame( '6.8.1', $wpdb->to_version );
+	}
+
+	/**
+	 * Stub helpers for an automatic plugin or theme log.
+	 */
+	private function stub_security_release_log(): void {
+		$this->stub_log_helpers();
+		Fatal_Detection::reset();
+
+		if ( ! defined( 'WP_PLUGIN_DIR' ) ) {
+			define( 'WP_PLUGIN_DIR', ABSPATH . 'wp-content/plugins' );
+		}
+
+		MonkeyFunctions\when( 'get_plugin_data' )->justReturn(
+			array(
+				'Version' => '1.7.3',
+			)
+		);
+	}
+
+	/**
+	 * Stub keyword options used while deciding a security release.
+	 *
+	 * @param bool   $enabled  Whether keyword matching is enabled.
+	 * @param string $keywords Configured keywords.
+	 */
+	private function stub_security_keywords( bool $enabled, string $keywords ): void {
+		Options::flush_cache();
+		MonkeyFunctions\when( 'get_site_option' )->alias(
+			static function ( $key, $default_value = false ) use ( $enabled, $keywords ) {
+				if ( Options::OPTIONS_KEY === $key ) {
+					return array(
+						'upgrade_notice_keywords'         => $keywords,
+						'upgrade_notice_keywords_enabled' => $enabled,
+					);
+				}
+
+				return $default_value;
+			}
+		);
+		MonkeyFunctions\when( 'sanitize_title' )->returnArg( 1 );
+		MonkeyFunctions\when( 'wp_strip_all_tags' )->alias(
+			static function ( $text ) {
+				if ( ! is_string( $text ) ) {
+					return '';
+				}
+
+				return (string) preg_replace( '/<[^>]*>/', '', $text );
+			}
+		);
+	}
+
+	/**
+	 * Build a plugin automatic-update result.
+	 *
+	 * @param string             $from     Installed version on the update item.
+	 * @param string             $to       Offered version.
+	 * @param string             $notice   Upgrade notice.
+	 * @param array<int, string> $messages Upgrader messages.
+	 * @return object
+	 */
+	private function plugin_update_result( string $from, string $to, string $notice, array $messages = array() ): object {
+		return (object) array(
+			'name'     => 'Hello Dolly',
+			'messages' => $messages,
+			'item'     => (object) array(
+				'plugin'          => 'hello-dolly/hello.php',
+				'slug'            => 'hello-dolly',
+				'current_version' => $from,
+				'new_version'     => $to,
+				'upgrade_notice'  => $notice,
+			),
+		);
 	}
 
 	/**

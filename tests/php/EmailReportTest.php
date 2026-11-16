@@ -59,6 +59,30 @@ class EmailReportTest extends TestCase {
 	}
 
 	/**
+	 * Success reports keep security releases with ordinary successes.
+	 */
+	public function test_success_filter_keeps_security_releases(): void {
+		$options = Email_Successes::get_defaults();
+		$updates = array(
+			array(
+				'name'          => 'Hello Dolly',
+				'update_type'   => 'plugin',
+				'update_status' => 'security',
+			),
+			array(
+				'name'          => 'Akismet',
+				'update_type'   => 'plugin',
+				'update_status' => 'failure',
+			),
+		);
+
+		$filtered = $this->filter_updates( Email_Successes::class, $updates, $options );
+
+		$this->assertCount( 1, $filtered );
+		$this->assertSame( 'security', $filtered[0]['update_status'] );
+	}
+
+	/**
 	 * Test failure report keeps only failure rows.
 	 */
 	public function test_failure_filter_keeps_failure_rows_only(): void {

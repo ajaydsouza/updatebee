@@ -95,7 +95,7 @@ class Slack_Report {
 		$fatals    = 0;
 
 		foreach ( $rows as $row ) {
-			if ( 'success' === $row['update_status'] ) {
+			if ( 'success' === $row['update_status'] || 'security' === $row['update_status'] ) {
 				++$successes;
 			} elseif ( 'failure' === $row['update_status'] ) {
 				++$failures;
@@ -177,10 +177,14 @@ class Slack_Report {
 				if ( $shown >= Slack_Row_Groups::ITEM_LIMIT ) {
 					break;
 				}
+				$status_label = $row['update_status'];
+				if ( 'security' === $status_label ) {
+					$status_label = __( 'Success - Security Release', 'updatebee' );
+				}
 				$lines[] = sprintf(
 					'*%1$s* — %2$s — %3$s → %4$s',
 					esc_html( $row['name'] ),
-					esc_html( $row['update_status'] ),
+					esc_html( $status_label ),
 					esc_html( $row['from_version'] ),
 					esc_html( $row['to_version'] )
 				);

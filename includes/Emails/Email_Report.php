@@ -265,7 +265,12 @@ abstract class Email_Report {
 				continue;
 			}
 			$row = Emails::normalize_log_row( $update );
-			if ( empty( $row ) || $status !== $row['update_status'] ) {
+			if ( empty( $row ) ) {
+				continue;
+			}
+			$row_status = $row['update_status'];
+			$is_match   = $status === $row_status || ( 'success' === $status && 'security' === $row_status );
+			if ( ! $is_match ) {
 				continue;
 			}
 			$type_key = static::map_update_type_to_supported_key( $row['update_type'] );
