@@ -55,6 +55,121 @@ class NetworkAdminBarTest extends TestCase {
 	}
 
 	/**
+	 * Upcoming Updates moves directly under Updates, and a second call keeps that order.
+	 */
+	public function test_moves_upcoming_directly_after_updates(): void {
+		$this->stub_reorder_access( true, true );
+		$bar = $this->bar_with_object_nodes();
+		$this->seed_nodes( $bar, $this->network_nodes_with_upcoming() );
+
+		$menu = new Network_Admin_Bar();
+		$menu->reorder_menu_items( $bar );
+
+		$expected = array(
+			'my-sites',
+			'network-admin',
+			'network-admin-d',
+			'updatebee-network-updates',
+			'updatebee-network-upcoming',
+			'network-admin-s',
+			'network-admin-s-child',
+			'updatebee-network-automatic-updates',
+		);
+		$this->assertSame( $expected, array_keys( $bar->nodes ) );
+
+		$upcoming = $bar->nodes['updatebee-network-upcoming'];
+		$this->assertSame( 'Upcoming Updates', $upcoming['title'] );
+		$this->assertSame( 'https://example.com/wp-admin/network/settings.php?page=updatebee&tab=dashboard&subtab=upcoming', $upcoming['href'] );
+		$this->assertSame( 'network-admin', $upcoming['parent'] );
+
+		$sites_index = array_search( 'network-admin-s', array_keys( $bar->nodes ), true );
+		$child_index = array_search( 'network-admin-s-child', array_keys( $bar->nodes ), true );
+		$this->assertIsInt( $sites_index );
+		$this->assertSame( $sites_index + 1, $child_index );
+
+		$menu->reorder_menu_items( $bar );
+
+		$this->assertSame( $expected, array_keys( $bar->nodes ) );
+		$this->assertSame( $upcoming, $bar->nodes['updatebee-network-upcoming'] );
+	}
+
+	/**
+	 * Upcoming Updates still moves under Updates when Updates is already beside Dashboard.
+	 */
+	public function test_moves_upcoming_when_updates_is_already_in_place(): void {
+		$this->stub_reorder_access( true, true );
+		$bar = new WP_Admin_Bar();
+		$this->seed_nodes(
+			$bar,
+			array(
+				array(
+					'id'    => 'my-sites',
+					'title' => 'My Sites',
+					'href'  => 'https://example.com/wp-admin/my-sites.php',
+				),
+				array(
+					'id'     => 'network-admin',
+					'parent' => 'my-sites',
+					'title'  => 'Network Admin',
+					'href'   => 'https://example.com/wp-admin/network/',
+				),
+				array(
+					'id'     => 'network-admin-d',
+					'parent' => 'network-admin',
+					'title'  => 'Dashboard',
+					'href'   => 'https://example.com/wp-admin/network/',
+				),
+				array(
+					'id'     => 'updatebee-network-updates',
+					'parent' => 'network-admin',
+					'title'  => 'Updates',
+					'href'   => 'https://example.com/wp-admin/network/update-core.php',
+				),
+				array(
+					'id'     => 'network-admin-s',
+					'parent' => 'network-admin',
+					'title'  => 'Sites',
+					'href'   => 'https://example.com/wp-admin/network/sites.php',
+				),
+				array(
+					'id'     => 'network-admin-s-child',
+					'parent' => 'network-admin-s',
+					'title'  => 'All Sites',
+					'href'   => 'https://example.com/wp-admin/network/sites.php',
+				),
+				array(
+					'id'     => 'updatebee-network-automatic-updates',
+					'parent' => 'network-admin',
+					'title'  => 'Automatic Updates',
+					'href'   => 'https://example.com/wp-admin/network/settings.php?page=updatebee',
+				),
+				array(
+					'id'     => 'updatebee-network-upcoming',
+					'parent' => 'network-admin',
+					'title'  => 'Upcoming Updates',
+					'href'   => 'https://example.com/wp-admin/network/settings.php?page=updatebee&tab=dashboard&subtab=upcoming',
+				),
+			)
+		);
+
+		( new Network_Admin_Bar() )->reorder_menu_items( $bar );
+
+		$this->assertSame(
+			array(
+				'my-sites',
+				'network-admin',
+				'network-admin-d',
+				'updatebee-network-updates',
+				'updatebee-network-upcoming',
+				'network-admin-s',
+				'network-admin-s-child',
+				'updatebee-network-automatic-updates',
+			),
+			array_keys( $bar->nodes )
+		);
+	}
+
+	/**
 	 * Missing Dashboard or Updates leaves the registered order alone.
 	 */
 	public function test_missing_node_leaves_order_alone(): void {
@@ -179,6 +294,23 @@ class NetworkAdminBarTest extends TestCase {
 				}
 			)
 		);
+	}
+
+	/**
+	 * Network nodes plus Upcoming Updates registered after the other UpdateBee links.
+	 *
+	 * @return array<int, array<string, string>>
+	 */
+	private function network_nodes_with_upcoming(): array {
+		$nodes   = $this->network_nodes();
+		$nodes[] = array(
+			'id'     => 'updatebee-network-upcoming',
+			'parent' => 'network-admin',
+			'title'  => 'Upcoming Updates',
+			'href'   => 'https://example.com/wp-admin/network/settings.php?page=updatebee&tab=dashboard&subtab=upcoming',
+		);
+
+		return $nodes;
 	}
 
 	/**
