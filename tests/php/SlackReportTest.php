@@ -360,4 +360,118 @@ class SlackReportTest extends TestCase {
 
 		$logs->perform_shutdown_task();
 	}
+
+	/**
+	 * Delayed automatic rows still complete as an automatic batch.
+	 *
+	 * WordPress never starts an update when every item is delayed, so the
+	 * automatic flag stays false. The stored offer is what decides the hook.
+	 */
+	public function test_automatic_offer_shutdown_fires_automatic_action_without_auto_flag(): void {
+		$this->expectNotToPerformAssertions();
+		$rows = $this->sample_rows( 'automatic' );
+		$this->set_current_updates( $rows );
+
+		$logs = new Logs();
+		$this->set_auto_update( $logs, false );
+
+		MonkeyFunctions\expect( 'do_action' )
+			->once()
+			->with( 'updatebee_automatic_updates_complete', $rows );
+
+		$logs->perform_shutdown_task();
+	}
+
+	/**
+	 * A manual row keeps the batch on the manual completion hook.
+	 */
+	public function test_mixed_offer_shutdown_fires_manual_action(): void {
+		$this->expectNotToPerformAssertions();
+		$rows   = $this->sample_rows( 'automatic' );
+		$rows[] = array(
+			'name'          => 'Hello Dolly',
+			'update_type'   => 'plugin',
+			'from_version'  => '1.7.2',
+			'to_version'    => '1.7.3',
+			'update_status' => 'success',
+			'update_offer'  => 'manual',
+			'user_id'       => 4,
+		);
+		$this->set_current_updates( $rows );
+
+		$logs = new Logs();
+		$this->set_auto_update( $logs, false );
+
+		MonkeyFunctions\expect( 'do_action' )
+			->once()
+			->with( 'updatebee_manual_updates_complete', $rows );
+
+		$logs->perform_shutdown_task();
+	}
+
+	/**
+	 * Delayed rows are omitted from Slack when the skip setting is on.
+	 */
+	public function test_skip_delayed_omits_delayed_rows_from_slack(): void {
+		$this->stub_helpers();
+		$this->site_options['updatebee_options']['slack_skip_delayed'] = true;
+
+		$report = new Slack_Report();
+		$report->send_report(
+			array(
+				array(
+					'name'          => 'Akismet',
+					'update_type'   => 'plugin',
+					'from_version'  => '5.0',
+					'to_version'    => '5.1',
+					'update_status' => 'success',
+					'update_offer'  => 'automatic',
+					'user_id'       => 0,
+				),
+				array(
+					'name'          => 'Patchstack Security',
+					'update_type'   => 'plugin',
+					'from_version'  => '2.3.7',
+					'to_version'    => '2.3.8',
+					'update_status' => 'delayed',
+					'update_offer'  => 'automatic',
+					'user_id'       => 0,
+				),
+			),
+			'automatic'
+		);
+
+		$this->assertCount( 1, $this->posted_bodies );
+		$this->assertStringContainsString( 'Akismet', $this->posted_bodies[0] );
+		$this->assertStringContainsString( 'Automatic', $this->posted_bodies[0] );
+		$this->assertStringNotContainsString( 'Patchstack Security', $this->posted_bodies[0] );
+		$this->assertStringNotContainsString( 'delayed', $this->posted_bodies[0] );
+	}
+
+	/**
+	 * A delay-only batch does not post when delayed rows are skipped.
+	 */
+	public function test_skip_delayed_skips_post_when_batch_is_only_delays(): void {
+		$this->stub_helpers();
+		$this->site_options['updatebee_options']['slack_skip_delayed'] = true;
+		MonkeyFunctions\expect( 'wp_remote_post' )->never();
+
+		$report = new Slack_Report();
+		$report->send_report(
+			array(
+				array(
+					'name'          => 'Patchstack Security',
+					'update_type'   => 'plugin',
+					'from_version'  => '2.3.7',
+					'to_version'    => '2.3.8',
+					'update_status' => 'delayed',
+					'update_offer'  => 'automatic',
+					'user_id'       => 0,
+				),
+			),
+			'automatic'
+		);
+
+		$this->assertSame( array(), $this->posted_bodies );
+	}
 }

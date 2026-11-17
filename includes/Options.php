@@ -80,6 +80,7 @@ class Options {
 			'clear_logs_days'                  => 0,
 			'slack_webhook_url'                => '',
 			'slack_enabled'                    => false,
+			'slack_skip_delayed'               => false,
 			'delay_updates'                    => 0,
 			'upgrade_notice_keywords'          => implode(
 				"\n",

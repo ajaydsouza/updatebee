@@ -44,6 +44,7 @@ interface UpdateBeeLogs {
 	saveNonce: string;
 	clearLogsDays: number;
 	slackEnabled: boolean;
+	slackSkipDelayed: boolean;
 	slackWebhookConfigured: boolean;
 }
 

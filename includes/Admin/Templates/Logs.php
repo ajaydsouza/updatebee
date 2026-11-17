@@ -100,6 +100,7 @@ class Logs {
 				'saveNonce'              => wp_create_nonce( 'updatebee-save-logs-settings' ),
 				'clearLogsDays'          => absint( $clear_logs_days ),
 				'slackEnabled'           => (bool) Options::get_options( 'slack_enabled' ),
+				'slackSkipDelayed'       => (bool) Options::get_options( 'slack_skip_delayed' ),
 				'slackWebhookConfigured' => \UpdateBee\Slack\Slack_Webhook::is_configured(),
 			)
 		);
