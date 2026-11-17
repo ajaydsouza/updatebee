@@ -215,11 +215,11 @@ const LogsSettingsDrawer = ( props: LogsSettingsDrawerProps ) => {
 									? __(
 											'Post a summary to Slack when automatic or manual updates finish.',
 											'updatebee'
-									  )
+										)
 									: __(
 											'Add a Slack webhook URL in Advanced settings to enable this.',
 											'updatebee'
-									  )
+										)
 							}
 						/>
 						<ToggleControl
