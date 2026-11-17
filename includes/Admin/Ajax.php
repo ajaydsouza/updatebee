@@ -1301,7 +1301,7 @@ class Ajax {
 	}
 
 	/**
-	 * Save log retention and Slack enabled settings.
+	 * Save log retention and Slack notification settings.
 	 */
 	public function save_logs_settings(): void {
 		if ( ! Functions::can_access_options() ) {
@@ -1319,11 +1319,18 @@ class Ajax {
 			$slack_enabled = Functions::sanitize_rest_boolean( wp_unslash( $_POST['slack_enabled'] ) );
 		}
 
+		$slack_skip_delayed = false;
+		if ( isset( $_POST['slack_skip_delayed'] ) ) {
+			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Boolean is sanitized below.
+			$slack_skip_delayed = Functions::sanitize_rest_boolean( wp_unslash( $_POST['slack_skip_delayed'] ) );
+		}
+
 		$updated = Options::update_options(
 			'',
 			array(
-				'clear_logs_days' => $days,
-				'slack_enabled'   => $slack_enabled,
+				'clear_logs_days'    => $days,
+				'slack_enabled'      => $slack_enabled,
+				'slack_skip_delayed' => $slack_skip_delayed,
 			)
 		);
 		if ( null === $updated ) {
@@ -1338,9 +1345,10 @@ class Ajax {
 
 		wp_send_json_success(
 			array(
-				'message'         => __( 'Log settings have been saved.', 'updatebee' ),
-				'clear_logs_days' => $days,
-				'slack_enabled'   => $slack_enabled,
+				'message'            => __( 'Log settings have been saved.', 'updatebee' ),
+				'clear_logs_days'    => $days,
+				'slack_enabled'      => $slack_enabled,
+				'slack_skip_delayed' => $slack_skip_delayed,
 			)
 		);
 	}

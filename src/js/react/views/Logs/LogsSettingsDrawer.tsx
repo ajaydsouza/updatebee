@@ -1,5 +1,6 @@
 /**
  * Logs settings drawer for retention days and Slack notifications.
+ * Delayed updates can be left out of Slack without removing them from the logs.
  */
 import { TextControl, ToggleControl } from '@wordpress/components';
 import { useCallback, useState } from '@wordpress/element';
@@ -17,11 +18,13 @@ type LogsSettingsPayload = {
 	message?: string;
 	clear_logs_days?: number;
 	slack_enabled?: boolean;
+	slack_skip_delayed?: boolean;
 };
 
 type LogsSettings = {
 	clearLogsDays: number;
 	slackEnabled: boolean;
+	slackSkipDelayed: boolean;
 };
 
 /**
@@ -47,6 +50,7 @@ const normalizeDays = ( value: unknown ): number => {
 const getInitialSettings = (): LogsSettings => ( {
 	clearLogsDays: normalizeDays( updatebeeLogs.clearLogsDays ),
 	slackEnabled: Boolean( updatebeeLogs.slackEnabled ),
+	slackSkipDelayed: Boolean( updatebeeLogs.slackSkipDelayed ),
 } );
 
 /**
@@ -92,6 +96,7 @@ const LogsSettingsDrawer = ( props: LogsSettingsDrawerProps ) => {
 
 		const nextDays = normalizeDays( draftSettings.clearLogsDays );
 		const nextEnabled = draftSettings.slackEnabled;
+		const nextSkipDelayed = draftSettings.slackSkipDelayed;
 
 		setIsSaving( true );
 
@@ -99,6 +104,7 @@ const LogsSettingsDrawer = ( props: LogsSettingsDrawerProps ) => {
 			nonce: updatebeeLogs.saveNonce,
 			clear_logs_days: nextDays,
 			slack_enabled: nextEnabled,
+			slack_skip_delayed: nextSkipDelayed,
 		} )
 			.then( ( response ) => {
 				const payload = response.data.data;
@@ -108,6 +114,10 @@ const LogsSettingsDrawer = ( props: LogsSettingsDrawerProps ) => {
 						'boolean' === typeof payload.slack_enabled
 							? payload.slack_enabled
 							: nextEnabled,
+					slackSkipDelayed:
+						'boolean' === typeof payload.slack_skip_delayed
+							? payload.slack_skip_delayed
+							: nextSkipDelayed,
 				};
 
 				setSavedSettings( nextSettings );
@@ -162,7 +172,7 @@ const LogsSettingsDrawer = ( props: LogsSettingsDrawerProps ) => {
 				<Drawer.Content>
 					<Drawer.Description>
 						{ __(
-							'Choose how long logs are kept and whether to enable Slack notifications.',
+							'Choose how long logs are kept, whether to enable Slack notifications, and whether those messages include delayed updates.',
 							'updatebee'
 						) }
 					</Drawer.Description>
@@ -205,12 +215,31 @@ const LogsSettingsDrawer = ( props: LogsSettingsDrawerProps ) => {
 									? __(
 											'Post a summary to Slack when automatic or manual updates finish.',
 											'updatebee'
-										)
+									  )
 									: __(
 											'Add a Slack webhook URL in Advanced settings to enable this.',
 											'updatebee'
-										)
+									  )
 							}
+						/>
+						<ToggleControl
+							label={ __( 'Skip delayed updates', 'updatebee' ) }
+							checked={ draftSettings.slackSkipDelayed }
+							disabled={
+								isSaving ||
+								! updatebeeLogs.slackWebhookConfigured ||
+								! draftSettings.slackEnabled
+							}
+							onChange={ ( checked: boolean ) => {
+								setDraftSettings( ( current ) => ( {
+									...current,
+									slackSkipDelayed: checked,
+								} ) );
+							} }
+							help={ __(
+								'Delayed updates stay in the logs and are left out of finished-update Slack messages.',
+								'updatebee'
+							) }
 						/>
 					</div>
 				</Drawer.Content>

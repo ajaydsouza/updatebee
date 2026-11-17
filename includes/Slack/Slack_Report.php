@@ -264,15 +264,20 @@ class Slack_Report {
 	}
 
 	/**
-	 * Keep rows that have a name.
+	 * Keep named rows, omitting delayed updates when that Slack setting is on.
 	 *
 	 * @param array<int, array<string, mixed>> $updates Log rows.
 	 * @return array<int, array<string, string>>
 	 */
 	private function normalize_rows( array $updates ): array {
-		$rows = array();
+		$skip_delayed = (bool) Options::get_options( 'slack_skip_delayed' );
+		$rows         = array();
 		foreach ( $updates as $update ) {
 			if ( ! is_array( $update ) ) {
+				continue;
+			}
+			$status = isset( $update['update_status'] ) ? (string) $update['update_status'] : '';
+			if ( $skip_delayed && 'delayed' === $status ) {
 				continue;
 			}
 			$name = isset( $update['name'] ) ? (string) $update['name'] : '';
@@ -284,7 +289,7 @@ class Slack_Report {
 				'update_type'   => isset( $update['update_type'] ) ? (string) $update['update_type'] : '',
 				'from_version'  => isset( $update['from_version'] ) ? (string) $update['from_version'] : '',
 				'to_version'    => isset( $update['to_version'] ) ? (string) $update['to_version'] : '',
-				'update_status' => isset( $update['update_status'] ) ? (string) $update['update_status'] : '',
+				'update_status' => $status,
 				'user_id'       => isset( $update['user_id'] ) ? (string) $update['user_id'] : '0',
 			);
 		}

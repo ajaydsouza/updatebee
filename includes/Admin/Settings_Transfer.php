@@ -1018,6 +1018,7 @@ class Settings_Transfer {
 			'core_email_recipients'            => 'email_list',
 			'clear_logs_days'                  => 'days',
 			'slack_enabled'                    => 'bool',
+			'slack_skip_delayed'               => 'bool',
 			'delay_updates'                    => 'days',
 			'upgrade_notice_keywords'          => 'keywords',
 			'upgrade_notice_keywords_enabled'  => 'bool',

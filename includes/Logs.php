@@ -570,11 +570,25 @@ class Logs {
 
 	/**
 	 * Flush pending manual log entries on shutdown (e.g. after fatal errors).
+	 *
+	 * Delayed, skipped, and blocked rows can be written before WordPress starts
+	 * an update, so the automatic flag stays false. Those batches are still
+	 * automatic offers and should not be reported as a manual run.
 	 */
 	public function perform_shutdown_task(): void {
 		$this->maybe_flush_log_messages();
 
 		if ( $this->is_auto_update || empty( self::$current_updates ) ) {
+			return;
+		}
+
+		if ( $this->batch_is_automatic( self::$current_updates ) ) {
+			/**
+			 * Run when automatic updates logged in this request have finished.
+			 *
+			 * @param array<int, array<string, mixed>> $updates Log rows from this request.
+			 */
+			do_action( 'updatebee_automatic_updates_complete', self::$current_updates );
 			return;
 		}
 
@@ -584,6 +598,31 @@ class Logs {
 		 * @param array<int, array<string, mixed>> $updates Log rows from this request.
 		 */
 		do_action( 'updatebee_manual_updates_complete', self::$current_updates );
+	}
+
+	/**
+	 * Whether every pending row was stored as an automatic offer.
+	 *
+	 * @param array<int, array<string, mixed>> $updates Log rows from this request.
+	 * @return bool
+	 */
+	private function batch_is_automatic( array $updates ): bool {
+		if ( empty( $updates ) ) {
+			return false;
+		}
+
+		foreach ( $updates as $update ) {
+			if ( ! is_array( $update ) ) {
+				return false;
+			}
+
+			$offer = isset( $update['update_offer'] ) ? (string) $update['update_offer'] : '';
+			if ( 'automatic' !== $offer ) {
+				return false;
+			}
+		}
+
+		return true;
 	}
 
 	/**
