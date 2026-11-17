@@ -237,7 +237,7 @@ const LogsSettingsDrawer = ( props: LogsSettingsDrawerProps ) => {
 								} ) );
 							} }
 							help={ __(
-								'Delayed updates stay in the logs and are left out of finished-update Slack messages.',
+								'Delayed updates stay in the logs and are left out of Slack messages if enabled.',
 								'updatebee'
 							) }
 						/>
