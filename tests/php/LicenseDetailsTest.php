@@ -61,6 +61,7 @@ class LicenseDetailsTest extends TestCase {
 
 		$this->assertArrayNotHasKey( 'license_key', $view );
 		$this->assertTrue( $view['has_license'] );
+		$this->assertTrue( $view['is_active'] );
 		$this->assertFalse( $view['is_lifetime'] );
 		$this->assertTrue( $view['show_upsell'] );
 		$this->assertSame( 'UpdateBee', $view['item_name'] );
@@ -90,6 +91,7 @@ class LicenseDetailsTest extends TestCase {
 			)
 		);
 
+		$this->assertTrue( $view['is_active'] );
 		$this->assertTrue( $view['is_lifetime'] );
 		$this->assertFalse( $view['show_upsell'] );
 		$this->assertSame( 'Never', $view['expires_on'] );
@@ -112,6 +114,7 @@ class LicenseDetailsTest extends TestCase {
 			)
 		);
 
+		$this->assertFalse( $view['is_active'] );
 		$this->assertFalse( $view['is_lifetime'] );
 		$this->assertSame( 'Expired', $view['status_label'] );
 		$this->assertSame( 'Expired', $view['days_left'] );
@@ -132,6 +135,7 @@ class LicenseDetailsTest extends TestCase {
 		);
 
 		$this->assertFalse( $view['has_license'] );
+		$this->assertFalse( $view['is_active'] );
 		$this->assertFalse( $view['is_lifetime'] );
 		$this->assertFalse( $view['show_upsell'] );
 		$this->assertSame( '—', $view['item_name'] );
@@ -190,14 +194,12 @@ class LicenseDetailsTest extends TestCase {
 				)
 			)
 		);
-		$this->assertFalse(
-			License_Details::is_active(
-				array(
-					'license_key' => 'secret-key',
-					'status'      => 'valid',
-					'expires'     => '2020-01-01 00:00:00',
-				)
-			)
+		$past = array(
+			'license_key' => 'secret-key',
+			'status'      => 'valid',
+			'expires'     => '2020-01-01 00:00:00',
 		);
+		$this->assertFalse( License_Details::is_active( $past ) );
+		$this->assertFalse( License_Details::present( $past )['is_active'] );
 	}
 }

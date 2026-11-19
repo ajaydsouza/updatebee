@@ -162,6 +162,7 @@ interface UpdateBeeLicenseView {
 	status_label: string;
 	status_tone: string;
 	is_lifetime: boolean;
+	is_active: boolean;
 	activations: string;
 	expires_on: string;
 	days_left: string;

@@ -152,6 +152,7 @@ class License_Details {
 			'status_label'   => self::status_label( $has_license ? $status : 'unregistered' ),
 			'status_tone'    => self::status_tone( $has_license ? $status : 'unregistered' ),
 			'is_lifetime'    => $has_license && $is_lifetime,
+			'is_active'      => self::is_active( $license ),
 			'activations'    => self::activations_label( $license, $has_license ),
 			'expires_on'     => self::expires_on_label( $expires_raw, $is_lifetime, $timestamp, $has_license ),
 			'days_left'      => self::days_left_label( $expires_raw, $is_lifetime, $is_expired, $timestamp, $has_license ),

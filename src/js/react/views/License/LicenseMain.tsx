@@ -18,6 +18,7 @@ type LicenseView = {
 	status_label: string;
 	status_tone: string;
 	is_lifetime: boolean;
+	is_active: boolean;
 	activations: string;
 	expires_on: string;
 	days_left: string;
@@ -55,6 +56,7 @@ const initialLicense = (): LicenseView => {
 		status_label: license.status_label,
 		status_tone: license.status_tone,
 		is_lifetime: Boolean( license.is_lifetime ),
+		is_active: Boolean( license.is_active ),
 		activations: license.activations,
 		expires_on: license.expires_on,
 		days_left: license.days_left,
@@ -114,6 +116,7 @@ const LicenseMain = () => {
 			...payload.license,
 			has_license: Boolean( payload.license.has_license ),
 			is_lifetime: Boolean( payload.license.is_lifetime ),
+			is_active: Boolean( payload.license.is_active ),
 			show_upsell: Boolean( payload.license.show_upsell ),
 			upsell_url:
 				payload.license.upsell_url || updatebeeLicense.upsellUrl,
@@ -268,6 +271,31 @@ const LicenseMain = () => {
 					</p>
 				</Card.Content>
 			</Card.Root>
+
+			{ ! license.is_active && (
+				<Card.Root className="updatebee-license-card">
+					<Card.Content>
+						<div className="updatebee-license-get-started">
+							<a
+								className="updatebee-license-upsell-link"
+								href="https://updatebee.com/purchase/updatebee/"
+								target="_blank"
+								rel="noopener noreferrer"
+							>
+								{ __( 'Purchase a License', 'updatebee' ) }
+							</a>
+							<a
+								className="updatebee-license-account-link"
+								href="https://updatebee.com/account/"
+								target="_blank"
+								rel="noopener noreferrer"
+							>
+								{ __( 'Log in to Your Account', 'updatebee' ) }
+							</a>
+						</div>
+					</Card.Content>
+				</Card.Root>
+			) }
 
 			{ license.has_license && (
 				<Card.Root className="updatebee-license-card">

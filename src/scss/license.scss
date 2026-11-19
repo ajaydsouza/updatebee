@@ -115,6 +115,29 @@
 	margin: 16px 0 0;
 }
 
+.updatebee-license-get-started {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 16px 20px;
+}
+
+.updatebee-license-get-started .updatebee-license-upsell-link {
+	margin-top: 0;
+}
+
+.updatebee-license-account-link {
+	color: #2271b1;
+	font-weight: 600;
+	text-decoration: none;
+}
+
+.updatebee-license-account-link:hover,
+.updatebee-license-account-link:focus {
+	color: #135e96;
+	text-decoration: underline;
+}
+
 .updatebee-license-upsell-link {
 	display: inline-block;
 	margin-top: 8px;
