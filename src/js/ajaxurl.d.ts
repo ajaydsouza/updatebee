@@ -140,6 +140,8 @@ interface UpdateBeeAdvanced {
 	brandingDescription: string;
 	brandingAuthor: string;
 	brandingUrl: string;
+	brandingHideLicenseTab: boolean;
+	canHideLicenseTab: boolean;
 	brandingDefaults: UpdateBeeBrandingDefaults;
 }
 

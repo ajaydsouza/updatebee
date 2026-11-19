@@ -140,4 +140,64 @@ class LicenseDetailsTest extends TestCase {
 		$this->assertSame( 'Unregistered', $view['status_label'] );
 		$this->assertArrayNotHasKey( 'license_key', $view );
 	}
+
+	/**
+	 * A valid future license and a lifetime license are active.
+	 */
+	public function test_active_license_includes_lifetime_and_future_dates(): void {
+		$this->stub_formatters();
+
+		$this->assertTrue(
+			License_Details::is_active(
+				array(
+					'license_key' => 'secret-key',
+					'status'      => 'valid',
+					'expires'     => '2027-09-15 00:00:00',
+				)
+			)
+		);
+		$this->assertTrue(
+			License_Details::is_active(
+				array(
+					'license_key' => 'secret-key',
+					'status'      => 'valid',
+					'expires'     => 'lifetime',
+				)
+			)
+		);
+	}
+
+	/**
+	 * Empty, expired, and past-dated licenses are not active.
+	 */
+	public function test_inactive_license_cannot_hide_the_tab(): void {
+		$this->stub_formatters();
+
+		$this->assertFalse(
+			License_Details::is_active(
+				array(
+					'license_key' => '',
+					'status'      => 'unregistered',
+				)
+			)
+		);
+		$this->assertFalse(
+			License_Details::is_active(
+				array(
+					'license_key' => 'secret-key',
+					'status'      => 'expired',
+					'expires'     => '2027-09-15 00:00:00',
+				)
+			)
+		);
+		$this->assertFalse(
+			License_Details::is_active(
+				array(
+					'license_key' => 'secret-key',
+					'status'      => 'valid',
+					'expires'     => '2020-01-01 00:00:00',
+				)
+			)
+		);
+	}
 }

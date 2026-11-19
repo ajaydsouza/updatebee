@@ -232,4 +232,21 @@ class BrandingTest extends TestCase {
 		$this->assertSame( 'https://updatebee.com', $defaults['url'] );
 		$this->assertArrayNotHasKey( 'logo_url', $defaults );
 	}
+
+	/**
+	 * An inactive license cannot turn the hide flag on or clear it.
+	 */
+	public function test_resolve_hide_license_tab_keeps_stored_value_when_inactive(): void {
+		$this->assertFalse( Branding::resolve_hide_license_tab( true, false, false ) );
+		$this->assertTrue( Branding::resolve_hide_license_tab( true, false, true ) );
+		$this->assertTrue( Branding::resolve_hide_license_tab( false, false, true ) );
+	}
+
+	/**
+	 * An active license stores the requested hide value.
+	 */
+	public function test_resolve_hide_license_tab_follows_request_when_active(): void {
+		$this->assertTrue( Branding::resolve_hide_license_tab( true, true, false ) );
+		$this->assertFalse( Branding::resolve_hide_license_tab( false, true, true ) );
+	}
 }

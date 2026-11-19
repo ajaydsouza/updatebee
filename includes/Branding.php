@@ -12,6 +12,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+use UpdateBee\Updater\License_Details;
+
 /**
  * Apply saved branding to plugin identity surfaces.
  */
@@ -224,5 +226,34 @@ class Branding {
 			'branding_author'      => $author,
 			'branding_url'         => $url,
 		);
+	}
+
+	/**
+	 * Whether the License tab should be omitted.
+	 *
+	 * The saved choice applies only while the stored license is active.
+	 *
+	 * @return bool
+	 */
+	public static function hides_license_tab(): bool {
+		return (bool) Options::get_options( 'branding_hide_license_tab' ) && License_Details::is_active();
+	}
+
+	/**
+	 * Value to store for the hide-license toggle.
+	 *
+	 * An inactive license keeps the saved choice and does not accept a new one.
+	 *
+	 * @param bool $requested         Requested toggle value.
+	 * @param bool $license_is_active Whether the stored license is active.
+	 * @param bool $stored            Currently saved value.
+	 * @return bool
+	 */
+	public static function resolve_hide_license_tab( bool $requested, bool $license_is_active, bool $stored ): bool {
+		if ( ! $license_is_active ) {
+			return $stored;
+		}
+
+		return $requested;
 	}
 }

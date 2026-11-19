@@ -48,19 +48,64 @@ class License_Details {
 	 * @return array<string, mixed>
 	 */
 	public static function from_stored(): array {
-		try {
-			$licensing = FluentLicensing::getInstance();
-		} catch ( \Exception $exception ) {
-			unset( $exception );
-			return self::empty_view();
-		}
-
-		$status = $licensing->getStatus();
-		if ( ! is_array( $status ) ) {
+		$status = self::stored_record();
+		if ( array() === $status ) {
 			return self::empty_view();
 		}
 
 		return self::present( $status );
+	}
+
+	/**
+	 * Whether a license is active enough to hide the License tab.
+	 *
+	 * Active means a stored key, status valid, and an expiration that is not past.
+	 * Lifetime counts as active. Pass a record to evaluate it without reading storage.
+	 *
+	 * @param array<string, mixed>|null $license License record, or null to read the stored record.
+	 * @return bool
+	 */
+	public static function is_active( ?array $license = null ): bool {
+		if ( null === $license ) {
+			$license = self::stored_record();
+		}
+
+		$has_license = isset( $license['license_key'] ) && '' !== (string) $license['license_key'];
+		if ( ! $has_license ) {
+			return false;
+		}
+
+		$status = isset( $license['status'] ) ? sanitize_key( (string) $license['status'] ) : '';
+		if ( 'valid' !== $status ) {
+			return false;
+		}
+
+		$expires_raw = isset( $license['expires'] ) ? trim( (string) $license['expires'] ) : '';
+		$is_lifetime = 'lifetime' === strtolower( $expires_raw );
+		$timestamp   = self::expiration_timestamp( $expires_raw, $is_lifetime );
+
+		return null === $timestamp || $timestamp >= time();
+	}
+
+	/**
+	 * Local license record, without a remote check.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private static function stored_record(): array {
+		try {
+			$licensing = FluentLicensing::getInstance();
+		} catch ( \Exception $exception ) {
+			unset( $exception );
+			return array();
+		}
+
+		$status = $licensing->getStatus();
+		if ( ! is_array( $status ) || ! isset( $status['license_key'] ) || '' === (string) $status['license_key'] ) {
+			return array();
+		}
+
+		return $status;
 	}
 
 	/**

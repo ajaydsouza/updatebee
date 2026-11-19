@@ -12,6 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+use UpdateBee\Branding;
 use UpdateBee\Functions;
 use UpdateBee\Updater\License_Details;
 
@@ -35,6 +36,10 @@ class License {
 	 * @return array<int, array<string, string>> Array of tabs.
 	 */
 	public function add_license_tab( array $tabs ): array {
+		if ( Branding::hides_license_tab() ) {
+			return $tabs;
+		}
+
 		$tabs[] = array(
 			'get'    => 'license',
 			'action' => 'updatebee_output_license',

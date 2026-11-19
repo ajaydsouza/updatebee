@@ -2761,6 +2761,21 @@ class Ajax {
 			)
 		);
 
+		$stored_hide    = (bool) Options::get_options( 'branding_hide_license_tab' );
+		$requested_hide = $stored_hide;
+		if ( isset( $_POST['hide_license_tab'] ) ) {
+			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Boolean is sanitized below.
+			$raw_hide = wp_unslash( $_POST['hide_license_tab'] );
+			if ( ! is_array( $raw_hide ) ) {
+				$requested_hide = Functions::sanitize_rest_boolean( $raw_hide );
+			}
+		}
+		$to_save['branding_hide_license_tab'] = Branding::resolve_hide_license_tab(
+			$requested_hide,
+			License_Details::is_active(),
+			$stored_hide
+		);
+
 		$updated = Options::update_options( '', $to_save );
 		if ( null === $updated ) {
 			wp_send_json_error(
@@ -2772,11 +2787,12 @@ class Ajax {
 
 		wp_send_json_success(
 			array(
-				'name'        => Branding::get_saved_name(),
-				'description' => Branding::get_saved_description(),
-				'author'      => Branding::get_saved_author(),
-				'url'         => Branding::get_saved_url(),
-				'message'     => __( 'Branding settings have been saved.', 'updatebee' ),
+				'name'           => Branding::get_saved_name(),
+				'description'    => Branding::get_saved_description(),
+				'author'         => Branding::get_saved_author(),
+				'url'            => Branding::get_saved_url(),
+				'hideLicenseTab' => (bool) Options::get_options( 'branding_hide_license_tab' ),
+				'message'        => __( 'Branding settings have been saved.', 'updatebee' ),
 			)
 		);
 	}
