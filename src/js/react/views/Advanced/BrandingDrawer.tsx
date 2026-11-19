@@ -273,7 +273,10 @@ const BrandingDrawer = ( props: BrandingDrawerProps ) => {
 							disabled={ isSaving }
 						/>
 						<ToggleControl
-							label={ __( 'Hide the License tab shown in the admin', 'updatebee' ) }
+							label={ __(
+								'Hide the License tab shown in the admin',
+								'updatebee'
+							) }
 							checked={ canHideLicenseTab && draftHideLicenseTab }
 							disabled={ isSaving || ! canHideLicenseTab }
 							onChange={ ( checked: boolean ) => {

@@ -5,7 +5,6 @@ import { TextControl } from '@wordpress/components';
 import { useCallback, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import { Button, Card, useEnableWpCompatOverlaySlot } from '@wordpress/ui';
-import Snackbar from '../../components/Snackbar';
 import type { SnackbarType } from '../Advanced/AdvancedFooter';
 import sendCommand, { WpCommandError } from '../../../utils/SendCommand';
 import LicenseFooter from './LicenseFooter';
