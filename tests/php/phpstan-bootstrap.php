@@ -16,3 +16,6 @@ if ( ! defined( 'UPDATEBEE_FILE' ) ) {
 if ( ! defined( 'UPDATEBEE_VERSION' ) ) {
 	define( 'UPDATEBEE_VERSION', '1.0.0' );
 }
+
+require_once dirname( __DIR__, 2 ) . '/updater/PluginUpdater.php';
+require_once dirname( __DIR__, 2 ) . '/updater/FluentLicensing.php';

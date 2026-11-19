@@ -38,6 +38,7 @@ use UpdateBee\Tables\{
 use UpdateBee\Logs as Update_Logs;
 use UpdateBee\Updates\Fatal_Detection;
 use UpdateBee\Updates\Init as Updates_Init;
+use UpdateBee\Updater\Init as Updater_Init;
 
 /**
  * Plugin singleton.
@@ -206,6 +207,13 @@ class Plugin {
 	private Branding $branding;
 
 	/**
+	 * FluentCart licensing and update checks.
+	 *
+	 * @var Updater_Init
+	 */
+	private Updater_Init $updater;
+
+	/**
 	 * Return a class instance.
 	 *
 	 * @return Plugin
@@ -242,6 +250,9 @@ class Plugin {
 	 * Fired when the plugins for WordPress have finished loading.
 	 */
 	public function plugins_loaded(): void {
+		$this->updater = new Updater_Init();
+		$this->updater->run();
+
 		$this->branding = new Branding();
 		$this->branding->run();
 

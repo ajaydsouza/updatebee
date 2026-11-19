@@ -140,6 +140,11 @@ class Admin_Bar_Menu {
 				'title' => _x( 'Emails', 'Tab label as Emails', 'updatebee' ),
 			),
 			array(
+				'id'    => 'updatebee-license',
+				'tab'   => 'license',
+				'title' => _x( 'License', 'Tab label as License', 'updatebee' ),
+			),
+			array(
 				'id'    => 'updatebee-advanced',
 				'tab'   => 'advanced',
 				'title' => _x( 'Advanced', 'Tab label as Advanced', 'updatebee' ),

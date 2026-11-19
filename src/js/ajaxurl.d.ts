@@ -151,3 +151,30 @@ interface UpdateBeeBrandingDefaults {
 }
 
 declare const updatebeeAdvanced: UpdateBeeAdvanced;
+
+interface UpdateBeeLicenseView {
+	has_license: boolean;
+	item_name: string;
+	variation_name: string;
+	status: string;
+	status_label: string;
+	status_tone: string;
+	is_lifetime: boolean;
+	activations: string;
+	expires_on: string;
+	days_left: string;
+	show_upsell: boolean;
+	upsell_url: string;
+	renewal_url: string;
+}
+
+interface UpdateBeeLicense {
+	configured: boolean;
+	activateNonce: string;
+	checkNonce: string;
+	revokeNonce: string;
+	license: UpdateBeeLicenseView;
+	upsellUrl: string;
+}
+
+declare const updatebeeLicense: UpdateBeeLicense;

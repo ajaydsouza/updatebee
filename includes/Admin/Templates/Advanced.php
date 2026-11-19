@@ -28,7 +28,7 @@ class Advanced {
 	 * Constructor.
 	 */
 	public function __construct() {
-		add_filter( 'updatebee_admin_tabs', array( $this, 'add_advanced_tab' ), 9 );
+		add_filter( 'updatebee_admin_tabs', array( $this, 'add_advanced_tab' ), 10 );
 		add_action( 'updatebee_output_advanced', array( $this, 'output_advanced_content' ), 1, 2 );
 	}
 

@@ -24,6 +24,23 @@ export type WpAjaxResponse< T > = WpAjaxSuccess< T > | WpAjaxError;
  * @param data WP `data` field from a `success: false` response.
  * @return Message string when one is present.
  */
+/**
+ * Admin-ajax failure that still carries the JSON `data` payload.
+ */
+export class WpCommandError extends Error {
+	readonly data?: unknown;
+
+	/**
+	 * @param message User-facing message.
+	 * @param data    WP `data` field, when the response included one.
+	 */
+	constructor( message: string, data?: unknown ) {
+		super( message );
+		this.name = 'WpCommandError';
+		this.data = data;
+	}
+}
+
 export function getWpAjaxErrorMessage( data: unknown ): string | undefined {
 	if ( typeof data === 'string' && '' !== data.trim() ) {
 		return data;
@@ -73,7 +90,9 @@ export default function sendCommand< T = unknown >(
 			const message =
 				getWpAjaxErrorMessage( response.data?.data ) ??
 				'Request failed.';
-			return Promise.reject( new Error( message ) );
+			return Promise.reject(
+				new WpCommandError( message, response.data?.data )
+			);
 		}
 
 		return response as AxiosResponse< WpAjaxSuccess< T > >;
