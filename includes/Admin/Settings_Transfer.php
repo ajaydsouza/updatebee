@@ -1030,6 +1030,7 @@ class Settings_Transfer {
 			'branding_description'             => 'description',
 			'branding_author'                  => 'text',
 			'branding_url'                     => 'url',
+			'branding_hide_license_tab'        => 'bool',
 			'admin_bar_enabled'                => 'bool',
 			'admin_bar_show_admin'             => 'bool',
 			'admin_bar_show_frontend'          => 'bool',

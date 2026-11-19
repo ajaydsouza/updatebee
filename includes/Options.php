@@ -101,6 +101,7 @@ class Options {
 			'branding_description'             => '',
 			'branding_author'                  => '',
 			'branding_url'                     => '',
+			'branding_hide_license_tab'        => false,
 			'admin_bar_enabled'                => false,
 			'admin_bar_show_admin'             => true,
 			'admin_bar_show_frontend'          => true,
@@ -159,9 +160,9 @@ class Options {
 	/**
 	 * Save options for the plugin.
 	 *
-	 * @param string                      $key     Key to update.
+	 * @param string                          $key     Key to update.
 	 * @param array<int|string, mixed>|string $options Options to save.
-	 * @param bool                        $force   True to forcefully retrieve fresh options.
+	 * @param bool                            $force   True to forcefully retrieve fresh options.
 	 * @return array<string, mixed>|null Options.
 	 */
 	public static function update_options( string $key = '', array|string $options = array(), bool $force = false ) {

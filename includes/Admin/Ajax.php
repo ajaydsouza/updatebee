@@ -23,6 +23,8 @@ use UpdateBee\Logs;
 use UpdateBee\Options;
 use UpdateBee\Slack\Slack_Webhook;
 use UpdateBee\Uninstall;
+use UpdateBee\Updater\FluentLicensing;
+use UpdateBee\Updater\License_Details;
 use UpdateBee\Updates\Fatal_Detection;
 use UpdateBee\Updates\Version_Controlled;
 use UpdateBee\Updates\Hide_Blocked_Updates;
@@ -112,6 +114,11 @@ class Ajax {
 
 		// Branding Ajax actions.
 		add_action( 'wp_ajax_updatebee_save_branding_settings', array( $this, 'save_branding_settings' ) );
+
+		// License Ajax actions.
+		add_action( 'wp_ajax_updatebee_activate_license', array( $this, 'activate_license' ) );
+		add_action( 'wp_ajax_updatebee_check_license', array( $this, 'check_license' ) );
+		add_action( 'wp_ajax_updatebee_revoke_license', array( $this, 'revoke_license' ) );
 	}
 
 	/**
@@ -2754,6 +2761,21 @@ class Ajax {
 			)
 		);
 
+		$stored_hide    = (bool) Options::get_options( 'branding_hide_license_tab' );
+		$requested_hide = $stored_hide;
+		if ( isset( $_POST['hide_license_tab'] ) ) {
+			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Boolean is sanitized below.
+			$raw_hide = wp_unslash( $_POST['hide_license_tab'] );
+			if ( ! is_array( $raw_hide ) ) {
+				$requested_hide = Functions::sanitize_rest_boolean( $raw_hide );
+			}
+		}
+		$to_save['branding_hide_license_tab'] = Branding::resolve_hide_license_tab(
+			$requested_hide,
+			License_Details::is_active(),
+			$stored_hide
+		);
+
 		$updated = Options::update_options( '', $to_save );
 		if ( null === $updated ) {
 			wp_send_json_error(
@@ -2765,11 +2787,211 @@ class Ajax {
 
 		wp_send_json_success(
 			array(
-				'name'        => Branding::get_saved_name(),
-				'description' => Branding::get_saved_description(),
-				'author'      => Branding::get_saved_author(),
-				'url'         => Branding::get_saved_url(),
-				'message'     => __( 'Branding settings have been saved.', 'updatebee' ),
+				'name'           => Branding::get_saved_name(),
+				'description'    => Branding::get_saved_description(),
+				'author'         => Branding::get_saved_author(),
+				'url'            => Branding::get_saved_url(),
+				'hideLicenseTab' => (bool) Options::get_options( 'branding_hide_license_tab' ),
+				'message'        => __( 'Branding settings have been saved.', 'updatebee' ),
+			)
+		);
+	}
+
+	/**
+	 * Activate a posted license key, or recheck the stored key when the field is empty.
+	 */
+	public function activate_license(): void {
+		if ( ! Functions::can_access_options() ) {
+			wp_send_json_error();
+		}
+
+		check_ajax_referer( 'updatebee-activate-license', 'nonce' );
+
+		$licensing = $this->licensed_client();
+		if ( null === $licensing ) {
+			wp_send_json_error(
+				array(
+					'message' => __( 'Licensing is not available.', 'updatebee' ),
+					'license' => License_Details::empty_view(),
+				)
+			);
+		}
+
+		if ( ! License_Details::is_configured() ) {
+			wp_send_json_error(
+				array(
+					'message' => __( 'The license product ID is not configured.', 'updatebee' ),
+					'license' => License_Details::from_stored(),
+				)
+			);
+		}
+
+		$license_key = isset( $_POST['license_key'] ) ? sanitize_text_field( wp_unslash( $_POST['license_key'] ) ) : '';
+		if ( '' === $license_key ) {
+			$this->check_stored_license( $licensing, __( 'License checked successfully.', 'updatebee' ) );
+			return;
+		}
+
+		$activated = $licensing->activate( $license_key );
+		if ( is_wp_error( $activated ) ) {
+			wp_send_json_error(
+				array(
+					'message' => $activated->get_error_message(),
+					'license' => License_Details::from_stored(),
+				)
+			);
+		}
+
+		if ( ! is_array( $activated ) ) {
+			wp_send_json_error(
+				array(
+					'message' => __( 'License activation failed. Please check your license key.', 'updatebee' ),
+					'license' => License_Details::from_stored(),
+				)
+			);
+		}
+
+		$status = isset( $activated['status'] ) ? sanitize_key( (string) $activated['status'] ) : '';
+		if ( ! in_array( $status, array( 'valid', 'expired' ), true ) ) {
+			$licensing->deactivate();
+			wp_send_json_error(
+				array(
+					'message' => __( 'License activation failed. Please check your license key.', 'updatebee' ),
+					'license' => License_Details::empty_view(),
+				)
+			);
+		}
+
+		$message = 'expired' === $status
+			? __( 'This license is expired.', 'updatebee' )
+			: __( 'License activated successfully.', 'updatebee' );
+
+		wp_send_json_success(
+			array(
+				'message' => $message,
+				'license' => License_Details::present( $activated ),
+			)
+		);
+	}
+
+	/**
+	 * Refresh the stored license from FluentCart.
+	 */
+	public function check_license(): void {
+		if ( ! Functions::can_access_options() ) {
+			wp_send_json_error();
+		}
+
+		check_ajax_referer( 'updatebee-check-license', 'nonce' );
+
+		$licensing = $this->licensed_client();
+		if ( null === $licensing ) {
+			wp_send_json_error(
+				array(
+					'message' => __( 'Licensing is not available.', 'updatebee' ),
+					'license' => License_Details::empty_view(),
+				)
+			);
+		}
+
+		if ( ! License_Details::is_configured() ) {
+			wp_send_json_error(
+				array(
+					'message' => __( 'The license product ID is not configured.', 'updatebee' ),
+					'license' => License_Details::from_stored(),
+				)
+			);
+		}
+
+		if ( '' === $licensing->getCurrentLicenseKey() ) {
+			wp_send_json_error(
+				array(
+					'message' => __( 'Please provide a valid license key.', 'updatebee' ),
+					'license' => License_Details::empty_view(),
+				)
+			);
+		}
+
+		$this->check_stored_license( $licensing, __( 'License checked successfully.', 'updatebee' ) );
+	}
+
+	/**
+	 * Remove the license from this site.
+	 */
+	public function revoke_license(): void {
+		if ( ! Functions::can_access_options() ) {
+			wp_send_json_error();
+		}
+
+		check_ajax_referer( 'updatebee-revoke-license', 'nonce' );
+
+		$licensing = $this->licensed_client();
+		if ( null === $licensing ) {
+			wp_send_json_error(
+				array(
+					'message' => __( 'Licensing is not available.', 'updatebee' ),
+					'license' => License_Details::empty_view(),
+				)
+			);
+		}
+
+		$remote  = $licensing->deactivate();
+		$message = is_wp_error( $remote )
+			? __( 'The license was removed from this site, but the store could not be reached.', 'updatebee' )
+			: __( 'License revoked.', 'updatebee' );
+
+		wp_send_json_success(
+			array(
+				'message' => $message,
+				'license' => License_Details::empty_view(),
+			)
+		);
+	}
+
+	/**
+	 * Registered FluentCart client, when the updater has booted.
+	 *
+	 * @return FluentLicensing|null Client, or null when licensing was not registered.
+	 */
+	private function licensed_client(): ?FluentLicensing {
+		try {
+			return FluentLicensing::getInstance();
+		} catch ( \Exception $exception ) {
+			unset( $exception );
+			return null;
+		}
+	}
+
+	/**
+	 * Send a remote license check for the stored key.
+	 *
+	 * @param FluentLicensing $licensing Licensing client.
+	 * @param string          $message   Success message.
+	 */
+	private function check_stored_license( FluentLicensing $licensing, string $message ): void {
+		$remote = $licensing->getStatus( true );
+		if ( is_wp_error( $remote ) ) {
+			wp_send_json_error(
+				array(
+					'message' => $remote->get_error_message(),
+					'license' => License_Details::from_stored(),
+				)
+			);
+		}
+
+		if ( ! is_array( $remote ) ) {
+			wp_send_json_error(
+				array(
+					'message' => __( 'The license could not be checked.', 'updatebee' ),
+					'license' => License_Details::from_stored(),
+				)
+			);
+		}
+
+		wp_send_json_success(
+			array(
+				'message' => $message,
+				'license' => License_Details::present( $remote ),
 			)
 		);
 	}

@@ -17,6 +17,7 @@ use UpdateBee\Branding;
 use UpdateBee\Functions;
 use UpdateBee\Options;
 use UpdateBee\Uninstall;
+use UpdateBee\Updater\License_Details;
 use UpdateBee\Updates\Upgrade_Notice_Keywords;
 
 /**
@@ -28,7 +29,7 @@ class Advanced {
 	 * Constructor.
 	 */
 	public function __construct() {
-		add_filter( 'updatebee_admin_tabs', array( $this, 'add_advanced_tab' ), 9 );
+		add_filter( 'updatebee_admin_tabs', array( $this, 'add_advanced_tab' ), 10 );
 		add_action( 'updatebee_output_advanced', array( $this, 'output_advanced_content' ), 1, 2 );
 	}
 
@@ -110,6 +111,8 @@ class Advanced {
 				'brandingDescription'          => Branding::get_saved_description(),
 				'brandingAuthor'               => Branding::get_saved_author(),
 				'brandingUrl'                  => Branding::get_saved_url(),
+				'brandingHideLicenseTab'       => (bool) Options::get_options( 'branding_hide_license_tab' ),
+				'canHideLicenseTab'            => License_Details::is_active(),
 				'brandingDefaults'             => array(
 					'name'        => $branding_defaults['name'],
 					'description' => $branding_defaults['description'],

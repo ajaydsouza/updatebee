@@ -1,7 +1,11 @@
 /**
  * Advanced card and drawer for plugin branding.
  */
-import { TextareaControl, TextControl } from '@wordpress/components';
+import {
+	TextareaControl,
+	TextControl,
+	ToggleControl,
+} from '@wordpress/components';
 import { useCallback, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import { cog } from '@wordpress/icons';
@@ -21,6 +25,7 @@ type BrandingPayload = {
 	description?: string;
 	author?: string;
 	url?: string;
+	hideLicenseTab?: boolean;
 };
 
 /**
@@ -55,11 +60,17 @@ const BrandingDrawer = ( props: BrandingDrawerProps ) => {
 	const [ savedUrl, setSavedUrl ] = useState(
 		normalizeText( updatebeeAdvanced.brandingUrl )
 	);
+	const canHideLicenseTab = Boolean( updatebeeAdvanced.canHideLicenseTab );
+	const [ savedHideLicenseTab, setSavedHideLicenseTab ] = useState(
+		Boolean( updatebeeAdvanced.brandingHideLicenseTab )
+	);
 	const [ draftName, setDraftName ] = useState( savedName );
 	const [ draftDescription, setDraftDescription ] =
 		useState( savedDescription );
 	const [ draftAuthor, setDraftAuthor ] = useState( savedAuthor );
 	const [ draftUrl, setDraftUrl ] = useState( savedUrl );
+	const [ draftHideLicenseTab, setDraftHideLicenseTab ] =
+		useState( savedHideLicenseTab );
 
 	/**
 	 * Revert drawer drafts to the last saved values.
@@ -69,7 +80,14 @@ const BrandingDrawer = ( props: BrandingDrawerProps ) => {
 		setDraftDescription( savedDescription );
 		setDraftAuthor( savedAuthor );
 		setDraftUrl( savedUrl );
-	}, [ savedAuthor, savedDescription, savedName, savedUrl ] );
+		setDraftHideLicenseTab( savedHideLicenseTab );
+	}, [
+		savedAuthor,
+		savedDescription,
+		savedHideLicenseTab,
+		savedName,
+		savedUrl,
+	] );
 
 	/**
 	 * Open or close the drawer and revert unsaved edits.
@@ -107,6 +125,7 @@ const BrandingDrawer = ( props: BrandingDrawerProps ) => {
 			description: draftDescription.trim(),
 			author: draftAuthor.trim(),
 			url: draftUrl.trim(),
+			hide_license_tab: canHideLicenseTab && draftHideLicenseTab,
 		} )
 			.then( ( response ) => {
 				const payload = response.data.data;
@@ -122,6 +141,9 @@ const BrandingDrawer = ( props: BrandingDrawerProps ) => {
 				setDraftAuthor( nextAuthor );
 				setSavedUrl( nextUrl );
 				setDraftUrl( nextUrl );
+				const nextHide = Boolean( payload.hideLicenseTab );
+				setSavedHideLicenseTab( nextHide );
+				setDraftHideLicenseTab( nextHide );
 				onSnackbar(
 					payload.message ||
 						__( 'Branding settings have been saved.', 'updatebee' ),
@@ -143,6 +165,8 @@ const BrandingDrawer = ( props: BrandingDrawerProps ) => {
 		disabled,
 		draftAuthor,
 		draftDescription,
+		canHideLicenseTab,
+		draftHideLicenseTab,
 		draftName,
 		draftUrl,
 		isSaving,
@@ -190,6 +214,11 @@ const BrandingDrawer = ( props: BrandingDrawerProps ) => {
 						<p className="updatebee-advanced-keywords-preview">
 							<strong>{ __( 'Shown as:', 'updatebee' ) }</strong>{ ' ' }
 							{ savedName }
+						</p>
+					) }
+					{ canHideLicenseTab && savedHideLicenseTab && (
+						<p className="updatebee-advanced-keywords-preview">
+							{ __( 'License tab hidden', 'updatebee' ) }
 						</p>
 					) }
 				</Card.Content>
@@ -242,6 +271,30 @@ const BrandingDrawer = ( props: BrandingDrawerProps ) => {
 							placeholder={ defaults.url }
 							onChange={ setDraftUrl }
 							disabled={ isSaving }
+						/>
+						<ToggleControl
+							label={ __(
+								'Hide the License tab shown in the admin',
+								'updatebee'
+							) }
+							checked={ canHideLicenseTab && draftHideLicenseTab }
+							disabled={ isSaving || ! canHideLicenseTab }
+							onChange={ ( checked: boolean ) => {
+								if ( canHideLicenseTab ) {
+									setDraftHideLicenseTab( checked );
+								}
+							} }
+							help={
+								canHideLicenseTab
+									? __(
+											'Removes the License tab shown in the admin while this license is active.',
+											'updatebee'
+										)
+									: __(
+											'Activate a license to remove the License tab shown in the admin.',
+											'updatebee'
+										)
+							}
 						/>
 					</div>
 				</Drawer.Content>

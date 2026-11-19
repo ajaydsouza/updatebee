@@ -66,6 +66,10 @@ module.exports = {
 			process.cwd(),
 			'src/js/react/views/Advanced/index.tsx'
 		),
+		license: path.resolve(
+			process.cwd(),
+			'src/js/react/views/License/index.tsx'
+		),
 		commands: path.resolve( process.cwd(), 'src/js/commands/index.tsx' ),
 	},
 };
