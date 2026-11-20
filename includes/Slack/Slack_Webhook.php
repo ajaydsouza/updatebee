@@ -49,8 +49,10 @@ class Slack_Webhook {
 		wp_safe_remote_post(
 			esc_url_raw( $webhook ),
 			array(
-				'body'    => wp_json_encode( $message ),
-				'headers' => array(
+				'body'        => wp_json_encode( $message ),
+				// Do not follow redirects: a redirect could point at an http:// URL and send the report in clear text.
+				'redirection' => 0,
+				'headers'     => array(
 					'Content-Type' => 'application/json; charset=utf-8',
 				),
 			)

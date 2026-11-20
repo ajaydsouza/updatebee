@@ -27,6 +27,13 @@ class SlackReportTest extends TestCase {
 	private array $posted_bodies = array();
 
 	/**
+	 * The redirection argument of each posted request.
+	 *
+	 * @var array<int, mixed>
+	 */
+	private array $posted_redirection = array();
+
+	/**
 	 * In-memory site options.
 	 *
 	 * @var array<string, mixed>
@@ -49,6 +56,7 @@ class SlackReportTest extends TestCase {
 	 */
 	private function stub_helpers( string $webhook = 'https://hooks.slack.com/services/T/B/X' ): void {
 		$this->posted_bodies                     = array();
+		$this->posted_redirection                = array();
 		$this->site_options['updatebee_options'] = array(
 			'slack_webhook_url' => $webhook,
 			'slack_enabled'     => true,
@@ -114,7 +122,8 @@ class SlackReportTest extends TestCase {
 		MonkeyFunctions\when( 'wp_safe_remote_post' )->alias(
 			function ( $url, $args = array() ) {
 				unset( $url );
-				$this->posted_bodies[] = isset( $args['body'] ) ? (string) $args['body'] : '';
+				$this->posted_bodies[]      = isset( $args['body'] ) ? (string) $args['body'] : '';
+				$this->posted_redirection[] = $args['redirection'] ?? null;
 				return array();
 			}
 		);
@@ -325,6 +334,9 @@ class SlackReportTest extends TestCase {
 
 		$this->assertCount( 2, $this->posted_bodies );
 		$this->assertStringContainsString( 'Automatic', $this->posted_bodies[0] );
+
+		// Redirects stay off so the report can never be re-sent to an http:// URL.
+		$this->assertSame( array_fill( 0, count( $this->posted_bodies ), 0 ), $this->posted_redirection );
 		$this->assertStringContainsString( 'Manual', $this->posted_bodies[1] );
 		$this->assertStringContainsString( 'WordPress core', $this->posted_bodies[1] );
 		$this->assertStringContainsString( 'Update details', $this->posted_bodies[0] );
