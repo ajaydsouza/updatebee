@@ -1,5 +1,8 @@
 # UpdateBee
 
+<img width="1544" height="500" alt="UpdateBee Social (1544 x 500 px)" src="https://github.com/user-attachments/assets/675cd94e-c665-4acd-8bb5-e5b9d5e185e8" />
+
+
 Take complete control over your automatic WordPress updates.
 
 - Website: https://updatebee.com
