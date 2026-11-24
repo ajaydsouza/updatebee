@@ -30,16 +30,14 @@ const path = require( 'path' );
 
 module.exports = function ( grunt ) {
 	const sharedZipFiles = [
-		{ src: [ 'updatebee.php' ], dest: '/', filter: 'isFile' },
-		{ src: [ 'readme.txt' ], dest: '/', filter: 'isFile' },
-		{ src: [ 'LICENSE' ], dest: '/', filter: 'isFile' },
-		{ src: [ 'includes/**' ], dest: '/' },
-		// The licensing client. includes/Updater/Init.php requires these files on every request.
-		{ src: [ 'updater/**' ], dest: '/' },
-		{ src: [ 'assets/**' ], dest: '/' },
-		{ src: [ 'build/**', '!build/**/*.map' ], dest: '/' },
-		{ src: [ 'languages/**' ], dest: '/' },
-		{ src: [ 'composer.json	' ], dest: '/', filter: 'isFile' },
+		{ src: [ 'updatebee.php' ], dest: 'updatebee/', filter: 'isFile' },
+		{ src: [ 'readme.txt' ], dest: 'updatebee/', filter: 'isFile' },
+		{ src: [ 'LICENSE' ], dest: 'updatebee/', filter: 'isFile' },
+		{ src: [ 'includes/**' ], dest: 'updatebee/' },
+		{ src: [ 'updater/**' ], dest: 'updatebee/' },
+		{ src: [ 'assets/**' ], dest: 'updatebee/' },
+		{ src: [ 'build/**', '!build/**/*.map' ], dest: 'updatebee/' },
+		{ src: [ 'languages/**' ], dest: 'updatebee/' },
 	];
 
 	grunt.registerTask(
@@ -92,10 +90,13 @@ module.exports = function ( grunt ) {
 					...sharedZipFiles,
 					{
 						src: [ 'vendor/autoload.php' ],
-						dest: '/',
+						dest: 'updatebee/',
 						filter: 'isFile',
 					},
-					{ src: [ 'vendor/composer/**' ], dest: '/' },
+					{
+						src: [ 'vendor/composer/**' ],
+						dest: 'updatebee/',
+					},
 				],
 			},
 			dev: {
