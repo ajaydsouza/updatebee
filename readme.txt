@@ -149,3 +149,8 @@ If you need a plugin lighter than EUM or UpdateBee, <a href="https://wordpress.o
 
 = 1.0.0 =
 * Initial release.
+
+== Upgrade Notice ==
+
+= 1.1.0 =
+This is a maintenance release.

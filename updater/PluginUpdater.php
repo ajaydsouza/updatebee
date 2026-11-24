@@ -58,6 +58,7 @@ class PluginUpdater {
 	private function initPluginUpdaterHooks() {
 		add_filter( 'pre_set_site_transient_update_plugins', array( $this, 'checkPluginUpdate' ) );
 		add_filter( 'plugins_api', array( $this, 'pluginsApiFilter' ), 10, 3 );
+		add_action( 'in_plugin_update_message-' . $this->config['basename'], array( $this, 'plugin_update_message' ), 10, 2 );
 
 		if ( $this->config['show_check_update'] ) {
 
@@ -136,16 +137,19 @@ class PluginUpdater {
 		}
 
 		if ( 'plugins.php' === $pagenow && is_multisite() ) {
-			return $transient_data; // If on plugins page in a multisite, skip update check.
+			// Skip the license API on the network plugins screen. Keep a response that is already stored.
+			return $this->keep_existing_plugin_update( $transient_data );
 		}
 
 		if ( ! empty( $transient_data->response ) && ! empty( $transient_data->response[ $this->config['basename'] ] ) ) {
+			$transient_data->response[ $this->config['basename'] ] = $this->ensure_update_fields( $transient_data->response[ $this->config['basename'] ] );
 			return $transient_data;
 		}
 
 		$version_info = $this->getVersionInfo();
 
 		if ( false !== $version_info && is_object( $version_info ) && isset( $version_info->new_version ) ) {
+			$version_info = $this->ensure_update_fields( clone $version_info );
 			unset( $version_info->sections );
 			// If new version available then set to `response`.
 			if ( version_compare( $this->config['version'], $version_info->new_version, '<' ) ) {
@@ -184,18 +188,250 @@ class PluginUpdater {
 			return $data;
 		}
 
-		// get the version info.
+		// Remote sections win. readme.txt supplies a changelog when the payload has none.
 		$data = $this->getVersionInfo();
 
-		if ( is_wp_error( $data ) ) {
-			return $data;
+		if ( ! is_object( $data ) ) {
+			$data              = new \stdClass();
+			$data->new_version = $this->config['version'];
+			$data->name        = 'UpdateBee';
 		}
 
-		if ( ! $data ) {
-			return new \WP_Error( 'no_data', __( 'No data found for this plugin', 'updatebee' ) );
+		$data = $this->ensure_update_fields( clone $data );
+		if ( empty( $data->name ) ) {
+			$data->name = 'UpdateBee';
 		}
+		if ( empty( $data->version ) && ! empty( $data->new_version ) ) {
+			$data->version = $data->new_version;
+		}
+
+		$sections = array();
+		if ( ! empty( $data->sections ) ) {
+			$sections = (array) $data->sections;
+		}
+		if ( empty( $sections['changelog'] ) ) {
+			$changelog = $this->local_changelog_html();
+			if ( '' !== $changelog ) {
+				$sections['changelog'] = $changelog;
+			}
+		}
+		$data->sections = $sections;
+		$data->external = true;
 
 		return $data;
+	}
+
+	/**
+	 * Append the upgrade notice under the core update sentence.
+	 *
+	 * Core prints "There is a new version…" itself. The plugins screen does not print upgrade_notice.
+	 *
+	 * @param array  $plugin_data Plugin row data. Unused.
+	 * @param object $response    Update transient entry.
+	 * @return void
+	 */
+	public function plugin_update_message( $plugin_data, $response ) {
+		unset( $plugin_data );
+
+		$notice = '';
+		if ( is_object( $response ) && isset( $response->upgrade_notice ) && is_string( $response->upgrade_notice ) ) {
+			$notice = $this->trimUpgradeNotice( $response->upgrade_notice );
+		}
+		if ( '' === $notice && is_object( $response ) && isset( $response->new_version ) ) {
+			$notice = $this->local_upgrade_notice( (string) $response->new_version );
+		}
+		if ( '' === $notice ) {
+			return;
+		}
+
+		echo '<br />' . esc_html( $notice );
+	}
+
+	/**
+	 * Keep a stored UpdateBee offer when the network plugins screen skips the remote check.
+	 *
+	 * @param object $transient_data Update transient being saved.
+	 * @return object
+	 */
+	private function keep_existing_plugin_update( $transient_data ) {
+		$basename = $this->config['basename'];
+
+		if ( ! empty( $transient_data->response[ $basename ] ) ) {
+			$transient_data->response[ $basename ] = $this->ensure_update_fields( $transient_data->response[ $basename ] );
+			return $transient_data;
+		}
+
+		if ( ! empty( $transient_data->no_update[ $basename ] ) ) {
+			return $transient_data;
+		}
+
+		$stored = get_site_transient( 'update_plugins' );
+		if ( ! is_object( $stored ) || empty( $stored->response[ $basename ] ) ) {
+			return $transient_data;
+		}
+
+		if ( ! isset( $transient_data->response ) || ! is_array( $transient_data->response ) ) {
+			$transient_data->response = array();
+		}
+
+		$transient_data->response[ $basename ] = $this->ensure_update_fields( $stored->response[ $basename ] );
+
+		return $transient_data;
+	}
+
+	/**
+	 * Fill the update fields WordPress uses for the plugins-screen row.
+	 *
+	 * @param mixed $info Version payload.
+	 * @return mixed
+	 */
+	private function ensure_update_fields( $info ) {
+		if ( is_array( $info ) ) {
+			$info = (object) $info;
+		}
+		if ( ! is_object( $info ) ) {
+			return $info;
+		}
+
+		if ( empty( $info->slug ) ) {
+			$info->slug = $this->config['slug'];
+		}
+		if ( empty( $info->plugin ) ) {
+			$info->plugin = $this->config['basename'];
+		}
+		if ( empty( $info->url ) ) {
+			$info->url = ! empty( $this->config['store_url'] ) ? $this->config['store_url'] : $this->config['api_url'];
+		}
+		if ( ! isset( $info->package ) || ! is_string( $info->package ) ) {
+			$info->package = '';
+		}
+		if ( ( empty( $info->upgrade_notice ) || ! is_string( $info->upgrade_notice ) ) && ! empty( $info->new_version ) ) {
+			$notice = $this->local_upgrade_notice( (string) $info->new_version );
+			if ( '' !== $notice ) {
+				$info->upgrade_notice = $notice;
+			}
+		} elseif ( isset( $info->upgrade_notice ) && is_string( $info->upgrade_notice ) ) {
+			$info->upgrade_notice = $this->trimUpgradeNotice( $info->upgrade_notice );
+		}
+
+		return $info;
+	}
+
+	/**
+	 * Upgrade notice for one version from readme.txt.
+	 *
+	 * @param string $version Offered version.
+	 * @return string
+	 */
+	private function local_upgrade_notice( $version ) {
+		$section = $this->readmeSection( 'Upgrade Notice' );
+		if ( '' === $section ) {
+			return '';
+		}
+
+		$notices = array();
+		$current = '';
+		foreach ( preg_split( "/\n/", $section ) as $line ) {
+			$line = trim( $line );
+			if ( preg_match( '/^=\s*(.+?)\s*=$/', $line, $heading ) ) {
+				$current = trim( $heading[1] );
+				if ( ! isset( $notices[ $current ] ) ) {
+					$notices[ $current ] = '';
+				}
+				continue;
+			}
+			if ( '' === $current || '' === $line ) {
+				continue;
+			}
+			$notices[ $current ] .= ( '' === $notices[ $current ] ? '' : ' ' ) . $line;
+		}
+
+		foreach ( $notices as $notice_version => $text ) {
+			if ( version_compare( (string) $notice_version, $version, '==' ) ) {
+				return $this->trimUpgradeNotice( $text );
+			}
+		}
+
+		return '';
+	}
+
+	/**
+	 * Changelog HTML from readme.txt for the details modal.
+	 *
+	 * @return string
+	 */
+	private function local_changelog_html() {
+		$section = $this->readmeSection( 'Changelog' );
+		if ( '' === $section ) {
+			return '';
+		}
+
+		$html    = '';
+		$in_list = false;
+		foreach ( preg_split( "/\n/", $section ) as $line ) {
+			$line = trim( $line );
+			if ( preg_match( '/^=\s*(.+?)\s*=$/', $line, $heading ) ) {
+				if ( $in_list ) {
+					$html   .= '</ul>';
+					$in_list = false;
+				}
+				$html .= '<h4>' . esc_html( $heading[1] ) . '</h4>';
+				continue;
+			}
+			if ( preg_match( '/^[\*\-]\s+(.+)$/', $line, $item ) ) {
+				if ( ! $in_list ) {
+					$html   .= '<ul>';
+					$in_list = true;
+				}
+				$html .= '<li>' . esc_html( $item[1] ) . '</li>';
+			}
+		}
+		if ( $in_list ) {
+			$html .= '</ul>';
+		}
+
+		return $html;
+	}
+
+	/**
+	 * Body of one readme.txt section.
+	 *
+	 * @param string $title Section title.
+	 * @return string
+	 */
+	private function readmeSection( $title ) {
+		$path = dirname( __DIR__ ) . '/readme.txt';
+		if ( ! is_readable( $path ) ) {
+			return '';
+		}
+
+		$raw = file_get_contents( $path );
+		if ( ! is_string( $raw ) || '' === $raw ) {
+			return '';
+		}
+
+		$contents = str_replace( array( "\r\n", "\r" ), "\n", $raw );
+		$pattern  = '/^==\s*' . preg_quote( $title, '/' ) . '\s*==\s*\n(.*?)(?:\n==\s|\z)/s';
+		if ( ! preg_match( $pattern, $contents, $match ) ) {
+			return '';
+		}
+
+		return trim( $match[1] );
+	}
+
+	/**
+	 * Plain upgrade notice, capped the way WordPress.org caps it.
+	 *
+	 * @param string $notice Notice text.
+	 * @return string
+	 */
+	private function trimUpgradeNotice( $notice ) {
+		$notice = trim( preg_replace( '/\s+/', ' ', wp_strip_all_tags( $notice ) ) );
+		if ( strlen( $notice ) > 300 ) {
+			$notice = rtrim( substr( $notice, 0, 300 ) ) . '…';
+		}
+
+		return $notice;
 	}
 
 	/**
