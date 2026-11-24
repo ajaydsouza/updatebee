@@ -14,12 +14,11 @@ import {
 } from '@wordpress/dataviews';
 import { useCallback, useEffect, useMemo, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
-import { Button, Stack } from '@wordpress/ui';
+import { Button, Notice, Stack } from '@wordpress/ui';
 import sendCommand from '../../../utils/SendCommand';
 import { DATAVIEWS_STORAGE_KEYS } from '../../../utils/dataviews-view-storage';
 import { ErrorFallback } from '../../components/ErrorBoundary';
 import Loader from '../../components/Loader';
-import Snackbar from '../../components/Snackbar';
 import usePersistedDataView from '../../hooks/usePersistedDataView';
 import { getUpcomingActions } from './upcoming-actions';
 
@@ -52,12 +51,11 @@ type MessagePayload = {
 	message?: string;
 };
 
-type SnackbarType = 'success' | 'error' | 'warning' | 'info';
+type NoticeIntent = 'success' | 'error';
 
-type SnackbarState = {
-	isVisible: boolean;
+type NoticeState = {
 	message: string;
-	type: SnackbarType;
+	intent: NoticeIntent;
 };
 
 const tableColumnStyles = {
@@ -136,25 +134,18 @@ const UpcomingUpdates = () => {
 	const [ isLoading, setIsLoading ] = useState( true );
 	const [ isError, setIsError ] = useState( false );
 	const [ isBusy, setIsBusy ] = useState( false );
+	const [ isChecking, setIsChecking ] = useState( false );
 	const [ loadAttempt, setLoadAttempt ] = useState( 0 );
-	const [ snackbar, setSnackbar ] = useState< SnackbarState >( {
-		isVisible: false,
-		message: '',
-		type: 'success',
-	} );
+	const [ notice, setNotice ] = useState< NoticeState | null >( null );
 	const { view, onChangeView, onReset } = usePersistedDataView(
 		DATAVIEWS_STORAGE_KEYS.upcoming,
 		defaultView,
 		fieldIds
 	);
 
-	const showSnackbar = useCallback(
-		( message: string, type: SnackbarType ) => {
-			setSnackbar( {
-				isVisible: true,
-				message,
-				type,
-			} );
+	const showNotice = useCallback(
+		( message: string, intent: NoticeIntent ) => {
+			setNotice( { message, intent } );
 		},
 		[]
 	);
@@ -199,9 +190,10 @@ const UpcomingUpdates = () => {
 			}
 
 			setIsBusy( true );
+			setNotice( null );
 			sendCommand< MessagePayload >( action, payload )
 				.then( ( response ) => {
-					showSnackbar(
+					showNotice(
 						response.data.data?.message ||
 							__( 'Action completed.', 'updatebee' ),
 						'success'
@@ -209,13 +201,13 @@ const UpcomingUpdates = () => {
 					return loadItems();
 				} )
 				.catch( ( error: Error ) => {
-					showSnackbar( error.message || fallback, 'error' );
+					showNotice( error.message || fallback, 'error' );
 				} )
 				.finally( () => {
 					setIsBusy( false );
 				} );
 		},
-		[ isBusy, loadItems, showSnackbar ]
+		[ isBusy, loadItems, showNotice ]
 	);
 
 	const onSkip = useCallback(
@@ -343,11 +335,13 @@ const UpcomingUpdates = () => {
 		}
 
 		setIsBusy( true );
+		setIsChecking( true );
+		setNotice( null );
 		sendCommand< MessagePayload >( 'updatebee_refresh_updates', {
 			nonce: updatebeeDashboard.refreshNonce,
 		} )
 			.then( ( response ) => {
-				showSnackbar(
+				showNotice(
 					response.data.data?.message ||
 						__( 'Updates have been force refreshed.', 'updatebee' ),
 					'success'
@@ -355,7 +349,7 @@ const UpcomingUpdates = () => {
 				return loadItems();
 			} )
 			.catch( ( error: Error ) => {
-				showSnackbar(
+				showNotice(
 					error.message ||
 						__( 'Updates could not be refreshed.', 'updatebee' ),
 					'error'
@@ -363,10 +357,11 @@ const UpcomingUpdates = () => {
 			} )
 			.finally( () => {
 				setIsBusy( false );
+				setIsChecking( false );
 			} );
 	};
 
-	if ( isLoading && 0 === items.length && ! isError ) {
+	if ( isLoading && ! isChecking && 0 === items.length && ! isError ) {
 		return <Loader />;
 	}
 
@@ -414,12 +409,27 @@ const UpcomingUpdates = () => {
 					<Button
 						variant="outline"
 						disabled={ isBusy }
+						loading={ isChecking }
+						loadingAnnouncement={ __(
+							'Checking for updates',
+							'updatebee'
+						) }
 						onClick={ onCheckNow }
 					>
 						{ __( 'Check now', 'updatebee' ) }
 					</Button>
 				</div>
 			</div>
+			{ notice && (
+				<Notice.Root intent={ notice.intent }>
+					<Notice.Description>{ notice.message }</Notice.Description>
+					<Notice.CloseIcon
+						onClick={ () => {
+							setNotice( null );
+						} }
+					/>
+				</Notice.Root>
+			) }
 			<DataViews
 				data={ visibleItems }
 				fields={ fields }
@@ -428,7 +438,7 @@ const UpcomingUpdates = () => {
 				onReset={ onReset }
 				actions={ actions }
 				paginationInfo={ paginationInfo }
-				isLoading={ isBusy || isLoading }
+				isLoading={ ! isChecking && ( isBusy || isLoading ) }
 				getItemId={ ( item ) => item.RowId }
 				defaultLayouts={ {
 					table: {
@@ -456,17 +466,6 @@ const UpcomingUpdates = () => {
 					searchLabel={ __( 'Search updates', 'updatebee' ) }
 				/>
 			</DataViews>
-			<Snackbar
-				isVisible={ snackbar.isVisible }
-				message={ snackbar.message }
-				type={ snackbar.type }
-				onClose={ () => {
-					setSnackbar( ( current ) => ( {
-						...current,
-						isVisible: false,
-					} ) );
-				} }
-			/>
 		</div>
 	);
 };
