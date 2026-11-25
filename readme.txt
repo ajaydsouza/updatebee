@@ -3,7 +3,7 @@ Contributors: ronalfy
 Tags: updates, automatic updates, plugins, themes, cron
 Requires at least: 7.0
 Tested up to: 7.1
-Stable tag: 1.1.0
+Stable tag: 1.1.1
 Requires PHP: 8.2
 License: GPL v3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
@@ -144,6 +144,10 @@ If you need a plugin lighter than EUM or UpdateBee, <a href="https://wordpress.o
 
 == Changelog ==
 
+= 1.1.1 =
+* Upcoming updates: Check now shows progress on the button, and the table stays in place while updates are refreshed.
+* Upcoming updates: success and error messages appear above the table.
+
 = 1.1.0 =
 * Maintenance release.
 
@@ -151,6 +155,9 @@ If you need a plugin lighter than EUM or UpdateBee, <a href="https://wordpress.o
 * Initial release.
 
 == Upgrade Notice ==
+
+= 1.1.1 =
+Upcoming updates now shows Check now progress on the button and places messages above the table.
 
 = 1.1.0 =
 This is a maintenance release.

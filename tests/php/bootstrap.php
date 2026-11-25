@@ -16,7 +16,7 @@ if ( ! defined( 'UPDATEBEE_FILE' ) ) {
 }
 
 if ( ! defined( 'UPDATEBEE_VERSION' ) ) {
-	define( 'UPDATEBEE_VERSION', '1.1.0' );
+	define( 'UPDATEBEE_VERSION', '1.1.1' );
 }
 
 if ( ! defined( 'ARRAY_A' ) ) {

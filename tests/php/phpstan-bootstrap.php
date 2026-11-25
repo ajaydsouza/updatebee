@@ -14,7 +14,7 @@ if ( ! defined( 'UPDATEBEE_FILE' ) ) {
 }
 
 if ( ! defined( 'UPDATEBEE_VERSION' ) ) {
-	define( 'UPDATEBEE_VERSION', '1.1.0' );
+	define( 'UPDATEBEE_VERSION', '1.1.1' );
 }
 
 require_once dirname( __DIR__, 2 ) . '/updater/PluginUpdater.php';
