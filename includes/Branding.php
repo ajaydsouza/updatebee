@@ -276,6 +276,8 @@ class Branding {
 	/**
 	 * Saved branding, including values copied out of the main options.
 	 *
+	 * An unconfirmed copy is returned for this read and is not cached, so the next read can try again.
+	 *
 	 * @return array<string, mixed>
 	 */
 	public static function get_stored(): array {
@@ -290,9 +292,12 @@ class Branding {
 		}
 
 		$migrated = self::migrate_legacy();
-		if ( is_array( $migrated ) ) {
-			self::$stored = $migrated;
-			return self::$stored;
+		if ( null !== $migrated ) {
+			if ( $migrated['persisted'] ) {
+				self::$stored = $migrated['values'];
+			}
+
+			return $migrated['values'];
 		}
 
 		self::$stored = self::defaults();
@@ -571,7 +576,11 @@ class Branding {
 	/**
 	 * Copy branding keys out of the main options array.
 	 *
-	 * @return array<string, mixed>|null Saved branding, or null when the main option has none.
+	 * Legacy keys stay until a read-back of the branding option matches.
+	 * update_site_option() returns false when the stored value is unchanged, so that read-back decides whether cleanup runs.
+	 * A failed copy can run again.
+	 *
+	 * @return array{values: array<string, mixed>, persisted: bool}|null Saved branding, or null when the main option has none.
 	 */
 	private static function migrate_legacy(): ?array {
 		$main = get_site_option( Options::OPTIONS_KEY, array() );
@@ -588,7 +597,6 @@ class Branding {
 
 			$found          = true;
 			$values[ $key ] = $main[ $key ];
-			unset( $main[ $key ] );
 		}
 
 		if ( ! $found ) {
@@ -597,10 +605,39 @@ class Branding {
 
 		$values = self::normalize_stored( $values );
 		update_site_option( self::OPTION_KEY, $values );
+		if ( ! self::destination_matches( $values ) ) {
+			return array(
+				'values'    => $values,
+				'persisted' => false,
+			);
+		}
+
+		foreach ( self::FIELD_KEYS as $key ) {
+			unset( $main[ $key ] );
+		}
+
 		update_site_option( Options::OPTIONS_KEY, $main );
 		Options::flush_cache();
 
-		return $values;
+		return array(
+			'values'    => $values,
+			'persisted' => true,
+		);
+	}
+
+	/**
+	 * Whether the branding option contains these values.
+	 *
+	 * @param array<string, mixed> $values Expected branding.
+	 * @return bool
+	 */
+	private static function destination_matches( array $values ): bool {
+		$saved = get_site_option( self::OPTION_KEY, null );
+		if ( ! is_array( $saved ) ) {
+			return false;
+		}
+
+		return self::normalize_stored( $saved ) === $values;
 	}
 
 	/**

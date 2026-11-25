@@ -163,3 +163,5 @@ vite.config.ts.timestamp-*
 /languages/*.pot
 /languages/*.mo
 /languages/*.json
+
+phpunit-out.txt

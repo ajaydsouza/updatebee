@@ -8,6 +8,7 @@
 namespace UpdateBee\Tests;
 
 use Brain\Monkey\Functions as MonkeyFunctions;
+use UpdateBee\Branding;
 use UpdateBee\Options;
 use UpdateBee\Uninstall;
 
@@ -22,6 +23,7 @@ class UninstallTest extends TestCase {
 	protected function tearDown(): void {
 		unset( $GLOBALS['wpdb'] );
 		Options::flush_cache();
+		Branding::flush_cache();
 		parent::tearDown();
 	}
 
@@ -58,6 +60,7 @@ class UninstallTest extends TestCase {
 				'updatebee_email_updates_available_last_send',
 				'updatebee_hide_eum_importer',
 				'updatebee_hide_cau_importer',
+				'updatebee_branding',
 			),
 			$deleted_site_meta
 		);
@@ -151,6 +154,58 @@ class UninstallTest extends TestCase {
 	}
 
 	/**
+	 * A locked remove-all copies legacy branding before deleting the main option.
+	 */
+	public function test_clear_data_keeps_migrated_branding_when_locked(): void {
+		$deleted_options    = array();
+		$deleted_site_meta  = array();
+		$cleared_hooks      = array();
+		$deleted_transients = array();
+		$queries            = array();
+		$stored             = array(
+			Options::OPTIONS_KEY => array(
+				'branding_name' => 'Agency Updates',
+				'delay_updates' => 2,
+			),
+		);
+
+		$this->stub_cleanup_functions( $deleted_options, $deleted_site_meta, $cleared_hooks, $deleted_transients );
+		MonkeyFunctions\when( 'get_site_option' )->alias(
+			static function ( $key, $fallback = false ) use ( &$stored ) {
+				if ( array_key_exists( $key, $stored ) ) {
+					return $stored[ $key ];
+				}
+
+				return $fallback;
+			}
+		);
+		MonkeyFunctions\when( 'update_site_option' )->alias(
+			static function ( $key, $value ) use ( &$stored ) {
+				$stored[ $key ] = $value;
+				return true;
+			}
+		);
+		MonkeyFunctions\when( 'apply_filters' )->alias(
+			static function ( $hook, $value ) {
+				if ( 'updatebee_branding_locked' === $hook ) {
+					return true;
+				}
+
+				return $value;
+			}
+		);
+		MonkeyFunctions\when( 'is_multisite' )->justReturn( false );
+		Branding::set_license_active_override( true );
+		$this->set_mock_wpdb( $queries );
+
+		Uninstall::clear_data();
+
+		$this->assertSame( 'Agency Updates', $stored[ Branding::OPTION_KEY ]['branding_name'] );
+		$this->assertContains( Options::OPTIONS_KEY, $deleted_site_meta );
+		$this->assertNotContains( Branding::OPTION_KEY, $deleted_site_meta );
+	}
+
+	/**
 	 * On multisite, table version options are removed for every site.
 	 */
 	public function test_clear_data_drops_tables_on_each_site(): void {
@@ -210,6 +265,13 @@ class UninstallTest extends TestCase {
 			static function ( $transient ) use ( &$deleted_transients ) {
 				$deleted_transients[] = (string) $transient;
 				return true;
+			}
+		);
+		MonkeyFunctions\when( 'get_site_option' )->alias(
+			static function ( $key, $fallback = false ) {
+				unset( $key );
+
+				return $fallback;
 			}
 		);
 	}

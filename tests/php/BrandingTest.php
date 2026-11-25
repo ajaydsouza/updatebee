@@ -394,24 +394,99 @@ class BrandingTest extends TestCase {
 	 * Legacy branding keys are copied into the branding option.
 	 */
 	public function test_legacy_branding_is_copied_out_of_main_options(): void {
-		$written = array();
-		$this->stub_options(
-			array(
+		$stored  = array(
+			Options::OPTIONS_KEY => array(
 				'branding_name' => 'Agency Updates',
 				'delay_updates' => 2,
-			)
+			),
+		);
+		$persist = true;
+		$this->stub_site_option_store( $stored, $persist );
+
+		$this->assertSame( 'Agency Updates', Branding::get_saved_name() );
+		$this->assertSame( 'Agency Updates', $stored[ Branding::OPTION_KEY ]['branding_name'] );
+		$this->assertArrayNotHasKey( 'branding_name', $stored[ Options::OPTIONS_KEY ] );
+		$this->assertSame( 2, $stored[ Options::OPTIONS_KEY ]['delay_updates'] );
+	}
+
+	/**
+	 * A failed branding copy leaves the legacy keys in place for another try.
+	 */
+	public function test_legacy_branding_stays_when_the_copy_does_not_persist(): void {
+		$stored  = array(
+			Options::OPTIONS_KEY => array(
+				'branding_name' => 'Agency Updates',
+				'delay_updates' => 2,
+			),
+		);
+		$persist = false;
+		$this->stub_site_option_store( $stored, $persist );
+
+		$this->assertSame( 'Agency Updates', Branding::get_saved_name() );
+		$this->assertArrayNotHasKey( Branding::OPTION_KEY, $stored );
+		$this->assertSame( 'Agency Updates', $stored[ Options::OPTIONS_KEY ]['branding_name'] );
+		$this->assertSame( 2, $stored[ Options::OPTIONS_KEY ]['delay_updates'] );
+
+		$persist = true;
+
+		$this->assertSame( 'Agency Updates', Branding::get_saved_name() );
+		$this->assertSame( 'Agency Updates', $stored[ Branding::OPTION_KEY ]['branding_name'] );
+		$this->assertArrayNotHasKey( 'branding_name', $stored[ Options::OPTIONS_KEY ] );
+		$this->assertSame( 2, $stored[ Options::OPTIONS_KEY ]['delay_updates'] );
+	}
+
+	/**
+	 * Cleanup runs when the branding option matches, even if the write returns false.
+	 */
+	public function test_legacy_branding_is_removed_when_the_read_back_matches(): void {
+		$stored  = array(
+			Options::OPTIONS_KEY => array(
+				'branding_name' => 'Agency Updates',
+				'delay_updates' => 2,
+			),
+		);
+		$persist = true;
+		$this->stub_site_option_store( $stored, $persist, false );
+
+		$this->assertSame( 'Agency Updates', Branding::get_saved_name() );
+		$this->assertSame( 'Agency Updates', $stored[ Branding::OPTION_KEY ]['branding_name'] );
+		$this->assertArrayNotHasKey( 'branding_name', $stored[ Options::OPTIONS_KEY ] );
+		$this->assertSame( 2, $stored[ Options::OPTIONS_KEY ]['delay_updates'] );
+	}
+
+	/**
+	 * Stub site options backed by a store the test can change.
+	 *
+	 * @param array<string, mixed> $stored                   Option values keyed by option name.
+	 * @param bool                 $persist_branding         Whether a branding write is visible to the next read.
+	 * @param bool                 $branding_update_succeeds Return value for the branding option write.
+	 */
+	private function stub_site_option_store( array &$stored, bool &$persist_branding, bool $branding_update_succeeds = true ): void {
+		MonkeyFunctions\when( 'get_site_option' )->alias(
+			static function ( $key, $fallback = false ) use ( &$stored ) {
+				if ( array_key_exists( $key, $stored ) ) {
+					return $stored[ $key ];
+				}
+
+				return $fallback;
+			}
 		);
 		MonkeyFunctions\when( 'update_site_option' )->alias(
-			static function ( $key, $value ) use ( &$written ) {
-				$written[ $key ] = $value;
+			static function ( $key, $value ) use ( &$stored, &$persist_branding, $branding_update_succeeds ) {
+				$is_branding = Branding::OPTION_KEY === $key;
+				if ( $is_branding && ! $persist_branding ) {
+					return false;
+				}
+
+				$stored[ $key ] = $value;
+
+				if ( $is_branding ) {
+					return $branding_update_succeeds;
+				}
+
 				return true;
 			}
 		);
-
-		$this->assertSame( 'Agency Updates', Branding::get_saved_name() );
-		$this->assertSame( 'Agency Updates', $written[ Branding::OPTION_KEY ]['branding_name'] );
-		$this->assertArrayNotHasKey( 'branding_name', $written[ Options::OPTIONS_KEY ] );
-		$this->assertSame( 2, $written[ Options::OPTIONS_KEY ]['delay_updates'] );
 	}
 
 	/**
