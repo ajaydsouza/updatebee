@@ -21,7 +21,9 @@ use UpdateBee\Functions;
 class Settings_Page {
 
 	/**
-	 * Send bookmarks for the removed Branding tab to Advanced.
+	 * Send removed tabs back to Advanced.
+	 *
+	 * The old Branding tab is gone. A hidden License tab has no screen, so that URL comes here too.
 	 */
 	public static function maybe_redirect_branding_tab(): void {
 		$page = filter_input( INPUT_GET, 'page', FILTER_DEFAULT );
@@ -29,12 +31,16 @@ class Settings_Page {
 			return;
 		}
 
-		if ( 'branding' !== Functions::get_admin_tab() ) {
-			return;
+		$tab = Functions::get_admin_tab();
+		if ( 'branding' === $tab ) {
+			wp_safe_redirect( Functions::get_settings_url( 'advanced' ) );
+			exit;
 		}
 
-		wp_safe_redirect( Functions::get_settings_url( 'advanced' ) );
-		exit;
+		if ( 'license' === $tab && Branding::hides_license_tab() ) {
+			wp_safe_redirect( Functions::get_settings_url( 'advanced' ) );
+			exit;
+		}
 	}
 
 	/**

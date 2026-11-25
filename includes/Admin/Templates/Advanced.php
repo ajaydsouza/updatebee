@@ -88,39 +88,44 @@ class Advanced {
 			array( 'updatebee-admin' ),
 			is_string( $deps['version'] ) ? $deps['version'] : Functions::get_plugin_version()
 		);
-		$branding_defaults = Branding::get_header_defaults();
+		$script_data = array(
+			'pluginName'                   => Functions::get_plugin_name(),
+			'saveNonce'                    => wp_create_nonce( 'updatebee-save-advanced-settings' ),
+			'resetNonce'                   => wp_create_nonce( 'updatebee-reset-options' ),
+			'canDeactivate'                => Uninstall::user_can_deactivate(),
+			'deactivateNonce'              => wp_create_nonce( 'updatebee-deactivate-plugin' ),
+			'delayUpdates'                 => absint( Options::get_options( 'delay_updates' ) ),
+			'blockUntestedUpdates'         => 'on' === Options::get_options( 'block_untested_updates' ),
+			'upgradeNoticeKeywords'        => (string) Options::get_options( 'upgrade_notice_keywords' ),
+			'upgradeNoticeKeywordsEnabled' => Upgrade_Notice_Keywords::is_enabled(),
+			'slackWebhookUrl'              => (string) Options::get_options( 'slack_webhook_url' ),
+			'adminBarEnabled'              => (bool) Options::get_options( Admin_Bar_Menu::OPTION_ENABLED ),
+			'adminBarShowAdmin'            => (bool) Options::get_options( Admin_Bar_Menu::OPTION_SHOW_ADMIN ),
+			'adminBarShowFrontend'         => (bool) Options::get_options( Admin_Bar_Menu::OPTION_SHOW_FRONTEND ),
+			'brandingLocked'               => Branding::is_locked(),
+		);
+
+		if ( ! $script_data['brandingLocked'] ) {
+			$branding_defaults                     = Branding::get_header_defaults();
+			$script_data['brandingSaveNonce']      = wp_create_nonce( 'updatebee-save-branding-settings' );
+			$script_data['brandingName']           = Branding::get_saved_name();
+			$script_data['brandingDescription']    = Branding::get_saved_description();
+			$script_data['brandingAuthor']         = Branding::get_saved_author();
+			$script_data['brandingUrl']            = Branding::get_saved_url();
+			$script_data['brandingHideLicenseTab'] = (bool) Branding::get_stored()['branding_hide_license_tab'];
+			$script_data['canHideLicenseTab']      = License_Details::is_active();
+			$script_data['brandingDefaults']       = array(
+				'name'        => $branding_defaults['name'],
+				'description' => $branding_defaults['description'],
+				'author'      => $branding_defaults['author'],
+				'url'         => $branding_defaults['url'],
+			);
+		}
 
 		wp_localize_script(
 			'updatebee-advanced',
 			'updatebeeAdvanced',
-			array(
-				'pluginName'                   => Functions::get_plugin_name(),
-				'saveNonce'                    => wp_create_nonce( 'updatebee-save-advanced-settings' ),
-				'resetNonce'                   => wp_create_nonce( 'updatebee-reset-options' ),
-				'canDeactivate'                => Uninstall::user_can_deactivate(),
-				'deactivateNonce'              => wp_create_nonce( 'updatebee-deactivate-plugin' ),
-				'delayUpdates'                 => absint( Options::get_options( 'delay_updates' ) ),
-				'blockUntestedUpdates'         => 'on' === Options::get_options( 'block_untested_updates' ),
-				'upgradeNoticeKeywords'        => (string) Options::get_options( 'upgrade_notice_keywords' ),
-				'upgradeNoticeKeywordsEnabled' => Upgrade_Notice_Keywords::is_enabled(),
-				'slackWebhookUrl'              => (string) Options::get_options( 'slack_webhook_url' ),
-				'adminBarEnabled'              => (bool) Options::get_options( Admin_Bar_Menu::OPTION_ENABLED ),
-				'adminBarShowAdmin'            => (bool) Options::get_options( Admin_Bar_Menu::OPTION_SHOW_ADMIN ),
-				'adminBarShowFrontend'         => (bool) Options::get_options( Admin_Bar_Menu::OPTION_SHOW_FRONTEND ),
-				'brandingSaveNonce'            => wp_create_nonce( 'updatebee-save-branding-settings' ),
-				'brandingName'                 => Branding::get_saved_name(),
-				'brandingDescription'          => Branding::get_saved_description(),
-				'brandingAuthor'               => Branding::get_saved_author(),
-				'brandingUrl'                  => Branding::get_saved_url(),
-				'brandingHideLicenseTab'       => (bool) Options::get_options( 'branding_hide_license_tab' ),
-				'canHideLicenseTab'            => License_Details::is_active(),
-				'brandingDefaults'             => array(
-					'name'        => $branding_defaults['name'],
-					'description' => $branding_defaults['description'],
-					'author'      => $branding_defaults['author'],
-					'url'         => $branding_defaults['url'],
-				),
-			)
+			$script_data
 		);
 
 		unset( $sub_tab );

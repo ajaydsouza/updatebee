@@ -10,6 +10,7 @@ namespace UpdateBee\Tests;
 use Brain\Monkey\Functions as MonkeyFunctions;
 use UpdateBee\Admin\Migrate\CompanionAutoUpdate;
 use UpdateBee\Admin\Migrate\EasyUpdatesManager;
+use UpdateBee\Branding;
 use UpdateBee\Options;
 
 /**
@@ -22,6 +23,7 @@ class OptionsTest extends TestCase {
 	 */
 	protected function tearDown(): void {
 		Options::flush_cache();
+		Branding::flush_cache();
 		parent::tearDown();
 	}
 
@@ -71,11 +73,7 @@ class OptionsTest extends TestCase {
 		$this->assertTrue( $options['fatal_error_detection'] );
 		$this->assertSame( array(), $options['fatal_email_recipients'] );
 		$this->assertFalse( $options['fatal_notify_slack'] );
-		$this->assertSame( '', $options['branding_name'] );
-		$this->assertSame( '', $options['branding_description'] );
-		$this->assertSame( '', $options['branding_author'] );
-		$this->assertSame( '', $options['branding_url'] );
-		$this->assertFalse( $options['branding_hide_license_tab'] );
+		$this->assertArrayNotHasKey( 'branding_name', $options );
 		$this->assertFalse( $options['admin_bar_enabled'] );
 		$this->assertTrue( $options['admin_bar_show_admin'] );
 		$this->assertTrue( $options['admin_bar_show_frontend'] );
@@ -139,7 +137,7 @@ class OptionsTest extends TestCase {
 				)
 			);
 		MonkeyFunctions\expect( 'update_site_option' )
-			->once()
+			->twice()
 			->andReturn( true );
 		MonkeyFunctions\expect( 'delete_site_option' )
 			->once()
@@ -153,6 +151,88 @@ class OptionsTest extends TestCase {
 		Options::reset_options();
 
 		$this->assertSame( 'off', Options::get_options( 'major_auto_updates' ) );
+	}
+
+	/**
+	 * Unlocked reset clears the branding option.
+	 */
+	public function test_reset_options_clears_branding_when_unlocked(): void {
+		$branding = array(
+			'branding_name'             => 'Stored Agency',
+			'branding_description'      => '',
+			'branding_author'           => '',
+			'branding_url'              => '',
+			'branding_hide_license_tab' => true,
+		);
+		$this->stub_branding_reset_store( $branding );
+
+		Options::reset_options();
+
+		$this->assertSame( '', $branding['branding_name'] );
+		$this->assertFalse( $branding['branding_hide_license_tab'] );
+	}
+
+	/**
+	 * A lock leaves saved branding in place when all options are reset.
+	 */
+	public function test_reset_options_keeps_branding_when_locked(): void {
+		$branding = array(
+			'branding_name'             => 'Stored Agency',
+			'branding_description'      => 'Managed updates.',
+			'branding_author'           => 'Agency Co',
+			'branding_url'              => 'https://agency.example/',
+			'branding_hide_license_tab' => true,
+		);
+		$this->stub_branding_reset_store( $branding );
+		Branding::set_license_active_override( true );
+		MonkeyFunctions\when( 'apply_filters' )->alias(
+			static function ( $hook, $value ) {
+				if ( 'updatebee_branding_locked' === $hook ) {
+					return true;
+				}
+
+				return $value;
+			}
+		);
+
+		Options::reset_options();
+
+		$this->assertSame( 'Stored Agency', $branding['branding_name'] );
+		$this->assertTrue( $branding['branding_hide_license_tab'] );
+		$this->assertSame( 'off', Options::get_options( 'major_auto_updates' ) );
+	}
+
+	/**
+	 * Stub option storage for reset tests that also touch branding.
+	 *
+	 * @param array<string, mixed> $branding Branding option, passed by reference.
+	 */
+	private function stub_branding_reset_store( array &$branding ): void {
+		$this->stub_option_helpers();
+		MonkeyFunctions\when( 'get_site_option' )->alias(
+			static function ( $key, $fallback = array() ) use ( &$branding ) {
+				if ( 'updatebee_options' === $key ) {
+					return array(
+						'major_auto_updates' => 'on',
+					);
+				}
+				if ( Branding::OPTION_KEY === $key ) {
+					return $branding;
+				}
+
+				return $fallback;
+			}
+		);
+		MonkeyFunctions\when( 'update_site_option' )->alias(
+			static function ( $key, $value ) use ( &$branding ) {
+				if ( Branding::OPTION_KEY === $key && is_array( $value ) ) {
+					$branding = $value;
+				}
+
+				return true;
+			}
+		);
+		MonkeyFunctions\when( 'delete_site_option' )->justReturn( true );
 	}
 
 	/**

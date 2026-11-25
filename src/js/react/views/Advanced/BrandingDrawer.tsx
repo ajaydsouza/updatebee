@@ -26,6 +26,7 @@ type BrandingPayload = {
 	author?: string;
 	url?: string;
 	hideLicenseTab?: boolean;
+	reload?: boolean;
 };
 
 /**
@@ -45,24 +46,23 @@ const normalizeText = ( value: unknown ): string => {
  */
 const BrandingDrawer = ( props: BrandingDrawerProps ) => {
 	const { disabled, onSavingChange, onSnackbar } = props;
-	const defaults = updatebeeAdvanced.brandingDefaults;
+	const defaults = updatebeeAdvanced.brandingDefaults ?? {
+		name: '',
+		description: '',
+		author: '',
+		url: '',
+	};
 	const [ isOpen, setIsOpen ] = useState( false );
 	const [ isSaving, setIsSaving ] = useState( false );
-	const [ savedName, setSavedName ] = useState(
-		normalizeText( updatebeeAdvanced.brandingName )
+	const savedName = normalizeText( updatebeeAdvanced.brandingName );
+	const savedDescription = normalizeText(
+		updatebeeAdvanced.brandingDescription
 	);
-	const [ savedDescription, setSavedDescription ] = useState(
-		normalizeText( updatebeeAdvanced.brandingDescription )
-	);
-	const [ savedAuthor, setSavedAuthor ] = useState(
-		normalizeText( updatebeeAdvanced.brandingAuthor )
-	);
-	const [ savedUrl, setSavedUrl ] = useState(
-		normalizeText( updatebeeAdvanced.brandingUrl )
-	);
+	const savedAuthor = normalizeText( updatebeeAdvanced.brandingAuthor );
+	const savedUrl = normalizeText( updatebeeAdvanced.brandingUrl );
 	const canHideLicenseTab = Boolean( updatebeeAdvanced.canHideLicenseTab );
-	const [ savedHideLicenseTab, setSavedHideLicenseTab ] = useState(
-		Boolean( updatebeeAdvanced.brandingHideLicenseTab )
+	const savedHideLicenseTab = Boolean(
+		updatebeeAdvanced.brandingHideLicenseTab
 	);
 	const [ draftName, setDraftName ] = useState( savedName );
 	const [ draftDescription, setDraftDescription ] =
@@ -120,36 +120,15 @@ const BrandingDrawer = ( props: BrandingDrawerProps ) => {
 		onSavingChange( true );
 
 		sendCommand< BrandingPayload >( 'updatebee_save_branding_settings', {
-			nonce: updatebeeAdvanced.brandingSaveNonce,
+			nonce: updatebeeAdvanced.brandingSaveNonce ?? '',
 			name: draftName.trim(),
 			description: draftDescription.trim(),
 			author: draftAuthor.trim(),
 			url: draftUrl.trim(),
 			hide_license_tab: canHideLicenseTab && draftHideLicenseTab,
 		} )
-			.then( ( response ) => {
-				const payload = response.data.data;
-				const nextName = normalizeText( payload.name );
-				const nextDescription = normalizeText( payload.description );
-				const nextAuthor = normalizeText( payload.author );
-				const nextUrl = normalizeText( payload.url );
-				setSavedName( nextName );
-				setDraftName( nextName );
-				setSavedDescription( nextDescription );
-				setDraftDescription( nextDescription );
-				setSavedAuthor( nextAuthor );
-				setDraftAuthor( nextAuthor );
-				setSavedUrl( nextUrl );
-				setDraftUrl( nextUrl );
-				const nextHide = Boolean( payload.hideLicenseTab );
-				setSavedHideLicenseTab( nextHide );
-				setDraftHideLicenseTab( nextHide );
-				onSnackbar(
-					payload.message ||
-						__( 'Branding settings have been saved.', 'updatebee' ),
-					'success'
-				);
-				setIsOpen( false );
+			.then( () => {
+				window.location.reload();
 			} )
 			.catch( () => {
 				onSnackbar(

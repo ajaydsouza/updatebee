@@ -2761,7 +2761,7 @@ class Ajax {
 	}
 
 	/**
-	 * Save branding / white-label settings.
+	 * Save branding settings.
 	 */
 	public function save_branding_settings(): void {
 		if ( ! Functions::can_access_options() ) {
@@ -2769,6 +2769,14 @@ class Ajax {
 		}
 
 		check_ajax_referer( 'updatebee-save-branding-settings', 'nonce' );
+
+		if ( Branding::is_locked() ) {
+			wp_send_json_error(
+				array(
+					'message' => __( 'Branding settings are locked.', 'updatebee' ),
+				)
+			);
+		}
 
 		$to_save = Branding::sanitize_settings(
 			array(
@@ -2779,7 +2787,7 @@ class Ajax {
 			)
 		);
 
-		$stored_hide    = (bool) Options::get_options( 'branding_hide_license_tab' );
+		$stored_hide    = (bool) Branding::get_stored()['branding_hide_license_tab'];
 		$requested_hide = $stored_hide;
 		if ( isset( $_POST['hide_license_tab'] ) ) {
 			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Boolean is sanitized below.
@@ -2794,23 +2802,18 @@ class Ajax {
 			$stored_hide
 		);
 
-		$updated = Options::update_options( '', $to_save );
-		if ( null === $updated ) {
-			wp_send_json_error(
-				array(
-					'message' => __( 'Branding settings could not be saved.', 'updatebee' ),
-				)
-			);
-		}
+		Branding::update_stored( $to_save );
 
+		// Name, description, author, URL, and the License tab are printed with the page.
 		wp_send_json_success(
 			array(
 				'name'           => Branding::get_saved_name(),
 				'description'    => Branding::get_saved_description(),
 				'author'         => Branding::get_saved_author(),
 				'url'            => Branding::get_saved_url(),
-				'hideLicenseTab' => (bool) Options::get_options( 'branding_hide_license_tab' ),
+				'hideLicenseTab' => (bool) Branding::get_stored()['branding_hide_license_tab'],
 				'message'        => __( 'Branding settings have been saved.', 'updatebee' ),
+				'reload'         => true,
 			)
 		);
 	}

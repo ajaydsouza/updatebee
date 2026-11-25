@@ -511,19 +511,21 @@ const AdvancedMain = () => {
 					onSnackbar={ showSnackbar }
 				/>
 
-				<BrandingDrawer
-					disabled={
-						isSaving ||
-						isSavingUntested ||
-						isSavingKeywords ||
-						isSavingAdminBar ||
-						isSavingSlack ||
-						isResetting ||
-						isDeactivating
-					}
-					onSavingChange={ setIsSavingBranding }
-					onSnackbar={ showSnackbar }
-				/>
+				{ ! updatebeeAdvanced.brandingLocked && (
+					<BrandingDrawer
+						disabled={
+							isSaving ||
+							isSavingUntested ||
+							isSavingKeywords ||
+							isSavingAdminBar ||
+							isSavingSlack ||
+							isResetting ||
+							isDeactivating
+						}
+						onSavingChange={ setIsSavingBranding }
+						onSnackbar={ showSnackbar }
+					/>
+				) }
 
 				<AdvancedReset
 					disabled={ isBusy }
