@@ -17,6 +17,8 @@
  *   WordPress loads and no source map is needed. It writes languages/updatebee.pot, and compiles every committed
  *   languages/*.po into .mo (PHP strings) and .json (one per script, JavaScript strings). The generated files are
  *   git-ignored and only exist in the zip. Needs WP-CLI (set WP_CLI to its path if `wp` is not on PATH).
+ *   make-pot parses the built bundles before WP-CLI raises PHP's memory limit, so the task runs
+ *   WP-CLI as `php -d memory_limit=1G`. WP_CLI_PHP_ARGS is not applied by the wp phar.
  *
  * Tasks
  * - `grunt` or `grunt release` — production zip (Composer no-dev cycle + vendor autoload in archive).
@@ -174,8 +176,36 @@ module.exports = function ( grunt ) {
 			const root = path.resolve( __dirname );
 			const languages = path.join( root, 'languages' );
 			const wp = process.env.WP_CLI || 'wp';
+			// make-pot parses built JS before WordPress loads, so WP-CLI's later
+			// ini_set( 'memory_limit', -1 ) never runs. The wp phar also ignores
+			// WP_CLI_PHP_ARGS, so pass the limit to the PHP binary directly.
+			const quoteArg = ( value ) =>
+				`'${ String( value ).replace( /'/g, `'\\''` ) }'`;
+			const wpInvocation = () => {
+				const memoryArg = '-d memory_limit=1G';
+				const trimmed = wp.trim();
+
+				if ( /^php(?:\s|$)/.test( trimmed ) ) {
+					return trimmed.replace( /^php\b/, `php ${ memoryArg }` );
+				}
+
+				let binary = trimmed;
+				if ( ! binary.includes( '/' ) ) {
+					try {
+						binary = execSync( `command -v ${ quoteArg( trimmed ) }`, {
+							encoding: 'utf8',
+							stdio: [ 'ignore', 'pipe', 'ignore' ],
+						} ).trim();
+					} catch ( err ) {
+						binary = trimmed;
+					}
+				}
+
+				return `php ${ memoryArg } ${ quoteArg( binary ) }`;
+			};
+			const wpCommand = wpInvocation();
 			const run = ( args ) =>
-				execSync( `${ wp } --skip-plugins --skip-themes ${ args }`, {
+				execSync( `${ wpCommand } --skip-plugins --skip-themes ${ args }`, {
 					cwd: root,
 					stdio: 'inherit',
 				} );
@@ -200,7 +230,7 @@ module.exports = function ( grunt ) {
 
 			let hasWpCli = true;
 			try {
-				execSync( `${ wp } --version`, { stdio: 'ignore' } );
+				execSync( `${ wpCommand } --version`, { stdio: 'ignore' } );
 			} catch ( err ) {
 				hasWpCli = false;
 			}
