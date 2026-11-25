@@ -54,21 +54,15 @@ const BrandingDrawer = ( props: BrandingDrawerProps ) => {
 	};
 	const [ isOpen, setIsOpen ] = useState( false );
 	const [ isSaving, setIsSaving ] = useState( false );
-	const [ savedName, setSavedName ] = useState(
-		normalizeText( updatebeeAdvanced.brandingName )
+	const savedName = normalizeText( updatebeeAdvanced.brandingName );
+	const savedDescription = normalizeText(
+		updatebeeAdvanced.brandingDescription
 	);
-	const [ savedDescription, setSavedDescription ] = useState(
-		normalizeText( updatebeeAdvanced.brandingDescription )
-	);
-	const [ savedAuthor, setSavedAuthor ] = useState(
-		normalizeText( updatebeeAdvanced.brandingAuthor )
-	);
-	const [ savedUrl, setSavedUrl ] = useState(
-		normalizeText( updatebeeAdvanced.brandingUrl )
-	);
+	const savedAuthor = normalizeText( updatebeeAdvanced.brandingAuthor );
+	const savedUrl = normalizeText( updatebeeAdvanced.brandingUrl );
 	const canHideLicenseTab = Boolean( updatebeeAdvanced.canHideLicenseTab );
-	const [ savedHideLicenseTab, setSavedHideLicenseTab ] = useState(
-		Boolean( updatebeeAdvanced.brandingHideLicenseTab )
+	const savedHideLicenseTab = Boolean(
+		updatebeeAdvanced.brandingHideLicenseTab
 	);
 	const [ draftName, setDraftName ] = useState( savedName );
 	const [ draftDescription, setDraftDescription ] =
