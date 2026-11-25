@@ -3,7 +3,7 @@ Contributors: ronalfy
 Tags: updates, automatic updates, plugins, themes, cron
 Requires at least: 7.0
 Tested up to: 7.1
-Stable tag: 1.1.1
+Stable tag: 1.1.2
 Requires PHP: 8.2
 License: GPL v3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
