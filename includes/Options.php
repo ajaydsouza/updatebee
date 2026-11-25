@@ -97,11 +97,6 @@ class Options {
 			'fatal_error_detection'            => true,
 			'fatal_email_recipients'           => array(),
 			'fatal_notify_slack'               => false,
-			'branding_name'                    => '',
-			'branding_description'             => '',
-			'branding_author'                  => '',
-			'branding_url'                     => '',
-			'branding_hide_license_tab'        => false,
 			'admin_bar_enabled'                => false,
 			'admin_bar_show_admin'             => true,
 			'admin_bar_show_frontend'          => true,
@@ -264,6 +259,10 @@ class Options {
 	 */
 	public static function reset_options(): void {
 		self::update_options( '', self::get_defaults() );
+		// Branding lives in its own option. A locked license keeps that option.
+		if ( ! Branding::is_locked() ) {
+			Branding::reset_stored();
+		}
 		// Restore all hidden importers.
 		EasyUpdatesManager::clear_importer_hide();
 		CompanionAutoUpdate::clear_importer_hide();

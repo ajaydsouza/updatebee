@@ -9,6 +9,7 @@ namespace UpdateBee\Tests;
 
 use Brain\Monkey\Functions as MonkeyFunctions;
 use UpdateBee\Admin\Settings_Transfer;
+use UpdateBee\Branding;
 use UpdateBee\Options;
 
 /**
@@ -34,6 +35,7 @@ class SettingsTransferTest extends TestCase {
 	 */
 	protected function tearDown(): void {
 		Options::flush_cache();
+		Branding::flush_cache();
 		parent::tearDown();
 	}
 
@@ -96,6 +98,87 @@ class SettingsTransferTest extends TestCase {
 	}
 
 	/**
+	 * Unlocked export includes branding stored with the main options.
+	 */
+	public function test_export_includes_branding_when_unlocked(): void {
+		$this->stub_export_environment(
+			array(
+				'delay_updates' => 4,
+				'branding_name' => 'Stored Agency',
+			)
+		);
+
+		$document = Settings_Transfer::build_document();
+
+		$this->assertIsArray( $document['options'] );
+		$this->assertSame( 'Stored Agency', $document['options']['branding_name'] );
+	}
+
+	/**
+	 * A lock omits branding from the export document.
+	 */
+	public function test_export_omits_branding_when_locked(): void {
+		$this->stub_export_environment(
+			array(
+				'delay_updates' => 4,
+				'branding_name' => 'Stored Agency',
+			)
+		);
+		$this->force_branding_lock();
+
+		$document = Settings_Transfer::build_document();
+
+		$this->assertIsArray( $document['options'] );
+		$this->assertArrayNotHasKey( 'branding_name', $document['options'] );
+		$this->assertArrayNotHasKey( 'branding_hide_license_tab', $document['options'] );
+		$this->assertSame( 4, $document['options']['delay_updates'] );
+	}
+
+	/**
+	 * Unlocked import writes branding to its own option.
+	 */
+	public function test_import_updates_branding_when_unlocked(): void {
+		$state = $this->stub_split_store(
+			array(
+				'slack_webhook_url' => self::WEBHOOK,
+				'delay_updates'     => 1,
+			),
+			$this->empty_branding()
+		);
+
+		$result = Settings_Transfer::import_json( $this->branding_import_json( 'Imported Agency', 6 ) );
+
+		$this->assertTrue( $result );
+		$this->assertSame( 6, $state->main['delay_updates'] );
+		$this->assertSame( 'Imported Agency', $state->branding['branding_name'] );
+	}
+
+	/**
+	 * A lock ignores branding keys in an otherwise valid import.
+	 */
+	public function test_import_skips_branding_when_locked(): void {
+		$state = $this->stub_split_store(
+			array(
+				'slack_webhook_url' => self::WEBHOOK,
+				'delay_updates'     => 1,
+			),
+			array_merge(
+				$this->empty_branding(),
+				array(
+					'branding_name' => 'Stored Agency',
+				)
+			)
+		);
+		$this->force_branding_lock();
+
+		$result = Settings_Transfer::import_json( $this->branding_import_json( 'Imported Agency', 6 ) );
+
+		$this->assertTrue( $result );
+		$this->assertSame( 6, $state->main['delay_updates'] );
+		$this->assertSame( 'Stored Agency', $state->branding['branding_name'] );
+	}
+
+	/**
 	 * Malformed documents are rejected and do not write settings.
 	 *
 	 * @dataProvider rejected_document_provider
@@ -146,6 +229,115 @@ class SettingsTransferTest extends TestCase {
 		}
 
 		return '{"format":"updatebee-settings","version":1,"options":' . $nested . '}';
+	}
+
+	/**
+	 * Force an active license and the branding lock.
+	 */
+	private function force_branding_lock(): void {
+		Branding::set_license_active_override( true );
+		MonkeyFunctions\when( 'apply_filters' )->alias(
+			static function ( $hook, $value ) {
+				if ( 'updatebee_branding_locked' === $hook ) {
+					return true;
+				}
+
+				return $value;
+			}
+		);
+	}
+
+	/**
+	 * Empty saved branding.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function empty_branding(): array {
+		return array(
+			'branding_name'             => '',
+			'branding_description'      => '',
+			'branding_author'           => '',
+			'branding_url'              => '',
+			'branding_hide_license_tab' => false,
+		);
+	}
+
+	/**
+	 * Settings JSON that changes the delay and the branded name.
+	 *
+	 * @param string $name  Branded name.
+	 * @param int    $delay Delay in days.
+	 * @return string JSON document.
+	 */
+	private function branding_import_json( string $name, int $delay ): string {
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.json_encode_json_encode -- Unit tests run without WordPress loaded.
+		return (string) json_encode(
+			array(
+				'format'  => 'updatebee-settings',
+				'version' => 1,
+				'options' => array(
+					'delay_updates' => $delay,
+					'branding_name' => $name,
+				),
+			)
+		);
+	}
+
+	/**
+	 * Stub the main options and the branding option as separate stores.
+	 *
+	 * @param array<string, mixed> $main     Stored main options.
+	 * @param array<string, mixed> $branding Stored branding.
+	 * @return \stdClass State with main and branding properties.
+	 */
+	private function stub_split_store( array $main, array $branding ): \stdClass {
+		$state           = new \stdClass();
+		$state->main     = $main;
+		$state->branding = $branding;
+
+		MonkeyFunctions\when( 'apply_filters' )->returnArg( 2 );
+		MonkeyFunctions\when( 'wp_parse_args' )->alias(
+			static function ( $args, $defaults ) {
+				if ( ! is_array( $args ) ) {
+					$args = array();
+				}
+				if ( ! is_array( $defaults ) ) {
+					$defaults = array();
+				}
+				return array_merge( $defaults, $args );
+			}
+		);
+		MonkeyFunctions\when( 'sanitize_text_field' )->alias(
+			static function ( $value ) {
+				return is_string( $value ) ? trim( $value ) : '';
+			}
+		);
+		MonkeyFunctions\when( 'get_site_option' )->alias(
+			static function ( $key, $fallback = array() ) use ( $state ) {
+				if ( 'updatebee_options' === $key ) {
+					return $state->main;
+				}
+				if ( Branding::OPTION_KEY === $key ) {
+					return $state->branding;
+				}
+
+				return $fallback;
+			}
+		);
+		MonkeyFunctions\when( 'update_site_option' )->alias(
+			static function ( $key, $value ) use ( $state ) {
+				if ( 'updatebee_options' === $key && is_array( $value ) ) {
+					$state->main = $value;
+				}
+				if ( Branding::OPTION_KEY === $key && is_array( $value ) ) {
+					$state->branding = $value;
+				}
+
+				return true;
+			}
+		);
+
+		return $state;
 	}
 
 	/**

@@ -135,14 +135,15 @@ interface UpdateBeeAdvanced {
 	adminBarShowAdmin: boolean;
 	adminBarShowFrontend: boolean;
 	pluginName: string;
-	brandingSaveNonce: string;
-	brandingName: string;
-	brandingDescription: string;
-	brandingAuthor: string;
-	brandingUrl: string;
-	brandingHideLicenseTab: boolean;
-	canHideLicenseTab: boolean;
-	brandingDefaults: UpdateBeeBrandingDefaults;
+	brandingLocked?: boolean;
+	brandingSaveNonce?: string;
+	brandingName?: string;
+	brandingDescription?: string;
+	brandingAuthor?: string;
+	brandingUrl?: string;
+	brandingHideLicenseTab?: boolean;
+	canHideLicenseTab?: boolean;
+	brandingDefaults?: UpdateBeeBrandingDefaults;
 }
 
 interface UpdateBeeBrandingDefaults {

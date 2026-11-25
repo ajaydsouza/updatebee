@@ -45,7 +45,12 @@ const normalizeText = ( value: unknown ): string => {
  */
 const BrandingDrawer = ( props: BrandingDrawerProps ) => {
 	const { disabled, onSavingChange, onSnackbar } = props;
-	const defaults = updatebeeAdvanced.brandingDefaults;
+	const defaults = updatebeeAdvanced.brandingDefaults ?? {
+		name: '',
+		description: '',
+		author: '',
+		url: '',
+	};
 	const [ isOpen, setIsOpen ] = useState( false );
 	const [ isSaving, setIsSaving ] = useState( false );
 	const [ savedName, setSavedName ] = useState(
@@ -120,7 +125,7 @@ const BrandingDrawer = ( props: BrandingDrawerProps ) => {
 		onSavingChange( true );
 
 		sendCommand< BrandingPayload >( 'updatebee_save_branding_settings', {
-			nonce: updatebeeAdvanced.brandingSaveNonce,
+			nonce: updatebeeAdvanced.brandingSaveNonce ?? '',
 			name: draftName.trim(),
 			description: draftDescription.trim(),
 			author: draftAuthor.trim(),

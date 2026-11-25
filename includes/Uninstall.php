@@ -38,6 +38,10 @@ class Uninstall {
 	 */
 	public static function clear_data(): void {
 		self::delete_site_options();
+		// A locked license keeps branding so an inactive license can restore it later.
+		if ( ! Branding::is_locked() ) {
+			Branding::delete_stored();
+		}
 		self::delete_tables();
 		self::clear_cron();
 		self::delete_transients();

@@ -12,6 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+use UpdateBee\Branding;
 use UpdateBee\Cron\Schedules;
 use UpdateBee\Cron\Updates_Cron;
 use UpdateBee\Emails\Email_Failures;
@@ -339,6 +340,15 @@ class Settings_Transfer {
 					continue;
 				}
 
+				if ( Branding::is_branding_key( $key ) ) {
+					if ( Branding::is_locked() ) {
+						continue;
+					}
+
+					Branding::update_stored( array( $key => $value ) );
+					continue;
+				}
+
 				$updated = Options::update_options( $key, array( $key => $value ) );
 				if ( null === $updated ) {
 					return self::save_failed();
@@ -401,7 +411,12 @@ class Settings_Transfer {
 			return $exported;
 		}
 
+		$locked = Branding::is_locked();
 		foreach ( self::option_types() as $key => $type ) {
+			if ( Branding::is_branding_key( $key ) ) {
+				continue;
+			}
+
 			if ( ! array_key_exists( $key, $current ) ) {
 				continue;
 			}
@@ -412,6 +427,22 @@ class Settings_Transfer {
 			}
 
 			$exported[ $key ] = $parsed;
+		}
+
+		if ( ! $locked ) {
+			foreach ( Branding::get_stored() as $key => $value ) {
+				$type = self::option_types()[ $key ] ?? '';
+				if ( '' === $type ) {
+					continue;
+				}
+
+				$parsed = self::parse_option_value( $key, $value, $type );
+				if ( is_wp_error( $parsed ) ) {
+					continue;
+				}
+
+				$exported[ $key ] = $parsed;
+			}
 		}
 
 		unset( $exported[ self::EXCLUDED_OPTION ] );
