@@ -26,6 +26,7 @@ type BrandingPayload = {
 	author?: string;
 	url?: string;
 	hideLicenseTab?: boolean;
+	reload?: boolean;
 };
 
 /**
@@ -132,29 +133,8 @@ const BrandingDrawer = ( props: BrandingDrawerProps ) => {
 			url: draftUrl.trim(),
 			hide_license_tab: canHideLicenseTab && draftHideLicenseTab,
 		} )
-			.then( ( response ) => {
-				const payload = response.data.data;
-				const nextName = normalizeText( payload.name );
-				const nextDescription = normalizeText( payload.description );
-				const nextAuthor = normalizeText( payload.author );
-				const nextUrl = normalizeText( payload.url );
-				setSavedName( nextName );
-				setDraftName( nextName );
-				setSavedDescription( nextDescription );
-				setDraftDescription( nextDescription );
-				setSavedAuthor( nextAuthor );
-				setDraftAuthor( nextAuthor );
-				setSavedUrl( nextUrl );
-				setDraftUrl( nextUrl );
-				const nextHide = Boolean( payload.hideLicenseTab );
-				setSavedHideLicenseTab( nextHide );
-				setDraftHideLicenseTab( nextHide );
-				onSnackbar(
-					payload.message ||
-						__( 'Branding settings have been saved.', 'updatebee' ),
-					'success'
-				);
-				setIsOpen( false );
+			.then( () => {
+				window.location.reload();
 			} )
 			.catch( () => {
 				onSnackbar(

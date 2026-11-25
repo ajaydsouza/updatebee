@@ -2804,6 +2804,7 @@ class Ajax {
 
 		Branding::update_stored( $to_save );
 
+		// Name, description, author, URL, and the License tab are printed with the page.
 		wp_send_json_success(
 			array(
 				'name'           => Branding::get_saved_name(),
@@ -2812,6 +2813,7 @@ class Ajax {
 				'url'            => Branding::get_saved_url(),
 				'hideLicenseTab' => (bool) Branding::get_stored()['branding_hide_license_tab'],
 				'message'        => __( 'Branding settings have been saved.', 'updatebee' ),
+				'reload'         => true,
 			)
 		);
 	}
