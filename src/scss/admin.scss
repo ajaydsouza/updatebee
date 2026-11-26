@@ -432,3 +432,6 @@ h3.updatebee-panel-heading {
 	line-height: 1.25;
 	letter-spacing: -0.02em;
 }
+.updatebee-notices-slot:not(:empty) {
+	margin: 8px 0 16px;
+}

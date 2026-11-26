@@ -7,7 +7,7 @@ import { __ } from '@wordpress/i18n';
 import { useFormContext } from 'react-hook-form';
 import sendCommand from '../../../utils/SendCommand';
 import SaveBar from '../../components/SaveBar';
-import Snackbar from '../../components/Snackbar';
+import InlineNotice from '../../components/InlineNotice';
 import {
 	formToOptions,
 	optionsToForm,
@@ -135,7 +135,7 @@ const DashboardFooter = () => {
 
 	return (
 		<Fill name="updatebeeFooter">
-			<Snackbar
+			<InlineNotice
 				isVisible={ snackbar.isVisible }
 				message={ snackbar.message }
 				type={ snackbar.type }

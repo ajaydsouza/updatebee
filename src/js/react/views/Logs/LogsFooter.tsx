@@ -3,7 +3,7 @@
  */
 import { Fill } from '@wordpress/components';
 import { DataViews } from '@wordpress/dataviews';
-import Snackbar from '../../components/Snackbar';
+import InlineNotice from '../../components/InlineNotice';
 
 export type SnackbarType = 'success' | 'error' | 'warning' | 'info';
 
@@ -24,7 +24,7 @@ const LogsFooter = ( props: LogsFooterProps ) => {
 	return (
 		<Fill name="updatebeeFooter">
 			<div className="updatebee-logs-footer">
-				<Snackbar
+				<InlineNotice
 					isVisible={ snackbar.isVisible }
 					message={ snackbar.message }
 					type={ snackbar.type }

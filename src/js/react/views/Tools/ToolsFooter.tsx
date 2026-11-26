@@ -2,7 +2,7 @@
  * Tools footer snackbar.
  */
 import { Fill } from '@wordpress/components';
-import Snackbar from '../../components/Snackbar';
+import InlineNotice from '../../components/InlineNotice';
 
 export type SnackbarType = 'success' | 'error' | 'warning' | 'info';
 
@@ -23,7 +23,7 @@ const ToolsFooter = ( props: ToolsFooterProps ) => {
 	return (
 		<Fill name="updatebeeFooter">
 			<div className="updatebee-tools-footer">
-				<Snackbar
+				<InlineNotice
 					isVisible={ snackbar.isVisible }
 					message={ snackbar.message }
 					type={ snackbar.type }

@@ -7,7 +7,7 @@ import type {
 	UseFormGetValues,
 	UseFormSetValue,
 } from 'react-hook-form';
-import Snackbar from '../../components/Snackbar';
+import InlineNotice from '../../components/InlineNotice';
 import BulkActions, { type Action } from './bulk-actions';
 import type { PluginItem, PluginsFormValues } from './PluginsMain';
 
@@ -45,7 +45,7 @@ const PluginsFooter = ( props: PluginsFooterProps ) => {
 	return (
 		<Fill name="updatebeeFooter">
 			<div className="updatebee-plugins-footer">
-				<Snackbar
+				<InlineNotice
 					isVisible={ snackbar.isVisible }
 					message={ snackbar.message }
 					type={ snackbar.type }

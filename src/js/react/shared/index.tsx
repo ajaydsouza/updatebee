@@ -6,6 +6,7 @@ import { createPortal, createRoot, StrictMode } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import type { ReactNode } from 'react';
 import ErrorBoundary from '../components/ErrorBoundary';
+import { NOTICES_SLOT } from '../components/InlineNotice';
 
 /**
  * Wrap a view so render errors stay inside the visible admin container.
@@ -58,11 +59,22 @@ export const commonFill = ( domId: string, children: ReactNode ): void => {
 			rootContainer.style.display = 'none';
 			commonParent.appendChild( rootContainer );
 
+			const noticesContainer = document.createElement( 'div' );
+			noticesContainer.className = 'updatebee-notices-slot';
+			container.parentElement?.insertBefore(
+				noticesContainer,
+				container
+			);
+
 			const root = createRoot( rootContainer );
 			root.render(
 				<StrictMode>
 					<SlotFillProvider>
 						{ createPortal( view, container ) }
+						{ createPortal(
+							<Slot name={ NOTICES_SLOT } bubblesVirtually />,
+							noticesContainer
+						) }
 						{ createPortal(
 							<Slot
 								name="updatebeeFooter"

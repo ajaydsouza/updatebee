@@ -3,7 +3,7 @@
  */
 import { Fill } from '@wordpress/components';
 import { DataViews } from '@wordpress/dataviews';
-import Snackbar from '../../components/Snackbar';
+import InlineNotice from '../../components/InlineNotice';
 import type { SnackbarState } from '../Tools/ToolsFooter';
 
 type CronEventsFooterProps = {
@@ -17,7 +17,7 @@ const CronEventsFooter = ( props: CronEventsFooterProps ) => {
 	return (
 		<Fill name="updatebeeFooter">
 			<div className="updatebee-cron-footer">
-				<Snackbar
+				<InlineNotice
 					isVisible={ snackbar.isVisible }
 					message={ snackbar.message }
 					type={ snackbar.type }
