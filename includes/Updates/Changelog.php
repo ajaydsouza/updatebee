@@ -87,13 +87,15 @@ class Changelog {
 	}
 
 	/**
-	 * Whether a resolved context has a changelog source that does not need the network.
+	 * Whether a changelog row can be offered without contacting the network.
+	 *
+	 * A directory id, a stored section, or a local file is enough. A third-party slug is also enough: the update record can answer the info API later, and this check does not call it.
 	 *
 	 * @param array{directory: bool, slug: string, stored: string, package_dir: string, kind: string} $context Asset context.
 	 * @return bool
 	 */
 	private static function is_available( array $context ): bool {
-		if ( $context['directory'] || '' !== $context['stored'] ) {
+		if ( $context['directory'] || '' !== $context['slug'] || '' !== $context['stored'] ) {
 			return true;
 		}
 
@@ -357,7 +359,7 @@ class Changelog {
 	}
 
 	/**
-	 * Turn one readme Changelog section into headings and lists.
+	 * Turn one readme Changelog section into headings, lists, and paragraphs.
 	 *
 	 * @param string $section Section body.
 	 * @return string
@@ -374,26 +376,65 @@ class Changelog {
 
 		$html    = '';
 		$in_list = false;
+		$li_open = false;
 		foreach ( $lines as $line ) {
-			$line = trim( (string) $line );
-			if ( preg_match( '/^=\s*(.+?)\s*=$/', $line, $heading ) ) {
-				if ( $in_list ) {
-					$html   .= '</ul>';
-					$in_list = false;
-				}
-				$html .= '<h4>' . esc_html( $heading[1] ) . '</h4>';
+			$raw     = (string) $line;
+			$trimmed = trim( $raw );
+			if ( '' === $trimmed ) {
+				$html    = self::close_readme_list( $html, $in_list, $li_open );
+				$in_list = false;
+				$li_open = false;
 				continue;
 			}
 
-			if ( preg_match( '/^[\*\-]\s+(.+)$/', $line, $item ) ) {
+			if ( preg_match( '/^=\s*(.+?)\s*=$/', $trimmed, $heading ) ) {
+				$html    = self::close_readme_list( $html, $in_list, $li_open );
+				$in_list = false;
+				$li_open = false;
+				$html   .= '<h4>' . esc_html( $heading[1] ) . '</h4>';
+				continue;
+			}
+
+			if ( preg_match( '/^[\*\-]\s+(.+)$/', $trimmed, $item ) ) {
 				if ( ! $in_list ) {
 					$html   .= '<ul>';
 					$in_list = true;
 				}
-				$html .= '<li>' . esc_html( $item[1] ) . '</li>';
+				if ( $li_open ) {
+					$html .= '</li>';
+				}
+				$html   .= '<li>' . esc_html( $item[1] );
+				$li_open = true;
+				continue;
 			}
+
+			// An indented line continues the open list item. Other text is its own paragraph.
+			if ( $li_open && preg_match( '/^\s+\S/', $raw ) ) {
+				$html .= ' ' . esc_html( $trimmed );
+				continue;
+			}
+
+			$html    = self::close_readme_list( $html, $in_list, $li_open );
+			$in_list = false;
+			$li_open = false;
+			$html   .= '<p>' . esc_html( $trimmed ) . '</p>';
 		}
 
+		return self::close_readme_list( $html, $in_list, $li_open );
+	}
+
+	/**
+	 * Close an open readme list item and list.
+	 *
+	 * @param string $html    HTML built so far.
+	 * @param bool   $in_list Whether a ul is open.
+	 * @param bool   $li_open Whether an li is open.
+	 * @return string
+	 */
+	private static function close_readme_list( string $html, bool $in_list, bool $li_open ): string {
+		if ( $li_open ) {
+			$html .= '</li>';
+		}
 		if ( $in_list ) {
 			$html .= '</ul>';
 		}
@@ -472,27 +513,43 @@ class Changelog {
 	 * @return bool
 	 */
 	private static function is_wordpress_org_id( string $directory_id ): bool {
-		return '' !== $directory_id && (bool) preg_match( '/w\.org/i', $directory_id );
+		return '' !== self::slug_from_directory_id( $directory_id );
 	}
 
 	/**
 	 * Whether a theme URL points at the WordPress.org theme directory.
 	 *
+	 * The host must be wordpress.org. A lookalike host or a URL that only contains that text does not count.
+	 *
 	 * @param string $url Theme URL.
 	 * @return bool
 	 */
 	private static function is_wordpress_org_theme_url( string $url ): bool {
-		return (bool) preg_match( '#WordPress\.org/themes#i', $url );
+		$parts = wp_parse_url( $url );
+		if ( ! is_array( $parts ) || isset( $parts['user'] ) || isset( $parts['pass'] ) ) {
+			return false;
+		}
+
+		$scheme = isset( $parts['scheme'] ) ? strtolower( (string) $parts['scheme'] ) : '';
+		$host   = isset( $parts['host'] ) ? strtolower( (string) $parts['host'] ) : '';
+		$path   = isset( $parts['path'] ) ? (string) $parts['path'] : '';
+		if ( ! in_array( $scheme, array( 'http', 'https' ), true ) || 'wordpress.org' !== $host ) {
+			return false;
+		}
+
+		return (bool) preg_match( '#^/themes(?:/|$)#', $path );
 	}
 
 	/**
 	 * Slug embedded in a WordPress.org update id.
 	 *
+	 * The id must be the whole value w.org/plugins/{slug} or w.org/themes/{slug}.
+	 *
 	 * @param string $directory_id Update id, such as w.org/plugins/akismet.
 	 * @return string
 	 */
 	private static function slug_from_directory_id( string $directory_id ): string {
-		if ( ! preg_match( '#w\.org/(?:plugins|themes)/([a-z0-9][a-z0-9-]*)#i', $directory_id, $match ) ) {
+		if ( ! preg_match( '/^w\.org\/(?:plugins|themes)\/([a-z0-9][a-z0-9-]*)$/i', $directory_id, $match ) ) {
 			return '';
 		}
 

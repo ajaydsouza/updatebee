@@ -50,6 +50,7 @@ class ChangelogTest extends TestCase {
 				return strip_tags( (string) $html, '<a><p><br><ul><ol><li><h2><h3><h4><strong><em><code><pre><blockquote>' );
 			}
 		);
+		$this->stub_url_parsing();
 	}
 
 	/**
@@ -73,6 +74,20 @@ class ChangelogTest extends TestCase {
 
 		$this->assertSame(
 			'<h4>1.2.3</h4><ul><li>Fixed the modal</li><li>Added a link</li></ul><h4>1.2.2</h4><ul><li>Earlier fix</li></ul>',
+			$html
+		);
+	}
+
+	/**
+	 * Paragraph text is kept, and an indented line stays with the list item above it.
+	 */
+	public function test_readme_paragraphs_and_list_continuation_are_kept(): void {
+		$html = Changelog::html_from_readme(
+			"== Changelog ==\nSecurity release.\n= 1.2.3 =\n* Fixed the modal\n  when it is wide\nPlease update.\n"
+		);
+
+		$this->assertSame(
+			'<p>Security release.</p><h4>1.2.3</h4><ul><li>Fixed the modal when it is wide</li></ul><p>Please update.</p>',
 			$html
 		);
 	}
@@ -248,6 +263,55 @@ class ChangelogTest extends TestCase {
 
 		$this->assertStringContainsString( 'Vendor changelog', $html );
 		$this->assertStringNotContainsString( 'Directory changelog', $html );
+	}
+
+	/**
+	 * A third-party slug can offer a changelog before any section or local file exists.
+	 */
+	public function test_third_party_slug_is_available_without_a_stored_section(): void {
+		MonkeyFunctions\expect( 'plugins_api' )->never();
+		$this->stub_plugins(
+			array(
+				'vendor/vendor.php' => (object) array(
+					'slug' => 'vendor-pro',
+					'id'   => 'example.com/vendor-pro',
+				),
+			)
+		);
+
+		$this->assertTrue( Changelog::plugin_is_available( 'vendor/vendor.php' ) );
+	}
+
+	/**
+	 * A lookalike update id is not a WordPress.org directory id.
+	 */
+	public function test_directory_id_must_match_the_whole_w_org_path(): void {
+		MonkeyFunctions\expect( 'plugins_api' )->never();
+		$this->stub_plugins(
+			array(
+				'vendor/vendor.php' => (object) array(
+					'id' => 'notw.org/plugins/akismet',
+				),
+			)
+		);
+
+		$this->assertFalse( Changelog::plugin_is_available( 'vendor/vendor.php' ) );
+	}
+
+	/**
+	 * A theme URL counts only when the host is wordpress.org.
+	 */
+	public function test_theme_url_requires_the_wordpress_org_host(): void {
+		MonkeyFunctions\expect( 'themes_api' )->never();
+		$this->stub_themes(
+			array(
+				'lookalike' => array(
+					'url' => 'https://notwordpress.org/themes/lookalike/',
+				),
+			)
+		);
+
+		$this->assertFalse( Changelog::theme_is_available( 'lookalike' ) );
 	}
 
 	/**
