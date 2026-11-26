@@ -34,6 +34,7 @@ import sendCommand from '../../../utils/SendCommand';
 import AssetUpdatePanel, {
 	type AssetUpdate,
 } from '../../components/AssetUpdatePanel';
+import ChangelogModal from '../../components/ChangelogModal';
 import RollbackModal from '../../components/RollbackModal';
 import { ErrorFallback } from '../../components/ErrorBoundary';
 import ItemSettingsDrawer from '../../components/ItemSettingsDrawer';
@@ -81,6 +82,8 @@ export type ThemeItem = {
 	Update: AssetUpdate | null;
 	CanRollback?: boolean;
 	RollbackNonce?: string;
+	HasChangelog?: boolean;
+	ChangelogNonce?: string;
 };
 
 type AutoUpdatesStatus = 'enabled' | 'custom' | 'disabled' | 'blocked';
@@ -322,6 +325,9 @@ const ThemesList = ( props: {
 		type: 'success',
 	} );
 	const [ rollbackTheme, setRollbackTheme ] = useState< ThemeItem | null >(
+		null
+	);
+	const [ changelogTheme, setChangelogTheme ] = useState< ThemeItem | null >(
 		null
 	);
 	const notice = getStatusNotice( autoUpdatesStatus );
@@ -1207,6 +1213,35 @@ const ThemesList = ( props: {
 													</span>
 												</td>
 											</tr>
+											{ theme.HasChangelog &&
+												theme.ChangelogNonce && (
+													<tr>
+														<th scope="row">
+															{ __(
+																'Changelog:',
+																'updatebee'
+															) }
+														</th>
+														<td>
+															<Button
+																variant="link"
+																disabled={
+																	isBusy
+																}
+																onClick={ () => {
+																	setChangelogTheme(
+																		theme
+																	);
+																} }
+															>
+																{ __(
+																	'View changelog',
+																	'updatebee'
+																) }
+															</Button>
+														</td>
+													</tr>
+												) }
 											{ theme.ParentName && (
 												<tr>
 													<th scope="row">
@@ -1543,6 +1578,21 @@ const ThemesList = ( props: {
 					} ) }
 				</div>
 			</div>
+			<ChangelogModal
+				target={
+					changelogTheme
+						? {
+								kind: 'theme',
+								id: changelogTheme.Stylesheet,
+								name: changelogTheme.Name,
+								nonce: changelogTheme.ChangelogNonce || '',
+							}
+						: null
+				}
+				onClose={ () => {
+					setChangelogTheme( null );
+				} }
+			/>
 			<RollbackModal
 				target={
 					rollbackTheme
