@@ -27,6 +27,7 @@ use UpdateBee\Updater\FluentLicensing;
 use UpdateBee\Updater\License_Details;
 use UpdateBee\Updater\License_Key;
 use UpdateBee\Updates\Automatic_Updater_Override;
+use UpdateBee\Updates\Changelog;
 use UpdateBee\Updates\Fatal_Detection;
 use UpdateBee\Updates\Force_Update_Report;
 use UpdateBee\Updates\Version_Controlled;
@@ -70,6 +71,7 @@ class Ajax {
 		add_action( 'wp_ajax_updatebee_update_plugin', array( $this, 'update_plugin' ) );
 		add_action( 'wp_ajax_updatebee_plugin_rollback_versions', array( $this, 'plugin_rollback_versions' ) );
 		add_action( 'wp_ajax_updatebee_rollback_plugin', array( $this, 'rollback_plugin' ) );
+		add_action( 'wp_ajax_updatebee_plugin_changelog', array( $this, 'plugin_changelog' ) );
 
 		// Theme Ajax actions.
 		add_action( 'wp_ajax_updatebee_retrieve_themes', array( $this, 'retrieve_themes' ) );
@@ -82,6 +84,7 @@ class Ajax {
 		add_action( 'wp_ajax_updatebee_update_theme', array( $this, 'update_theme' ) );
 		add_action( 'wp_ajax_updatebee_theme_rollback_versions', array( $this, 'theme_rollback_versions' ) );
 		add_action( 'wp_ajax_updatebee_rollback_theme', array( $this, 'rollback_theme' ) );
+		add_action( 'wp_ajax_updatebee_theme_changelog', array( $this, 'theme_changelog' ) );
 
 		// Translation Ajax actions.
 		add_action( 'wp_ajax_updatebee_retrieve_translations', array( $this, 'retrieve_translations' ) );
@@ -400,18 +403,21 @@ class Ajax {
 				}
 			}
 
-			$plugin_data                  = $this->copy_update_display_fields( $plugin_data, $extra );
-			$plugin_data['Update']        = Available_Updates::plugin_offer( $plugin_file );
-			$plugin_slug                  = isset( $plugin_data['slug'] ) && is_string( $plugin_data['slug'] ) ? $plugin_data['slug'] : '';
-			$plugin_directory_id          = isset( $plugin_data['id'] ) && is_string( $plugin_data['id'] ) ? $plugin_data['id'] : '';
-			$can_rollback                 = current_user_can( 'update_plugins' ) && Rollback::plugin_is_eligible(
+			$plugin_data                   = $this->copy_update_display_fields( $plugin_data, $extra );
+			$plugin_data['Update']         = Available_Updates::plugin_offer( $plugin_file );
+			$plugin_slug                   = isset( $plugin_data['slug'] ) && is_string( $plugin_data['slug'] ) ? $plugin_data['slug'] : '';
+			$plugin_directory_id           = isset( $plugin_data['id'] ) && is_string( $plugin_data['id'] ) ? $plugin_data['id'] : '';
+			$can_rollback                  = current_user_can( 'update_plugins' ) && Rollback::plugin_is_eligible(
 				$plugin_file,
 				! empty( $plugin_data['VersionControlled'] ),
 				$plugin_slug,
 				$plugin_directory_id
 			);
-			$plugin_data['CanRollback']   = $can_rollback;
-			$plugin_data['RollbackNonce'] = $can_rollback ? wp_create_nonce( 'updatebee-plugin-rollback-' . $plugin_file ) : '';
+			$has_changelog                 = Changelog::plugin_is_available( $plugin_file );
+			$plugin_data['CanRollback']    = $can_rollback;
+			$plugin_data['RollbackNonce']  = $can_rollback ? wp_create_nonce( 'updatebee-plugin-rollback-' . $plugin_file ) : '';
+			$plugin_data['HasChangelog']   = $has_changelog;
+			$plugin_data['ChangelogNonce'] = $has_changelog ? wp_create_nonce( 'updatebee-plugin-changelog-' . $plugin_file ) : '';
 
 			$slug = $plugin_data['slug'] ?? '';
 			if ( is_string( $slug ) && '' !== $slug ) {
@@ -763,15 +769,18 @@ class Ajax {
 			$theme_directory_id   = isset( $theme_data['id'] ) && is_string( $theme_data['id'] ) ? $theme_data['id'] : '';
 			$theme_directory_url  = isset( $theme_data['url'] ) && is_string( $theme_data['url'] ) ? $theme_data['url'] : '';
 			// Rollback needs the update_themes capability and a theme that can be fetched from the directory.
-			$can_rollback                = current_user_can( 'update_themes' ) && Rollback::theme_is_eligible(
+			$can_rollback                 = current_user_can( 'update_themes' ) && Rollback::theme_is_eligible(
 				$stylesheet,
 				! empty( $theme_data['VersionControlled'] ),
 				$theme_directory_id,
 				$theme_directory_url
 			);
-			$theme_data['CanRollback']   = $can_rollback;
-			$theme_data['RollbackNonce'] = $can_rollback ? wp_create_nonce( 'updatebee-theme-rollback-' . $stylesheet ) : '';
-			$all_themes[ $stylesheet ]   = $theme_data;
+			$has_changelog                = Changelog::theme_is_available( $stylesheet );
+			$theme_data['CanRollback']    = $can_rollback;
+			$theme_data['RollbackNonce']  = $can_rollback ? wp_create_nonce( 'updatebee-theme-rollback-' . $stylesheet ) : '';
+			$theme_data['HasChangelog']   = $has_changelog;
+			$theme_data['ChangelogNonce'] = $has_changelog ? wp_create_nonce( 'updatebee-theme-changelog-' . $stylesheet ) : '';
+			$all_themes[ $stylesheet ]    = $theme_data;
 		}
 
 		$options = Options::get_options();
@@ -1953,6 +1962,41 @@ class Ajax {
 	}
 
 	/**
+	 * Changelog HTML for one installed plugin.
+	 */
+	public function plugin_changelog(): void {
+		if ( ! Functions::can_access_options() ) {
+			wp_send_json_error();
+		}
+
+		$file = $this->get_posted_plugin_file();
+		check_ajax_referer( 'updatebee-plugin-changelog-' . $file, 'nonce' );
+
+		if ( ! Functions::plugin_file_exists( $file ) ) {
+			wp_send_json_error(
+				array(
+					'message' => __( 'Changelog is not available for this plugin.', 'updatebee' ),
+				)
+			);
+		}
+
+		$html = Changelog::plugin_html( $file );
+		if ( '' === $html ) {
+			wp_send_json_error(
+				array(
+					'message' => __( 'No changelog is available for this plugin.', 'updatebee' ),
+				)
+			);
+		}
+
+		wp_send_json_success(
+			array(
+				'html' => $html,
+			)
+		);
+	}
+
+	/**
 	 * Older WordPress.org releases for one theme.
 	 */
 	public function theme_rollback_versions(): void {
@@ -2055,6 +2099,41 @@ class Ajax {
 				'version' => Functions::get_theme_current_version( $stylesheet ),
 				'update'  => Available_Updates::theme_offer( $stylesheet ),
 				'message' => __( 'Theme rolled back.', 'updatebee' ),
+			)
+		);
+	}
+
+	/**
+	 * Changelog HTML for one installed theme.
+	 */
+	public function theme_changelog(): void {
+		if ( ! Functions::can_access_options() ) {
+			wp_send_json_error();
+		}
+
+		$stylesheet = $this->get_posted_theme_stylesheet();
+		check_ajax_referer( 'updatebee-theme-changelog-' . $stylesheet, 'nonce' );
+
+		if ( ! Functions::theme_stylesheet_exists( $stylesheet ) ) {
+			wp_send_json_error(
+				array(
+					'message' => __( 'Changelog is not available for this theme.', 'updatebee' ),
+				)
+			);
+		}
+
+		$html = Changelog::theme_html( $stylesheet );
+		if ( '' === $html ) {
+			wp_send_json_error(
+				array(
+					'message' => __( 'No changelog is available for this theme.', 'updatebee' ),
+				)
+			);
+		}
+
+		wp_send_json_success(
+			array(
+				'html' => $html,
 			)
 		);
 	}

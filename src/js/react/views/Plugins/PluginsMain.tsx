@@ -34,6 +34,7 @@ import sendCommand from '../../../utils/SendCommand';
 import AssetUpdatePanel, {
 	type AssetUpdate,
 } from '../../components/AssetUpdatePanel';
+import ChangelogModal from '../../components/ChangelogModal';
 import RollbackModal from '../../components/RollbackModal';
 import { ErrorFallback } from '../../components/ErrorBoundary';
 import ItemSettingsDrawer from '../../components/ItemSettingsDrawer';
@@ -84,6 +85,8 @@ export type PluginItem = {
 	Update: AssetUpdate | null;
 	CanRollback?: boolean;
 	RollbackNonce?: string;
+	HasChangelog?: boolean;
+	ChangelogNonce?: string;
 };
 
 type AutoUpdatesStatus = 'enabled' | 'custom' | 'disabled' | 'blocked';
@@ -328,6 +331,8 @@ const PluginsList = ( props: {
 	const [ rollbackPlugin, setRollbackPlugin ] = useState< PluginItem | null >(
 		null
 	);
+	const [ changelogPlugin, setChangelogPlugin ] =
+		useState< PluginItem | null >( null );
 	const notice = getStatusNotice( autoUpdatesStatus );
 	const autoUpdatesAvailable =
 		'disabled' !== autoUpdatesStatus && 'blocked' !== autoUpdatesStatus;
@@ -1224,6 +1229,35 @@ const PluginsList = ( props: {
 													</span>
 												</td>
 											</tr>
+											{ plugin.HasChangelog &&
+												plugin.ChangelogNonce && (
+													<tr>
+														<th scope="row">
+															{ __(
+																'Changelog:',
+																'updatebee'
+															) }
+														</th>
+														<td>
+															<Button
+																variant="link"
+																disabled={
+																	isBusy
+																}
+																onClick={ () => {
+																	setChangelogPlugin(
+																		plugin
+																	);
+																} }
+															>
+																{ __(
+																	'View changelog',
+																	'updatebee'
+																) }
+															</Button>
+														</td>
+													</tr>
+												) }
 										</tbody>
 									</table>
 								</div>
@@ -1541,6 +1575,21 @@ const PluginsList = ( props: {
 					} ) }
 				</div>
 			</div>
+			<ChangelogModal
+				target={
+					changelogPlugin
+						? {
+								kind: 'plugin',
+								id: changelogPlugin.File,
+								name: changelogPlugin.Name,
+								nonce: changelogPlugin.ChangelogNonce || '',
+							}
+						: null
+				}
+				onClose={ () => {
+					setChangelogPlugin( null );
+				} }
+			/>
 			<RollbackModal
 				target={
 					rollbackPlugin

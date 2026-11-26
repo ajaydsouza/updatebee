@@ -3,6 +3,7 @@
  */
 import '../../../../scss/themes.scss';
 import '../../../../scss/rollback.scss';
+import '../../../../scss/changelog.scss';
 import { commonFill } from '../../shared/index';
 import ThemesMain from './ThemesMain';
 
