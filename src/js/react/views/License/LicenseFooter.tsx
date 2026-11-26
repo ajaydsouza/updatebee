@@ -2,7 +2,7 @@
  * License footer snackbar.
  */
 import { Fill } from '@wordpress/components';
-import Snackbar from '../../components/Snackbar';
+import FloatingNotice from '../../components/FloatingNotice';
 import type { SnackbarType } from '../Advanced/AdvancedFooter';
 
 type SnackbarState = {
@@ -22,7 +22,7 @@ const LicenseFooter = ( props: LicenseFooterProps ) => {
 	return (
 		<Fill name="updatebeeFooter">
 			<div className="updatebee-license-footer">
-				<Snackbar
+				<FloatingNotice
 					isVisible={ snackbar.isVisible }
 					message={ snackbar.message }
 					type={ snackbar.type }

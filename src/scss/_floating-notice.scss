@@ -1,0 +1,12 @@
+/**
+ * Notice pinned to the top centre of the screen, under the admin bar.
+ */
+.updatebee-floating-notice {
+	position: fixed;
+	top: calc(var(--wp-admin--admin-bar--height, 32px) + 12px);
+	left: 50%;
+	transform: translateX(-50%);
+	width: min(560px, calc(100vw - 32px));
+	z-index: 100100;
+	overflow-wrap: anywhere;
+}

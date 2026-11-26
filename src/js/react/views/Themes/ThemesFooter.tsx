@@ -7,7 +7,7 @@ import type {
 	UseFormGetValues,
 	UseFormSetValue,
 } from 'react-hook-form';
-import Snackbar from '../../components/Snackbar';
+import FloatingNotice from '../../components/FloatingNotice';
 import BulkActions, { type Action } from './bulk-actions';
 import type { ThemeItem, ThemesFormValues } from './ThemesMain';
 
@@ -45,7 +45,7 @@ const ThemesFooter = ( props: ThemesFooterProps ) => {
 	return (
 		<Fill name="updatebeeFooter">
 			<div className="updatebee-themes-footer">
-				<Snackbar
+				<FloatingNotice
 					isVisible={ snackbar.isVisible }
 					message={ snackbar.message }
 					type={ snackbar.type }

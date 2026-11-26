@@ -14,7 +14,8 @@ import {
 } from '@wordpress/dataviews';
 import { useCallback, useEffect, useMemo, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
-import { Button, Notice, Stack } from '@wordpress/ui';
+import { Button, Stack } from '@wordpress/ui';
+import FloatingNotice from '../../components/FloatingNotice';
 import sendCommand from '../../../utils/SendCommand';
 import { DATAVIEWS_STORAGE_KEYS } from '../../../utils/dataviews-view-storage';
 import { ErrorFallback } from '../../components/ErrorBoundary';
@@ -420,16 +421,14 @@ const UpcomingUpdates = () => {
 					</Button>
 				</div>
 			</div>
-			{ notice && (
-				<Notice.Root intent={ notice.intent }>
-					<Notice.Description>{ notice.message }</Notice.Description>
-					<Notice.CloseIcon
-						onClick={ () => {
-							setNotice( null );
-						} }
-					/>
-				</Notice.Root>
-			) }
+			<FloatingNotice
+				isVisible={ null !== notice }
+				message={ notice?.message ?? '' }
+				type={ notice?.intent }
+				onClose={ () => {
+					setNotice( null );
+				} }
+			/>
 			<DataViews
 				data={ visibleItems }
 				fields={ fields }

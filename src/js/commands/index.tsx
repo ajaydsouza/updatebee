@@ -14,7 +14,7 @@ import {
 } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import ForceUpdatesModal from '../react/components/ForceUpdatesModal';
-import Snackbar from '../react/components/Snackbar';
+import FloatingNotice from '../react/components/FloatingNotice';
 import sendCommand, { type SendCommandData } from '../utils/SendCommand';
 
 const UpdateIcon = () => {
@@ -42,6 +42,7 @@ type NoticeState = {
 	isVisible: boolean;
 	message: string;
 	type: 'success' | 'error';
+	id: number;
 };
 
 type PaletteAction = {
@@ -58,12 +59,13 @@ const INITIAL_NOTICE: NoticeState = {
 	isVisible: false,
 	message: '',
 	type: 'success',
+	id: 0,
 };
 
 /**
- * Register update commands, show progress, then a snackbar.
+ * Register update commands, show progress, then a notice.
  *
- * @return Progress modal and snackbar notice.
+ * @return Progress modal and notice.
  */
 const UpdateCommands = () => {
 	const [ notice, setNotice ] = useState< NoticeState >( INITIAL_NOTICE );
@@ -75,11 +77,12 @@ const UpdateCommands = () => {
 
 	const showNotice = useCallback(
 		( message: string, type: NoticeState[ 'type' ] ) => {
-			setNotice( {
+			setNotice( ( current ) => ( {
 				isVisible: true,
 				message,
 				type,
-			} );
+				id: current.id + 1,
+			} ) );
 		},
 		[]
 	);
@@ -233,7 +236,9 @@ const UpdateCommands = () => {
 				onClose={ handleCloseForceUpdates }
 				onConfirm={ handleConfirmForceUpdates }
 			/>
-			<Snackbar
+			<FloatingNotice
+				key={ notice.id }
+				id={ notice.id }
 				isVisible={ notice.isVisible }
 				message={ notice.message }
 				type={ notice.type }
