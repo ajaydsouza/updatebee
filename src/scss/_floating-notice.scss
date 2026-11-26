@@ -8,4 +8,5 @@
 	transform: translateX(-50%);
 	width: min(560px, calc(100vw - 32px));
 	z-index: 100100;
+	overflow-wrap: anywhere;
 }
