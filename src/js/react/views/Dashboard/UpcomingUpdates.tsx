@@ -2,6 +2,7 @@
  * Upcoming plugin and theme updates.
  */
 import {
+	Notice,
 	Tooltip,
 	// eslint-disable-next-line @wordpress/no-unsafe-wp-apis
 	__experimentalTruncate as Truncate,
@@ -13,7 +14,7 @@ import {
 	type View,
 } from '@wordpress/dataviews';
 import { useCallback, useEffect, useMemo, useState } from '@wordpress/element';
-import { __ } from '@wordpress/i18n';
+import { __, _n, sprintf } from '@wordpress/i18n';
 import { Button, Stack } from '@wordpress/ui';
 import ChangelogModal from '../../components/ChangelogModal';
 import FloatingNotice from '../../components/FloatingNotice';
@@ -22,6 +23,7 @@ import { DATAVIEWS_STORAGE_KEYS } from '../../../utils/dataviews-view-storage';
 import { ErrorFallback } from '../../components/ErrorBoundary';
 import Loader from '../../components/Loader';
 import usePersistedDataView from '../../hooks/usePersistedDataView';
+import UpcomingDelayModal from './UpcomingDelayModal';
 import { getUpcomingActions } from './upcoming-actions';
 
 export type UpcomingItem = {
@@ -49,6 +51,8 @@ export type UpcomingItem = {
 type UpcomingPayload = {
 	items?: UpcomingItem[];
 	next_run_label?: string;
+	delay_updates?: number;
+	message?: string;
 };
 
 type MessagePayload = {
@@ -130,15 +134,57 @@ const versionLabel = ( item: UpcomingItem ): string =>
 	`${ item.FromVersion } → ${ item.ToVersion }`;
 
 /**
+ * Normalize a delay-days value.
+ *
+ * @param value Incoming days value.
+ * @return Non-negative integer days.
+ */
+const normalizeDays = ( value: unknown ): number => {
+	const days = Number( value );
+	if ( Number.isFinite( days ) && days >= 0 ) {
+		return Math.floor( days );
+	}
+
+	return 0;
+};
+
+/**
+ * Warning copy for an active site-wide delay.
+ *
+ * @param days Delay in whole days. Greater than zero.
+ */
+const delayNotice = ( days: number ): string => {
+	const wait = sprintf(
+		/* translators: %d: number of days updates wait before they can install. */
+		_n(
+			'Plugin and theme updates wait %d day before they can install automatically.',
+			'Plugin and theme updates wait %d days before they can install automatically.',
+			days,
+			'updatebee'
+		),
+		days
+	);
+
+	return `${ wait } ${ __(
+		'If an update is fixing a security issue, then your site will be unfixed for the time of the delay.',
+		'updatebee'
+	) }`;
+};
+
+/**
  * Upcoming updates table.
  */
 const UpcomingUpdates = () => {
 	const [ items, setItems ] = useState< UpcomingItem[] >( [] );
 	const [ nextRunLabel, setNextRunLabel ] = useState( '' );
+	const [ delayUpdates, setDelayUpdates ] = useState( 0 );
 	const [ isLoading, setIsLoading ] = useState( true );
 	const [ isError, setIsError ] = useState( false );
 	const [ isBusy, setIsBusy ] = useState( false );
 	const [ isChecking, setIsChecking ] = useState( false );
+	const [ isSavingDelay, setIsSavingDelay ] = useState( false );
+	const [ isDelayModalOpen, setIsDelayModalOpen ] = useState( false );
+	const [ delayError, setDelayError ] = useState( '' );
 	const [ loadAttempt, setLoadAttempt ] = useState( 0 );
 	const [ notice, setNotice ] = useState< NoticeState | null >( null );
 	const [ changelogItem, setChangelogItem ] = useState< UpcomingItem | null >(
@@ -157,6 +203,15 @@ const UpcomingUpdates = () => {
 		[]
 	);
 
+	const applyPayload = useCallback(
+		( payload: UpcomingPayload | undefined ) => {
+			setItems( Array.isArray( payload?.items ) ? payload.items : [] );
+			setNextRunLabel( payload?.next_run_label || '' );
+			setDelayUpdates( normalizeDays( payload?.delay_updates ) );
+		},
+		[]
+	);
+
 	const loadItems = useCallback( () => {
 		setIsLoading( true );
 		setIsError( false );
@@ -168,11 +223,7 @@ const UpcomingUpdates = () => {
 			}
 		)
 			.then( ( response ) => {
-				const payload = response.data.data;
-				setItems(
-					Array.isArray( payload?.items ) ? payload.items : []
-				);
-				setNextRunLabel( payload?.next_run_label || '' );
+				applyPayload( response.data.data );
 			} )
 			.catch( () => {
 				setIsError( true );
@@ -180,7 +231,61 @@ const UpcomingUpdates = () => {
 			.finally( () => {
 				setIsLoading( false );
 			} );
+	}, [ applyPayload ] );
+
+	const openDelayModal = useCallback( () => {
+		setDelayError( '' );
+		setIsDelayModalOpen( true );
 	}, [] );
+
+	const closeDelayModal = useCallback( () => {
+		if ( isSavingDelay ) {
+			return;
+		}
+
+		setIsDelayModalOpen( false );
+		setDelayError( '' );
+	}, [ isSavingDelay ] );
+
+	const onSaveDelay = useCallback(
+		( days: number ) => {
+			if ( isBusy || isSavingDelay ) {
+				return;
+			}
+
+			setIsSavingDelay( true );
+			setDelayError( '' );
+			setNotice( null );
+
+			sendCommand< UpcomingPayload >( 'updatebee_save_upcoming_delay', {
+				nonce: updatebeeDashboard.saveDelayNonce,
+				delay_updates: days,
+			} )
+				.then( ( response ) => {
+					const payload = response.data.data;
+					applyPayload( payload );
+					setIsDelayModalOpen( false );
+					showNotice(
+						payload?.message ||
+							__( 'Update delay has been saved.', 'updatebee' ),
+						'success'
+					);
+				} )
+				.catch( ( error: Error ) => {
+					setDelayError(
+						error.message ||
+							__(
+								'Update delay could not be saved.',
+								'updatebee'
+							)
+					);
+				} )
+				.finally( () => {
+					setIsSavingDelay( false );
+				} );
+		},
+		[ applyPayload, isBusy, isSavingDelay, showNotice ]
+	);
 
 	useEffect( () => {
 		void loadItems();
@@ -432,6 +537,22 @@ const UpcomingUpdates = () => {
 					</Button>
 				</div>
 			</div>
+			{ 0 < delayUpdates && (
+				<div className="updatebee-upcoming-delay">
+					<Notice status="warning" isDismissible={ false }>
+						<span className="updatebee-upcoming-delay-copy">
+							{ delayNotice( delayUpdates ) }
+						</span>
+						<Button
+							variant="outline"
+							disabled={ isBusy || isSavingDelay }
+							onClick={ openDelayModal }
+						>
+							{ __( 'Change delay', 'updatebee' ) }
+						</Button>
+					</Notice>
+				</div>
+			) }
 			<FloatingNotice
 				isVisible={ null !== notice }
 				message={ notice?.message ?? '' }
@@ -476,6 +597,14 @@ const UpcomingUpdates = () => {
 					searchLabel={ __( 'Search updates', 'updatebee' ) }
 				/>
 			</DataViews>
+			<UpcomingDelayModal
+				isOpen={ isDelayModalOpen }
+				delayDays={ delayUpdates }
+				isSaving={ isSavingDelay }
+				errorMessage={ delayError }
+				onClose={ closeDelayModal }
+				onSave={ onSaveDelay }
+			/>
 			<ChangelogModal
 				target={
 					changelogItem && changelogItem.ChangelogNonce

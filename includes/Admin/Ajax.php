@@ -57,6 +57,7 @@ class Ajax {
 		add_action( 'wp_ajax_updatebee_save_dashboard_settings', array( $this, 'save_dashboard_settings' ) );
 		add_action( 'wp_ajax_updatebee_reset_dashboard_settings', array( $this, 'reset_dashboard_settings' ) );
 		add_action( 'wp_ajax_updatebee_retrieve_upcoming_updates', array( $this, 'retrieve_upcoming_updates' ) );
+		add_action( 'wp_ajax_updatebee_save_upcoming_delay', array( $this, 'save_upcoming_delay' ) );
 		add_action( 'wp_ajax_updatebee_skip_plugin_version', array( $this, 'skip_plugin_version' ) );
 		add_action( 'wp_ajax_updatebee_skip_theme_version', array( $this, 'skip_theme_version' ) );
 
@@ -138,6 +139,47 @@ class Ajax {
 		check_ajax_referer( 'updatebee-retrieve-upcoming-updates', 'nonce' );
 
 		wp_send_json_success( Upcoming::get_list() );
+	}
+
+	/**
+	 * Save the site-wide update delay and return the refreshed upcoming list.
+	 */
+	public function save_upcoming_delay(): void {
+		if ( ! Functions::can_access_options() ) {
+			wp_send_json_error();
+		}
+
+		check_ajax_referer( 'updatebee-save-upcoming-delay', 'nonce' );
+
+		if ( ! isset( $_POST['delay_updates'] ) ) {
+			wp_send_json_error(
+				array(
+					'message' => __( 'Update delay could not be saved.', 'updatebee' ),
+				)
+			);
+		}
+
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Days are passed through absint.
+		$delay_updates = absint( wp_unslash( $_POST['delay_updates'] ) );
+		$updated       = Options::update_options(
+			'',
+			array(
+				'delay_updates' => $delay_updates,
+			)
+		);
+
+		if ( null === $updated ) {
+			wp_send_json_error(
+				array(
+					'message' => __( 'Update delay could not be saved.', 'updatebee' ),
+				)
+			);
+		}
+
+		$response            = Upcoming::get_list();
+		$response['message'] = __( 'Update delay has been saved.', 'updatebee' );
+
+		wp_send_json_success( $response );
 	}
 
 	/**
