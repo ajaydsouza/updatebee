@@ -25,6 +25,11 @@ class Init {
 	public const SETTINGS_KEY = '__updatebee_sl_info';
 
 	/**
+	 * Transient that backs off a failed activation of a code-defined key.
+	 */
+	private const DEFINED_LICENSE_SYNC = 'updatebee_defined_license_sync';
+
+	/**
 	 * Class runner.
 	 */
 	public function run(): void {
@@ -40,6 +45,51 @@ class Init {
 
 		$licensing = new FluentLicensing();
 		$licensing->register( self::get_config() );
+		self::maybe_activate_defined_key( $licensing );
+	}
+
+	/**
+	 * Activate a license key set in wp-config.php or an mu-plugin.
+	 *
+	 * Skips front-end requests. A stored record for this key with status
+	 * valid, expired, or disabled is left alone. A failed request waits an
+	 * hour before trying that same key again. The previous site activation
+	 * is not revoked at the store.
+	 *
+	 * @param FluentLicensing $licensing Registered licensing client.
+	 */
+	private static function maybe_activate_defined_key( FluentLicensing $licensing ): void {
+		$defined = License_Key::defined_key();
+		if ( '' === $defined || ! self::in_sync_context() ) {
+			return;
+		}
+
+		if ( License_Key::record_matches( $licensing->getStatus(), $defined ) ) {
+			return;
+		}
+
+		$lock = get_transient( self::DEFINED_LICENSE_SYNC );
+		if ( is_string( $lock ) && hash_equals( wp_hash( $defined ), $lock ) ) {
+			return;
+		}
+
+		$activated = $licensing->activate( $defined );
+		if ( ! is_array( $activated ) || ! License_Key::record_matches( $activated, $defined ) ) {
+			set_transient( self::DEFINED_LICENSE_SYNC, wp_hash( $defined ), HOUR_IN_SECONDS );
+		}
+	}
+
+	/**
+	 * Whether the defined key may be activated on this request.
+	 *
+	 * @return bool
+	 */
+	private static function in_sync_context(): bool {
+		$is_admin = function_exists( 'is_admin' ) && is_admin();
+		$is_cron  = function_exists( 'wp_doing_cron' ) && wp_doing_cron();
+		$is_cli   = defined( 'WP_CLI' ) && WP_CLI;
+
+		return License_Key::should_sync( $is_admin, $is_cron, $is_cli );
 	}
 
 	/**
