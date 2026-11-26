@@ -42,6 +42,7 @@ type NoticeState = {
 	isVisible: boolean;
 	message: string;
 	type: 'success' | 'error';
+	id: number;
 };
 
 type PaletteAction = {
@@ -58,6 +59,7 @@ const INITIAL_NOTICE: NoticeState = {
 	isVisible: false,
 	message: '',
 	type: 'success',
+	id: 0,
 };
 
 /**
@@ -75,11 +77,12 @@ const UpdateCommands = () => {
 
 	const showNotice = useCallback(
 		( message: string, type: NoticeState[ 'type' ] ) => {
-			setNotice( {
+			setNotice( ( current ) => ( {
 				isVisible: true,
 				message,
 				type,
-			} );
+				id: current.id + 1,
+			} ) );
 		},
 		[]
 	);
@@ -234,6 +237,8 @@ const UpdateCommands = () => {
 				onConfirm={ handleConfirmForceUpdates }
 			/>
 			<FloatingNotice
+				key={ notice.id }
+				id={ notice.id }
 				isVisible={ notice.isVisible }
 				message={ notice.message }
 				type={ notice.type }
