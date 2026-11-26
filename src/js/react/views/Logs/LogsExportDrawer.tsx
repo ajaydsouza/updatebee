@@ -74,10 +74,10 @@ const defaultFilters: ExportFilters = {
 };
 
 /**
- * Build the admin-ajax CSV download URL.
+ * Checked asset types in display order.
  *
- * @param filters Selected export filters.
- * @return Download URL.
+ * @param updateTypes Asset type selections.
+ * @return Selected asset types.
  */
 const getSelectedAssetTypes = (
 	updateTypes: Record< UpdateAssetType, boolean >
@@ -85,6 +85,12 @@ const getSelectedAssetTypes = (
 	return assetTypeOrder.filter( ( type ) => updateTypes[ type ] );
 };
 
+/**
+ * Build the admin-ajax CSV download URL.
+ *
+ * @param filters Selected export filters.
+ * @return Download URL.
+ */
 const getExportUrl = ( filters: ExportFilters ): string => {
 	const params = new URLSearchParams( {
 		action: 'updatebee_export_logs',
@@ -281,10 +287,7 @@ const LogsExportDrawer = ( props: LogsExportDrawerProps ) => {
 									} }
 								/>
 								<CheckboxControl
-									label={ __(
-										'Translations',
-										'updatebee'
-									) }
+									label={ __( 'Translations', 'updatebee' ) }
 									checked={ filters.updateTypes.translation }
 									onChange={ ( checked ) => {
 										handleTypeChange(
