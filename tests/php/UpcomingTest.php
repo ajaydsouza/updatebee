@@ -43,6 +43,38 @@ class UpcomingTest extends TestCase {
 		$this->assertSame( array( 'hello.php' ), $ids );
 		$this->assertSame( 'plugin', $items[0]['Type'] );
 		$this->assertFalse( $items[0]['Blocked'] );
+		$this->assertFalse( $items[0]['HasChangelog'] );
+		$this->assertSame( '', $items[0]['ChangelogNonce'] );
+	}
+
+	/**
+	 * A stored changelog section marks the row without calling the info API.
+	 */
+	public function test_changelog_section_marks_the_row_without_a_remote_request(): void {
+		MonkeyFunctions\expect( 'plugins_api' )->never();
+		$this->stub_list_helpers(
+			array(),
+			array(
+				'hello.php' => (object) array(
+					'new_version' => '1.1',
+					'package'     => 'https://downloads.example.com/hello.zip',
+					'sections'    => array(
+						'changelog' => '<p>Hello notes</p>',
+					),
+				),
+			)
+		);
+
+		$hello = null;
+		foreach ( Upcoming::get_list()['items'] as $item ) {
+			if ( is_array( $item ) && 'hello.php' === ( $item['Id'] ?? '' ) ) {
+				$hello = $item;
+			}
+		}
+
+		$this->assertIsArray( $hello );
+		$this->assertTrue( $hello['HasChangelog'] );
+		$this->assertSame( 'nonce', $hello['ChangelogNonce'] );
 	}
 
 	/**
@@ -63,9 +95,10 @@ class UpcomingTest extends TestCase {
 	/**
 	 * Stub the WordPress calls used while building upcoming rows.
 	 *
-	 * @param array<string, mixed> $options Stored updatebee_options values.
+	 * @param array<string, mixed>       $options         Stored updatebee_options values.
+	 * @param array<string, object>|null $plugin_response Pending plugin offers. Null uses the default offers.
 	 */
-	private function stub_list_helpers( array $options ): void {
+	private function stub_list_helpers( array $options, ?array $plugin_response = null ): void {
 		if ( ! defined( 'WP_PLUGIN_DIR' ) ) {
 			define( 'WP_PLUGIN_DIR', ABSPATH . 'wp-content/plugins' );
 		}
@@ -128,23 +161,24 @@ class UpcomingTest extends TestCase {
 				return array( 'Version' => '1.0' );
 			}
 		);
+		$plugin_response = $plugin_response ?? array(
+			'akismet/akismet.php' => (object) array(
+				'new_version' => '5.1',
+				'package'     => 'https://downloads.example.com/akismet.zip',
+			),
+			'hello.php'           => (object) array(
+				'new_version' => '1.1',
+				'package'     => 'https://downloads.example.com/hello.zip',
+			),
+		);
 		MonkeyFunctions\when( 'get_site_transient' )->alias(
-			static function ( $key ) {
+			static function ( $key ) use ( $plugin_response ) {
 				if ( 'update_plugins' !== $key ) {
 					return false;
 				}
 
 				return (object) array(
-					'response' => array(
-						'akismet/akismet.php' => (object) array(
-							'new_version' => '5.1',
-							'package'     => 'https://downloads.example.com/akismet.zip',
-						),
-						'hello.php'           => (object) array(
-							'new_version' => '1.1',
-							'package'     => 'https://downloads.example.com/hello.zip',
-						),
-					),
+					'response' => $plugin_response,
 				);
 			}
 		);
