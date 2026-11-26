@@ -14,7 +14,7 @@ import {
 } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import ForceUpdatesModal from '../react/components/ForceUpdatesModal';
-import Snackbar from '../react/components/Snackbar';
+import NoticeBanner from '../react/components/NoticeBanner';
 import sendCommand, { type SendCommandData } from '../utils/SendCommand';
 
 const UpdateIcon = () => {
@@ -61,9 +61,9 @@ const INITIAL_NOTICE: NoticeState = {
 };
 
 /**
- * Register update commands, show progress, then a snackbar.
+ * Register update commands, show progress, then a notice.
  *
- * @return Progress modal and snackbar notice.
+ * @return Progress modal and notice.
  */
 const UpdateCommands = () => {
 	const [ notice, setNotice ] = useState< NoticeState >( INITIAL_NOTICE );
@@ -233,12 +233,15 @@ const UpdateCommands = () => {
 				onClose={ handleCloseForceUpdates }
 				onConfirm={ handleConfirmForceUpdates }
 			/>
-			<Snackbar
-				isVisible={ notice.isVisible }
-				message={ notice.message }
-				type={ notice.type }
-				onClose={ handleClose }
-			/>
+			{ notice.isVisible && (
+				<div className="updatebee-command-notice">
+					<NoticeBanner
+						message={ notice.message }
+						type={ notice.type }
+						onClose={ handleClose }
+					/>
+				</div>
+			) }
 		</>
 	);
 };

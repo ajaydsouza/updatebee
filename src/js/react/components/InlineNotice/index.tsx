@@ -1,33 +1,17 @@
 import { useEffect, useRef } from 'react';
 import { Fill } from '@wordpress/components';
-import { Notice } from '@wordpress/ui';
+import NoticeBanner, { type NoticeBannerProps } from '../NoticeBanner';
 
 export const NOTICES_SLOT = 'updatebeeNotices';
 
-interface InlineNoticeProps {
+interface InlineNoticeProps extends Omit< NoticeBannerProps, 'message' > {
 	isVisible: boolean;
 	message: string;
-	type?: 'success' | 'error' | 'warning' | 'info';
-	isPersistent?: boolean;
-	onClose: () => void;
 }
 
 const InlineNotice = ( props: InlineNoticeProps ) => {
-	const {
-		isVisible,
-		message,
-		type = 'success',
-		isPersistent = false,
-		onClose,
-	} = props;
+	const { isVisible, message, ...rest } = props;
 	const ref = useRef< HTMLDivElement >( null );
-
-	useEffect( () => {
-		if ( isVisible && ! isPersistent && 'error' !== type ) {
-			const timer = setTimeout( onClose, 8000 );
-			return () => clearTimeout( timer );
-		}
-	}, [ isVisible, isPersistent, type, onClose ] );
 
 	useEffect( () => {
 		if ( isVisible ) {
@@ -42,10 +26,7 @@ const InlineNotice = ( props: InlineNoticeProps ) => {
 	return (
 		<Fill name={ NOTICES_SLOT }>
 			<div ref={ ref } className="updatebee-inline-notice">
-				<Notice.Root intent={ type }>
-					<Notice.Description>{ message }</Notice.Description>
-					<Notice.CloseIcon onClick={ onClose } />
-				</Notice.Root>
+				<NoticeBanner message={ message } { ...rest } />
 			</div>
 		</Fill>
 	);

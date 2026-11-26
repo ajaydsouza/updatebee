@@ -1,17 +1,18 @@
 /**
- * Command palette progress modal and snackbar.
+ * Command palette progress modal and notice.
  *
  * The modal is portaled to the document body, so its rules are not nested
- * under the mount node. The snackbar stays inside that node.
+ * under the mount node. The notice stays inside that node.
  */
 @use '@mediaron/react-spinners/spinner.css';
 
 #updatebee-command-notices {
-	.updatebee-snackbar {
+	.updatebee-command-notice {
 		position: fixed;
-		bottom: 24px;
+		top: calc(var(--wp-admin--admin-bar--height, 32px) + 12px);
 		left: 50%;
 		transform: translateX(-50%);
+		width: min(560px, calc(100vw - 32px));
 		z-index: 100100;
 	}
 }
