@@ -25,7 +25,9 @@ class Init {
 	public const SETTINGS_KEY = '__updatebee_sl_info';
 
 	/**
-	 * Transient that backs off a failed activation of a code-defined key.
+	 * Network transient that backs off a failed activation of a code-defined key.
+	 *
+	 * Stored with the site transient API so every site in a network shares one backoff.
 	 */
 	private const DEFINED_LICENSE_SYNC = 'updatebee_defined_license_sync';
 
@@ -68,14 +70,14 @@ class Init {
 			return;
 		}
 
-		$lock = get_transient( self::DEFINED_LICENSE_SYNC );
+		$lock = get_site_transient( self::DEFINED_LICENSE_SYNC );
 		if ( is_string( $lock ) && hash_equals( wp_hash( $defined ), $lock ) ) {
 			return;
 		}
 
 		$activated = $licensing->activate( $defined );
 		if ( ! is_array( $activated ) || ! License_Key::record_matches( $activated, $defined ) ) {
-			set_transient( self::DEFINED_LICENSE_SYNC, wp_hash( $defined ), HOUR_IN_SECONDS );
+			set_site_transient( self::DEFINED_LICENSE_SYNC, wp_hash( $defined ), HOUR_IN_SECONDS );
 		}
 	}
 
