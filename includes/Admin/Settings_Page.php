@@ -14,6 +14,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 use UpdateBee\Branding;
 use UpdateBee\Functions;
+use UpdateBee\Options;
+use UpdateBee\Updates\Automatic_Updater_Override;
 
 /**
  * Class Settings_Page.
@@ -298,16 +300,21 @@ class Settings_Page {
 	 * Show WordPress update configuration warnings on update-related tabs.
 	 */
 	private static function show_update_configuration_notices(): void {
-		if ( ! class_exists( 'WP_Automatic_Updater' ) ) {
-			require_once ABSPATH . 'wp-admin/includes/class-wp-automatic-updater.php';
-		}
-
-		$updater = new \WP_Automatic_Updater();
-		if ( $updater->is_disabled() ) {
+		$is_disabled     = Automatic_Updater_Override::is_disabled();
+		$constant_active = Automatic_Updater_Override::is_constant_active();
+		if ( $is_disabled || $constant_active ) {
 			if ( ! wp_is_file_mod_allowed( 'automatic_updater' ) ) {
-				$message = __( 'WordPress file changes are blocked. Automatic updates and Force updates are unavailable. Check DISALLOW_FILE_MODS or your hosting settings.', 'updatebee' );
-			} elseif ( defined( 'AUTOMATIC_UPDATER_DISABLED' ) && AUTOMATIC_UPDATER_DISABLED ) {
-				$message = __( 'AUTOMATIC_UPDATER_DISABLED is enabled. Automatic updates and Force updates are unavailable.', 'updatebee' );
+				$message = Automatic_Updater_Override::is_enabled()
+					? __( 'WordPress file changes are blocked. The saved UpdateBee override does not bypass file modification restrictions.', 'updatebee' )
+					: __( 'WordPress file changes are blocked. Automatic updates and Force updates are unavailable. Check DISALLOW_FILE_MODS or your hosting settings.', 'updatebee' );
+			} elseif ( $constant_active && $is_disabled && Automatic_Updater_Override::is_enabled() ) {
+				$message = __( 'AUTOMATIC_UPDATER_DISABLED is enabled. WordPress still blocks automatic updates despite the saved UpdateBee override.', 'updatebee' );
+			} elseif ( $constant_active && $is_disabled ) {
+				$message = __( 'AUTOMATIC_UPDATER_DISABLED is enabled. WordPress still blocks automatic updates.', 'updatebee' );
+			} elseif ( $constant_active && Automatic_Updater_Override::is_enabled() ) {
+				$message = __( 'AUTOMATIC_UPDATER_DISABLED is enabled. The UpdateBee override is active for scheduled updates and Force updates.', 'updatebee' );
+			} elseif ( $constant_active ) {
+				$message = __( 'AUTOMATIC_UPDATER_DISABLED is enabled, but WordPress currently allows automatic updates.', 'updatebee' );
 			} else {
 				$message = __( 'The WordPress automatic updater is disabled. Check your site configuration or contact your host. Force updates is also unavailable.', 'updatebee' );
 			}
@@ -321,6 +328,10 @@ class Settings_Page {
 			);
 		}
 
+		if ( null === Functions::get_admin_tab() || 'dashboard' === Functions::get_admin_tab() ) {
+			self::show_automatic_updater_override();
+		}
+
 		if ( defined( 'WP_AUTO_UPDATE_CORE' ) && false === WP_AUTO_UPDATE_CORE ) {
 			wp_admin_notice(
 				esc_html__( 'WP_AUTO_UPDATE_CORE is set to false. WordPress disables automatic core updates by default. UpdateBee’s major and minor update settings can override this default when the automatic updater is enabled.', 'updatebee' ),
@@ -330,6 +341,52 @@ class Settings_Page {
 				)
 			);
 		}
+	}
+
+	public static function save_automatic_updater_override(): void {
+		if ( ! Functions::can_access_options() ) {
+			wp_die( esc_html__( 'You are not allowed to change this setting.', 'updatebee' ), '', array( 'response' => 403 ) );
+		}
+
+		check_admin_referer( 'updatebee_save_automatic_updater_override' );
+
+		$posted_value = isset( $_POST[ Automatic_Updater_Override::OPTION ] )
+			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- The value is checked against the literal 1 before storage.
+			? wp_unslash( $_POST[ Automatic_Updater_Override::OPTION ] )
+			: null;
+		$enabled = is_string( $posted_value ) && '1' === sanitize_text_field( $posted_value );
+		Options::update_options(
+			Automatic_Updater_Override::OPTION,
+			array( Automatic_Updater_Override::OPTION => $enabled )
+		);
+
+		wp_safe_redirect( Functions::get_settings_url() );
+		exit;
+	}
+
+	private static function show_automatic_updater_override(): void {
+		if ( ! Automatic_Updater_Override::is_constant_active() ) {
+			return;
+		}
+
+		$enabled = Automatic_Updater_Override::is_enabled();
+		$action  = admin_url( 'admin-post.php' );
+		?>
+		<div class="notice notice-warning updatebee-configuration-notice updatebee-updater-override">
+			<h2><?php esc_html_e( 'Override the automatic updates block', 'updatebee' ); ?></h2>
+			<p><?php esc_html_e( 'Allow scheduled updates and Force updates when AUTOMATIC_UPDATER_DISABLED is set. UpdateBee still follows your update settings.', 'updatebee' ); ?></p>
+			<p><strong><?php echo $enabled ? esc_html__( 'Override active', 'updatebee' ) : esc_html__( 'Override inactive', 'updatebee' ); ?></strong></p>
+			<form method="post" action="<?php echo esc_url( $action ); ?>">
+				<input type="hidden" name="action" value="updatebee_save_automatic_updater_override" />
+				<?php wp_nonce_field( 'updatebee_save_automatic_updater_override' ); ?>
+				<label>
+					<input type="checkbox" name="<?php echo esc_attr( Automatic_Updater_Override::OPTION ); ?>" value="1" <?php checked( $enabled ); ?> />
+					<?php esc_html_e( 'Enable the UpdateBee override', 'updatebee' ); ?>
+				</label>
+				<p><button type="submit" class="button button-secondary"><?php esc_html_e( 'Save setting', 'updatebee' ); ?></button></p>
+			</form>
+		</div>
+		<?php
 	}
 
 	/**

@@ -25,6 +25,7 @@ use UpdateBee\Slack\Slack_Webhook;
 use UpdateBee\Uninstall;
 use UpdateBee\Updater\FluentLicensing;
 use UpdateBee\Updater\License_Details;
+use UpdateBee\Updates\Automatic_Updater_Override;
 use UpdateBee\Updates\Fatal_Detection;
 use UpdateBee\Updates\Force_Update_Report;
 use UpdateBee\Updates\Version_Controlled;
@@ -2153,11 +2154,36 @@ class Ajax {
 			$skip_delay = Functions::sanitize_rest_boolean( wp_unslash( $_POST['skip_delay'] ) );
 		}
 
-		$results = Updates_Init::run_auto_updates( $skip_delay );
+		$ignore_automatic_updater_disabled = false;
+		if ( isset( $_POST['ignore_automatic_updater_disabled'] ) ) {
+			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Boolean is sanitized below.
+			$ignore_automatic_updater_disabled = Functions::sanitize_rest_boolean( wp_unslash( $_POST['ignore_automatic_updater_disabled'] ) );
+		}
+
+		$run     = static function () use ( $skip_delay ): array {
+			if ( Automatic_Updater_Override::is_disabled( true ) ) {
+				return array(
+					'status'  => 'blocked',
+					'results' => array(),
+				);
+			}
+
+			$results = Updates_Init::run_auto_updates( $skip_delay );
+			return array(
+				'status'  => empty( $results ) ? 'no_updates' : 'completed',
+				'results' => $results,
+			);
+		};
+		$outcome = $ignore_automatic_updater_disabled
+			? Automatic_Updater_Override::with_one_run_override( $run )
+			: $run();
 
 		wp_send_json_success(
 			array(
-				'message' => Force_Update_Report::message( $results ),
+				'status'  => $outcome['status'],
+				'message' => 'blocked' === $outcome['status']
+					? Force_Update_Report::blocked_message()
+					: Force_Update_Report::message( $outcome['results'] ),
 			)
 		);
 	}

@@ -8,8 +8,12 @@ import { __ } from '@wordpress/i18n';
 type ForceUpdatesModalProps = {
 	isOpen: boolean;
 	delayEnabled: boolean;
+	ignoreAutomaticUpdaterDisabled: boolean;
 	onClose: () => void;
-	onConfirm: ( skipDelay: boolean ) => void;
+	onConfirm: (
+		skipDelay: boolean,
+		ignoreAutomaticUpdaterDisabled: boolean
+	) => void;
 };
 
 /**
@@ -18,12 +22,21 @@ type ForceUpdatesModalProps = {
  * @param props Modal state and confirm handler.
  */
 const ForceUpdatesModal = ( props: ForceUpdatesModalProps ) => {
-	const { isOpen, delayEnabled, onClose, onConfirm } = props;
+	const {
+		isOpen,
+		delayEnabled,
+		ignoreAutomaticUpdaterDisabled,
+		onClose,
+		onConfirm,
+	} = props;
 	const [ skipDelay, setSkipDelay ] = useState( false );
+	const [ ignoreUpdaterDisabled, setIgnoreUpdaterDisabled ] =
+		useState( false );
 
 	useEffect( () => {
 		if ( isOpen ) {
 			setSkipDelay( false );
+			setIgnoreUpdaterDisabled( false );
 		}
 	}, [ isOpen ] );
 
@@ -35,7 +48,10 @@ const ForceUpdatesModal = ( props: ForceUpdatesModalProps ) => {
 	 * Confirm the run and pass the skip choice.
 	 */
 	const handleConfirm = () => {
-		onConfirm( delayEnabled && skipDelay );
+		onConfirm(
+			delayEnabled && skipDelay,
+			ignoreAutomaticUpdaterDisabled && ignoreUpdaterDisabled
+		);
 	};
 
 	return (
@@ -67,6 +83,16 @@ const ForceUpdatesModal = ( props: ForceUpdatesModalProps ) => {
 					onChange={ ( checked: boolean ) => {
 						setSkipDelay( checked );
 					} }
+				/>
+			) }
+			{ ignoreAutomaticUpdaterDisabled && (
+				<CheckboxControl
+					label={ __(
+						'Ignore this restriction for this run',
+						'updatebee'
+					) }
+					checked={ ignoreUpdaterDisabled }
+					onChange={ setIgnoreUpdaterDisabled }
 				/>
 			) }
 			<div className="updatebee-force-updates-modal-footer">

@@ -36,12 +36,13 @@ const COMMAND_KEYWORDS = [ 'updatebee', 'plugins', 'themes', 'core' ];
 
 type MessagePayload = {
 	message?: string;
+	status?: 'completed' | 'no_updates' | 'blocked';
 };
 
 type NoticeState = {
 	isVisible: boolean;
 	message: string;
-	type: 'success' | 'error';
+	type: 'success' | 'error' | 'warning' | 'info';
 	id: number;
 };
 
@@ -60,6 +61,16 @@ const INITIAL_NOTICE: NoticeState = {
 	message: '',
 	type: 'success',
 	id: 0,
+};
+
+const getForceUpdatesNoticeType = (
+	status?: MessagePayload[ 'status' ]
+): NoticeState[ 'type' ] => {
+	if ( 'blocked' === status ) {
+		return 'warning';
+	}
+
+	return 'no_updates' === status ? 'info' : 'success';
 };
 
 /**
@@ -127,7 +138,7 @@ const UpdateCommands = () => {
 					finishAction(
 						response.data.data?.message ||
 							paletteAction.fallbackMessage,
-						'success'
+						getForceUpdatesNoticeType( response.data.data?.status )
 					);
 				} )
 				.catch( () => {
@@ -190,9 +201,13 @@ const UpdateCommands = () => {
 	/**
 	 * Start force updates after the user confirms.
 	 *
-	 * @param skipDelay Whether this run should ignore the update delay.
+	 * @param skipDelay                      Whether this run should ignore the update delay.
+	 * @param ignoreAutomaticUpdaterDisabled Whether to ignore the updater constant for this run.
 	 */
-	const handleConfirmForceUpdates = ( skipDelay: boolean ) => {
+	const handleConfirmForceUpdates = (
+		skipDelay: boolean,
+		ignoreAutomaticUpdaterDisabled: boolean
+	) => {
 		setForceUpdatesOpen( false );
 		runAction( {
 			action: 'updatebee_force_updates',
@@ -203,7 +218,12 @@ const UpdateCommands = () => {
 				'Force updates could not be completed.',
 				'updatebee'
 			),
-			data: skipDelay ? { skip_delay: true } : undefined,
+			data: {
+				...( skipDelay ? { skip_delay: true } : {} ),
+				...( ignoreAutomaticUpdaterDisabled
+					? { ignore_automatic_updater_disabled: true }
+					: {} ),
+			},
 		} );
 	};
 
@@ -233,6 +253,9 @@ const UpdateCommands = () => {
 			<ForceUpdatesModal
 				isOpen={ forceUpdatesOpen }
 				delayEnabled={ updatebeeCommands.delayEnabled }
+				ignoreAutomaticUpdaterDisabled={
+					updatebeeCommands.ignoreAutomaticUpdaterDisabled
+				}
 				onClose={ handleCloseForceUpdates }
 				onConfirm={ handleConfirmForceUpdates }
 			/>

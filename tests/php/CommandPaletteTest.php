@@ -93,9 +93,10 @@ class CommandPaletteTest extends TestCase {
 		$this->assertSame( 'updatebee', $captured['translations'][0][1] );
 		$this->assertSame(
 			array(
-				'forceUpdatesNonce'   => 'nonce-updatebee-force-updates',
-				'refreshUpdatesNonce' => 'nonce-updatebee-refresh-updates',
-				'delayEnabled'        => false,
+				'forceUpdatesNonce'              => 'nonce-updatebee-force-updates',
+				'refreshUpdatesNonce'            => 'nonce-updatebee-refresh-updates',
+				'delayEnabled'                   => false,
+				'ignoreAutomaticUpdaterDisabled' => false,
 			),
 			$captured['localized'][0][2]
 		);

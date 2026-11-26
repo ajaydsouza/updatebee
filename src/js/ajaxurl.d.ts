@@ -53,6 +53,7 @@ declare const updatebeeLogs: UpdateBeeLogs;
 interface UpdateBeeTools {
 	forceUpdatesNonce: string;
 	delayEnabled: boolean;
+	ignoreAutomaticUpdaterDisabled: boolean;
 	triggerCronNonce: string;
 	refreshUpdatesNonce: string;
 	eumDetected: boolean;
@@ -72,6 +73,7 @@ interface UpdateBeeCommands {
 	forceUpdatesNonce: string;
 	refreshUpdatesNonce: string;
 	delayEnabled: boolean;
+	ignoreAutomaticUpdaterDisabled: boolean;
 }
 
 declare const updatebeeCommands: UpdateBeeCommands;
