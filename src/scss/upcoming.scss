@@ -37,3 +37,35 @@
 	margin-top: 8px;
 	padding: var(--wpds-dimension-padding-2xl) var(--wpds-dimension-padding-xl);
 }
+
+.updatebee-upcoming-delay {
+
+	.components-notice {
+		margin: 0;
+	}
+
+	.components-notice__content {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 12px;
+	}
+
+	.updatebee-upcoming-delay-copy {
+		flex: 1 1 16rem;
+	}
+}
+
+.updatebee-upcoming-delay-modal {
+
+	.components-notice {
+		margin: 0 0 16px;
+	}
+}
+
+.updatebee-upcoming-delay-modal-footer {
+	display: flex;
+	justify-content: flex-end;
+	gap: 8px;
+	margin-top: 16px;
+}

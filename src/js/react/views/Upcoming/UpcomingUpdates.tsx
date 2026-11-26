@@ -14,7 +14,7 @@ import {
 	type View,
 } from '@wordpress/dataviews';
 import { useCallback, useEffect, useMemo, useState } from '@wordpress/element';
-import { __ } from '@wordpress/i18n';
+import { __, _n, sprintf } from '@wordpress/i18n';
 import { Button, Stack, useEnableWpCompatOverlaySlot } from '@wordpress/ui';
 import ChangelogModal from '../../components/ChangelogModal';
 import FloatingNotice from '../../components/FloatingNotice';
@@ -259,7 +259,7 @@ const UpcomingUpdates = () => {
 			setNotice( null );
 
 			sendCommand< UpcomingPayload >( 'updatebee_save_upcoming_delay', {
-				nonce: updatebeeDashboard.saveDelayNonce,
+				nonce: updatebeeUpcoming.saveDelayNonce,
 				delay_updates: days,
 			} )
 				.then( ( response ) => {

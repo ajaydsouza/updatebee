@@ -105,6 +105,7 @@ class Upcoming {
 			'updatebeeUpcoming',
 			array(
 				'retrieveUpcomingNonce' => wp_create_nonce( 'updatebee-retrieve-upcoming-updates' ),
+				'saveDelayNonce'        => wp_create_nonce( 'updatebee-save-upcoming-delay' ),
 				'refreshNonce'          => wp_create_nonce( 'updatebee-refresh-updates' ),
 				'schedulesUrl'          => esc_url_raw( Functions::get_settings_url( 'cron' ) ),
 			)
