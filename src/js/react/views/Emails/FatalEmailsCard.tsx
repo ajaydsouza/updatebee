@@ -65,6 +65,16 @@ const FatalEmailsCard = ( props: FatalEmailsCardProps ) => {
 		};
 	}, [] );
 
+	const handlePreview = useCallback( () => {
+		if ( updatebeeEmails.fatalPreviewUrl ) {
+			window.open(
+				updatebeeEmails.fatalPreviewUrl,
+				'_blank',
+				'noopener,noreferrer'
+			);
+		}
+	}, [] );
+
 	const handleSave = useCallback( async () => {
 		if ( enabled ) {
 			const addresses = recipients
@@ -236,7 +246,13 @@ const FatalEmailsCard = ( props: FatalEmailsCardProps ) => {
 					</>
 				) }
 				<div className="updatebee-emails-actions">
-					<span />
+					<Button
+						variant="outline"
+						disabled={ ! updatebeeEmails.fatalPreviewUrl }
+						onClick={ handlePreview }
+					>
+						{ __( 'Preview email', 'updatebee' ) }
+					</Button>
 					<Button
 						variant="solid"
 						loading={ isSaving }

@@ -547,14 +547,13 @@ abstract class Email_Report {
 			$updates = Logs::get_failure_logs( $supported, $effective_cutoff );
 		}
 
-		if ( empty( $updates ) ) {
-			wp_die( esc_html__( 'There are no records to retrieve.', 'updatebee' ) );
-		}
+		$is_sample = empty( $updates );
+		$updates   = Emails::rows_for_preview( $updates, static::get_log_status() );
 
 		$email_body = Emails::get_update_report_email(
 			$updates,
 			static::get_report_title(),
-			static::get_report_intro(),
+			Emails::preview_intro( static::get_report_intro(), $is_sample ),
 			static::get_cron_hook()
 		);
 
