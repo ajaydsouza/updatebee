@@ -12,6 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+use UpdateBee\Abilities\Registry as Abilities_Registry;
 use UpdateBee\Admin\Admin_Bar_Menu;
 use UpdateBee\Admin\Ajax;
 use UpdateBee\Admin\Command_Palette;
@@ -255,6 +256,8 @@ class Plugin {
 	 * Fired when the plugins for WordPress have finished loading.
 	 */
 	public function plugins_loaded(): void {
+		Abilities_Registry::boot();
+
 		$this->updater = new Updater_Init();
 		$this->updater->run();
 

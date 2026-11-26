@@ -355,6 +355,46 @@ class OptionsTest extends TestCase {
 	}
 
 	/**
+	 * An unchanged site option is a successful save.
+	 */
+	public function test_update_options_treats_unchanged_value_as_success(): void {
+		$this->stub_option_helpers();
+		$stored = null;
+		MonkeyFunctions\when( 'get_site_option' )->alias(
+			static function () use ( &$stored ) {
+				return is_array( $stored ) ? $stored : array();
+			}
+		);
+		MonkeyFunctions\when( 'update_site_option' )->alias(
+			static function ( $key, $value ) use ( &$stored ) {
+				unset( $key );
+				$stored = $value;
+
+				return false;
+			}
+		);
+
+		$updated = Options::update_options( '', array( 'plugin_auto_updates' => 'on' ) );
+
+		$this->assertIsArray( $updated );
+		$this->assertSame( 'on', $updated['plugin_auto_updates'] );
+	}
+
+	/**
+	 * A failed write is not cached and is reported as null.
+	 */
+	public function test_update_options_returns_null_when_write_fails(): void {
+		$this->stub_option_helpers();
+		MonkeyFunctions\when( 'get_site_option' )->justReturn( array() );
+		MonkeyFunctions\when( 'update_site_option' )->justReturn( false );
+
+		$updated = Options::update_options( '', array( 'plugin_auto_updates' => 'on' ) );
+
+		$this->assertNull( $updated );
+		$this->assertSame( 'off', Options::get_options( 'plugin_auto_updates' ) );
+	}
+
+	/**
 	 * Test translation blocked reset leaves auto-update lists alone.
 	 */
 	public function test_reset_translation_blocked_updates_clears_blocked_only() {

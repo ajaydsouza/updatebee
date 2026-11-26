@@ -152,7 +152,7 @@ class Init {
 	/**
 	 * Queue plugin, theme, and core version checks for the next cron pass.
 	 *
-	 * Used by the tools screen through admin-ajax.
+	 * Shared by the tools screen and the updatebee/schedule-update-checks ability.
 	 * The callbacks run later under real WP-Cron, which defines DOING_CRON itself.
 	 */
 	public static function schedule_update_checks(): void {
@@ -164,7 +164,7 @@ class Init {
 	/**
 	 * Run automatic updates for items the current policy allows.
 	 *
-	 * Used by the tools screen through admin-ajax.
+	 * Shared by the tools screen and the updatebee/run-auto-updates ability.
 	 * This can change the site by updating core, plugins, themes, and translations.
 	 *
 	 * @param bool $skip_delay Whether to ignore the plugin and theme update delay.
