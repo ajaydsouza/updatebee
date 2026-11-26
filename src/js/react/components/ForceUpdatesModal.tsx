@@ -88,7 +88,7 @@ const ForceUpdatesModal = ( props: ForceUpdatesModalProps ) => {
 			{ ignoreAutomaticUpdaterDisabled && (
 				<CheckboxControl
 					label={ __(
-						'Ignore this restriction for this run',
+						'Override the automatic updates block for this run',
 						'updatebee'
 					) }
 					checked={ ignoreUpdaterDisabled }

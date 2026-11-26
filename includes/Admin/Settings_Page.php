@@ -355,10 +355,21 @@ class Settings_Page {
 			? wp_unslash( $_POST[ Automatic_Updater_Override::OPTION ] )
 			: null;
 		$enabled = is_string( $posted_value ) && '1' === sanitize_text_field( $posted_value );
-		Options::update_options(
+		$saved = Options::update_options(
 			Automatic_Updater_Override::OPTION,
 			array( Automatic_Updater_Override::OPTION => $enabled )
 		);
+
+		if ( null === $saved ) {
+			wp_die(
+				esc_html__( 'The automatic updates override could not be saved. The previous setting is still in effect. Go back and try again.', 'updatebee' ),
+				'',
+				array(
+					'response'  => 500,
+					'back_link' => true,
+				)
+			);
+		}
 
 		wp_safe_redirect( Functions::get_settings_url() );
 		exit;
