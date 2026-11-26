@@ -2,7 +2,7 @@
  * Advanced footer snackbar.
  */
 import { Fill } from '@wordpress/components';
-import InlineNotice from '../../components/InlineNotice';
+import FloatingNotice from '../../components/FloatingNotice';
 
 export type SnackbarType = 'success' | 'error' | 'warning' | 'info';
 
@@ -23,7 +23,7 @@ const AdvancedFooter = ( props: AdvancedFooterProps ) => {
 	return (
 		<Fill name="updatebeeFooter">
 			<div className="updatebee-advanced-footer">
-				<InlineNotice
+				<FloatingNotice
 					isVisible={ snackbar.isVisible }
 					message={ snackbar.message }
 					type={ snackbar.type }

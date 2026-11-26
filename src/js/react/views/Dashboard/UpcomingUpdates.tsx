@@ -15,7 +15,7 @@ import {
 import { useCallback, useEffect, useMemo, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import { Button, Stack } from '@wordpress/ui';
-import InlineNotice from '../../components/InlineNotice';
+import FloatingNotice from '../../components/FloatingNotice';
 import sendCommand from '../../../utils/SendCommand';
 import { DATAVIEWS_STORAGE_KEYS } from '../../../utils/dataviews-view-storage';
 import { ErrorFallback } from '../../components/ErrorBoundary';
@@ -421,7 +421,7 @@ const UpcomingUpdates = () => {
 					</Button>
 				</div>
 			</div>
-			<InlineNotice
+			<FloatingNotice
 				isVisible={ null !== notice }
 				message={ notice?.message ?? '' }
 				type={ notice?.intent }

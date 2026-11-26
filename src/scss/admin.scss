@@ -1,5 +1,6 @@
 @use '@wordpress/theme/design-tokens.css';
 @use '@mediaron/react-spinners/spinner.css';
+@use 'floating-notice';
 
 @layer wp-ui, updatebee;
 
@@ -431,7 +432,4 @@ h3.updatebee-panel-heading {
 	font-weight: 700;
 	line-height: 1.25;
 	letter-spacing: -0.02em;
-}
-.updatebee-notices-slot:not(:empty) {
-	margin: 8px 0 16px;
 }

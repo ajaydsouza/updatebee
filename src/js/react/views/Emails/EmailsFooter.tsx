@@ -2,7 +2,7 @@
  * Emails tab footer snackbar.
  */
 import { Fill } from '@wordpress/components';
-import InlineNotice from '../../components/InlineNotice';
+import FloatingNotice from '../../components/FloatingNotice';
 import type { SnackbarState } from '../Tools/ToolsFooter';
 
 type EmailsFooterProps = {
@@ -16,7 +16,7 @@ const EmailsFooter = ( props: EmailsFooterProps ) => {
 	return (
 		<Fill name="updatebeeFooter">
 			<div className="updatebee-emails-footer">
-				<InlineNotice
+				<FloatingNotice
 					isVisible={ snackbar.isVisible }
 					message={ snackbar.message }
 					type={ snackbar.type }

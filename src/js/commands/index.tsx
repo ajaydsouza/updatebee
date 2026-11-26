@@ -14,7 +14,7 @@ import {
 } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import ForceUpdatesModal from '../react/components/ForceUpdatesModal';
-import NoticeBanner from '../react/components/NoticeBanner';
+import FloatingNotice from '../react/components/FloatingNotice';
 import sendCommand, { type SendCommandData } from '../utils/SendCommand';
 
 const UpdateIcon = () => {
@@ -233,15 +233,12 @@ const UpdateCommands = () => {
 				onClose={ handleCloseForceUpdates }
 				onConfirm={ handleConfirmForceUpdates }
 			/>
-			{ notice.isVisible && (
-				<div className="updatebee-command-notice">
-					<NoticeBanner
-						message={ notice.message }
-						type={ notice.type }
-						onClose={ handleClose }
-					/>
-				</div>
-			) }
+			<FloatingNotice
+				isVisible={ notice.isVisible }
+				message={ notice.message }
+				type={ notice.type }
+				onClose={ handleClose }
+			/>
 		</>
 	);
 };
