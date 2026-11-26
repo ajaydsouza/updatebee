@@ -149,15 +149,11 @@ const normalizeDays = ( value: unknown ): number => {
 };
 
 /**
- * Warning copy for the current site-wide delay.
+ * Warning copy for an active site-wide delay.
  *
- * @param days Delay in whole days. Zero means no delay.
+ * @param days Delay in whole days. Greater than zero.
  */
 const delayNotice = ( days: number ): string => {
-	if ( 0 === days ) {
-		return __( 'Plugin and theme updates are not delayed.', 'updatebee' );
-	}
-
 	const wait = sprintf(
 		/* translators: %d: number of days updates wait before they can install. */
 		_n(
@@ -236,6 +232,11 @@ const UpcomingUpdates = () => {
 				setIsLoading( false );
 			} );
 	}, [ applyPayload ] );
+
+	const openDelayModal = useCallback( () => {
+		setDelayError( '' );
+		setIsDelayModalOpen( true );
+	}, [] );
 
 	const closeDelayModal = useCallback( () => {
 		if ( isSavingDelay ) {
@@ -536,23 +537,22 @@ const UpcomingUpdates = () => {
 					</Button>
 				</div>
 			</div>
-			<div className="updatebee-upcoming-delay">
-				<Notice status="warning" isDismissible={ false }>
-					<span className="updatebee-upcoming-delay-copy">
-						{ delayNotice( delayUpdates ) }
-					</span>
-					<Button
-						variant="outline"
-						disabled={ isBusy || isSavingDelay }
-						onClick={ () => {
-							setDelayError( '' );
-							setIsDelayModalOpen( true );
-						} }
-					>
-						{ __( 'Change delay', 'updatebee' ) }
-					</Button>
-				</Notice>
-			</div>
+			{ 0 < delayUpdates && (
+				<div className="updatebee-upcoming-delay">
+					<Notice status="warning" isDismissible={ false }>
+						<span className="updatebee-upcoming-delay-copy">
+							{ delayNotice( delayUpdates ) }
+						</span>
+						<Button
+							variant="outline"
+							disabled={ isBusy || isSavingDelay }
+							onClick={ openDelayModal }
+						>
+							{ __( 'Change delay', 'updatebee' ) }
+						</Button>
+					</Notice>
+				</div>
+			) }
 			<FloatingNotice
 				isVisible={ null !== notice }
 				message={ notice?.message ?? '' }
