@@ -35,15 +35,15 @@ class Automatic_Updater_Override {
 		return self::is_constant_active() && ! self::is_enabled();
 	}
 
-	public static function filter_disabled( $disabled ): bool {
+	public static function filter_disabled( mixed $disabled ): bool {
 		return self::allow_constant_default( $disabled, self::is_enabled() );
 	}
 
-	public static function filter_disabled_for_one_run( $disabled ): bool {
+	public static function filter_disabled_for_one_run( mixed $disabled ): bool {
 		return self::allow_constant_default( $disabled, self::is_constant_active() );
 	}
 
-	public static function allow_constant_default( $disabled, bool $override_enabled ): bool {
+	public static function allow_constant_default( mixed $disabled, bool $override_enabled ): bool {
 		return $override_enabled && $disabled ? false : (bool) $disabled;
 	}
 
