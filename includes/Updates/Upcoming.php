@@ -184,10 +184,12 @@ class Upcoming {
 	 * @return array<string, mixed> Row.
 	 */
 	private static function row( string $type, string $id, string $name, string $type_label, string $from_version, array $offer, bool $blocked, bool $fully, bool $user_can, ?int $next_run, string $skip_action, string $block_action ): array {
-		$to_version  = isset( $offer['new_version'] ) ? (string) $offer['new_version'] : '';
-		$has_package = ! empty( $offer['has_package'] );
-		$skipped     = Skip_Version::is_skipped( $type, $id, $to_version );
-		$schedule    = self::schedule_label( $type, $id, $blocked, $skipped, $next_run );
+		$to_version       = isset( $offer['new_version'] ) ? (string) $offer['new_version'] : '';
+		$has_package      = ! empty( $offer['has_package'] );
+		$skipped          = Skip_Version::is_skipped( $type, $id, $to_version );
+		$schedule         = self::schedule_label( $type, $id, $blocked, $skipped, $next_run );
+		$has_changelog    = 'theme' === $type ? Changelog::theme_is_available( $id ) : Changelog::plugin_is_available( $id );
+		$changelog_action = 'theme' === $type ? 'updatebee-theme-changelog-' . $id : 'updatebee-plugin-changelog-' . $id;
 
 		if ( $blocked ) {
 			$status = 'blocked';
@@ -198,23 +200,25 @@ class Upcoming {
 		}
 
 		return array(
-			'RowId'        => $type . ':' . $id,
-			'Id'           => $id,
-			'Type'         => $type,
-			'Name'         => $name,
-			'TypeLabel'    => $type_label,
-			'FromVersion'  => $from_version,
-			'ToVersion'    => $to_version,
-			'Schedule'     => $schedule,
-			'Status'       => $status,
-			'HasPackage'   => $has_package,
-			'FullyBlocked' => $fully,
-			'Blocked'      => $blocked,
-			'Skipped'      => $skipped,
-			'CanUpdate'    => self::allows_manual_update( $has_package, $blocked, $fully, $user_can ),
-			'SkipNonce'    => wp_create_nonce( $skip_action ),
-			'BlockNonce'   => wp_create_nonce( $block_action ),
-			'UpdateNonce'  => isset( $offer['nonce'] ) ? (string) $offer['nonce'] : '',
+			'RowId'          => $type . ':' . $id,
+			'Id'             => $id,
+			'Type'           => $type,
+			'Name'           => $name,
+			'TypeLabel'      => $type_label,
+			'FromVersion'    => $from_version,
+			'ToVersion'      => $to_version,
+			'Schedule'       => $schedule,
+			'Status'         => $status,
+			'HasPackage'     => $has_package,
+			'FullyBlocked'   => $fully,
+			'Blocked'        => $blocked,
+			'Skipped'        => $skipped,
+			'CanUpdate'      => self::allows_manual_update( $has_package, $blocked, $fully, $user_can ),
+			'SkipNonce'      => wp_create_nonce( $skip_action ),
+			'BlockNonce'     => wp_create_nonce( $block_action ),
+			'UpdateNonce'    => isset( $offer['nonce'] ) ? (string) $offer['nonce'] : '',
+			'HasChangelog'   => $has_changelog,
+			'ChangelogNonce' => $has_changelog ? wp_create_nonce( $changelog_action ) : '',
 		);
 	}
 

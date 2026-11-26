@@ -15,6 +15,7 @@ import {
 import { useCallback, useEffect, useMemo, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import { Button, Stack } from '@wordpress/ui';
+import ChangelogModal from '../../components/ChangelogModal';
 import FloatingNotice from '../../components/FloatingNotice';
 import sendCommand from '../../../utils/SendCommand';
 import { DATAVIEWS_STORAGE_KEYS } from '../../../utils/dataviews-view-storage';
@@ -41,6 +42,8 @@ export type UpcomingItem = {
 	SkipNonce: string;
 	BlockNonce: string;
 	UpdateNonce: string;
+	HasChangelog?: boolean;
+	ChangelogNonce?: string;
 };
 
 type UpcomingPayload = {
@@ -138,6 +141,9 @@ const UpcomingUpdates = () => {
 	const [ isChecking, setIsChecking ] = useState( false );
 	const [ loadAttempt, setLoadAttempt ] = useState( 0 );
 	const [ notice, setNotice ] = useState< NoticeState | null >( null );
+	const [ changelogItem, setChangelogItem ] = useState< UpcomingItem | null >(
+		null
+	);
 	const { view, onChangeView, onReset } = usePersistedDataView(
 		DATAVIEWS_STORAGE_KEYS.upcoming,
 		defaultView,
@@ -254,6 +260,10 @@ const UpcomingUpdates = () => {
 		[ runAction ]
 	);
 
+	const onChangelog = useCallback( ( item: UpcomingItem ) => {
+		setChangelogItem( item );
+	}, [] );
+
 	const onUpdate = useCallback(
 		( item: UpcomingItem ) => {
 			const action =
@@ -282,8 +292,9 @@ const UpcomingUpdates = () => {
 				onSkip,
 				onBlock,
 				onUpdate,
+				onChangelog,
 			} ),
-		[ onBlock, onSkip, onUpdate ]
+		[ onBlock, onChangelog, onSkip, onUpdate ]
 	);
 
 	const fields = useMemo< Field< UpcomingItem >[] >(
@@ -465,6 +476,21 @@ const UpcomingUpdates = () => {
 					searchLabel={ __( 'Search updates', 'updatebee' ) }
 				/>
 			</DataViews>
+			<ChangelogModal
+				target={
+					changelogItem && changelogItem.ChangelogNonce
+						? {
+								kind: changelogItem.Type,
+								id: changelogItem.Id,
+								name: changelogItem.Name,
+								nonce: changelogItem.ChangelogNonce,
+							}
+						: null
+				}
+				onClose={ () => {
+					setChangelogItem( null );
+				} }
+			/>
 		</div>
 	);
 };

@@ -3,24 +3,25 @@
  */
 import type { Action } from '@wordpress/dataviews';
 import { __ } from '@wordpress/i18n';
-import { lock, scheduled, unlock, update } from '@wordpress/icons';
+import { lock, page, scheduled, unlock, update } from '@wordpress/icons';
 import type { UpcomingItem } from './UpcomingUpdates';
 
 type GetUpcomingActionsArgs = {
 	onSkip: ( item: UpcomingItem ) => void;
 	onBlock: ( item: UpcomingItem ) => void;
 	onUpdate: ( item: UpcomingItem ) => void;
+	onChangelog: ( item: UpcomingItem ) => void;
 };
 
 /**
- * Build skip, block, and update actions for an upcoming row.
+ * Build skip, block, changelog, and update actions for an upcoming row.
  *
  * @param args Action callbacks.
  */
 export const getUpcomingActions = (
 	args: GetUpcomingActionsArgs
 ): Action< UpcomingItem >[] => {
-	const { onSkip, onBlock, onUpdate } = args;
+	const { onSkip, onBlock, onUpdate, onChangelog } = args;
 
 	return [
 		{
@@ -72,6 +73,20 @@ export const getUpcomingActions = (
 				const item = items[ 0 ];
 				if ( item ) {
 					onBlock( item );
+				}
+			},
+		},
+		{
+			id: 'view-changelog',
+			label: __( 'View changelog', 'updatebee' ),
+			icon: page,
+			supportsBulk: false,
+			isEligible: ( item ) =>
+				Boolean( item.HasChangelog && item.ChangelogNonce ),
+			callback: ( items ) => {
+				const item = items[ 0 ];
+				if ( item ) {
+					onChangelog( item );
 				}
 			},
 		},
