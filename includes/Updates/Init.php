@@ -168,8 +168,9 @@ class Init {
 	 * This can change the site by updating core, plugins, themes, and translations.
 	 *
 	 * @param bool $skip_delay Whether to ignore the plugin and theme update delay.
+	 * @return array<string, list<object>> Results of updates attempted by WordPress.
 	 */
-	public static function run_auto_updates( bool $skip_delay = false ): void {
+	public static function run_auto_updates( bool $skip_delay = false ): array {
 		if ( $skip_delay ) {
 			Delay_Updates::skip_for_request();
 		}
@@ -195,9 +196,21 @@ class Init {
 			delete_option( 'auto_updater.lock' );
 		}
 
+		$results = array();
+		$capture = static function ( array $update_results ) use ( &$results ): void {
+			$results = $update_results;
+		};
+
+		add_action( 'automatic_updates_complete', $capture );
 		add_filter( 'wp_doing_cron', '__return_true' );
-		wp_maybe_auto_update();
-		remove_filter( 'wp_doing_cron', '__return_true' );
+		try {
+			wp_maybe_auto_update();
+		} finally {
+			remove_filter( 'wp_doing_cron', '__return_true' );
+			remove_action( 'automatic_updates_complete', $capture );
+		}
+
+		return $results;
 	}
 
 	/**

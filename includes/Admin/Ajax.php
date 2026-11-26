@@ -26,6 +26,7 @@ use UpdateBee\Uninstall;
 use UpdateBee\Updater\FluentLicensing;
 use UpdateBee\Updater\License_Details;
 use UpdateBee\Updates\Fatal_Detection;
+use UpdateBee\Updates\Force_Update_Report;
 use UpdateBee\Updates\Version_Controlled;
 use UpdateBee\Updates\Hide_Blocked_Updates;
 use UpdateBee\Updates\Init as Updates_Init;
@@ -2152,11 +2153,11 @@ class Ajax {
 			$skip_delay = Functions::sanitize_rest_boolean( wp_unslash( $_POST['skip_delay'] ) );
 		}
 
-		Updates_Init::run_auto_updates( $skip_delay );
+		$results = Updates_Init::run_auto_updates( $skip_delay );
 
 		wp_send_json_success(
 			array(
-				'message' => __( 'Force updates completed.', 'updatebee' ),
+				'message' => Force_Update_Report::message( $results ),
 			)
 		);
 	}
