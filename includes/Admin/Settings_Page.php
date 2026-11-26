@@ -170,6 +170,9 @@ class Settings_Page {
 			echo '<div class="updatebee-settings-layout">';
 			echo wp_kses( $tab_html, Functions::get_kses_allowed_html() );
 			echo '<div class="updatebee-settings-content">';
+			if ( in_array( $active_tab, array( 'dashboard', 'plugins', 'themes', 'translations', 'cron', 'tools', 'advanced' ), true ) ) {
+				self::show_update_configuration_notices();
+			}
 		}
 
 		$current_tab     = Functions::get_admin_tab();
@@ -288,6 +291,35 @@ class Settings_Page {
 		if ( $tabs_count > 0 ) {
 			echo '</div>';
 			echo '</div>';
+		}
+	}
+
+	/**
+	 * Show WordPress update configuration warnings on update-related tabs.
+	 */
+	private static function show_update_configuration_notices(): void {
+		if ( ! class_exists( 'WP_Automatic_Updater' ) ) {
+			require_once ABSPATH . 'wp-admin/includes/class-wp-automatic-updater.php';
+		}
+
+		$updater = new \WP_Automatic_Updater();
+		if ( $updater->is_disabled() ) {
+			if ( ! wp_is_file_mod_allowed( 'automatic_updater' ) ) {
+				$message = __( 'WordPress file changes are blocked. Automatic updates and Force updates are unavailable. Check DISALLOW_FILE_MODS or your hosting settings.', 'updatebee' );
+			} elseif ( defined( 'AUTOMATIC_UPDATER_DISABLED' ) && AUTOMATIC_UPDATER_DISABLED ) {
+				$message = __( 'AUTOMATIC_UPDATER_DISABLED is enabled. Automatic updates and Force updates are unavailable.', 'updatebee' );
+			} else {
+				$message = __( 'The WordPress automatic updater is disabled. Check your site configuration or contact your host. Force updates is also unavailable.', 'updatebee' );
+			}
+
+			wp_admin_notice( esc_html( $message ), array( 'type' => 'warning' ) );
+		}
+
+		if ( defined( 'WP_AUTO_UPDATE_CORE' ) && false === WP_AUTO_UPDATE_CORE ) {
+			wp_admin_notice(
+				esc_html__( 'WP_AUTO_UPDATE_CORE is set to false. WordPress disables automatic core updates by default. UpdateBee’s major and minor update settings can override this default when the automatic updater is enabled.', 'updatebee' ),
+				array( 'type' => 'warning' )
+			);
 		}
 	}
 
