@@ -159,6 +159,119 @@ class Emails {
 	}
 
 	/**
+	 * Real preview rows, or sample rows when the report is empty.
+	 *
+	 * @param array<int, array<string, mixed>> $rows Real report rows.
+	 * @param string                           $kind success|failure|fatal|available.
+	 * @return array<int, array<string, mixed>>
+	 */
+	public static function rows_for_preview( array $rows, string $kind ): array {
+		if ( ! empty( $rows ) ) {
+			return $rows;
+		}
+
+		return self::sample_preview_rows( $kind );
+	}
+
+	/**
+	 * Intro text, with a sample-data notice when the preview is not real.
+	 *
+	 * @param string $intro     Report introduction.
+	 * @param bool   $is_sample Whether the rows are samples.
+	 * @return string
+	 */
+	public static function preview_intro( string $intro, bool $is_sample ): string {
+		if ( ! $is_sample ) {
+			return $intro;
+		}
+
+		return __( 'This preview uses sample data because there is nothing to report right now.', 'updatebee' ) . ' ' . $intro;
+	}
+
+	/**
+	 * Sample log rows for an empty email preview.
+	 *
+	 * @param string $kind success|failure|fatal|available.
+	 * @return array<int, array<string, mixed>>
+	 */
+	public static function sample_preview_rows( string $kind ): array {
+		$date = current_time( 'mysql' );
+		if ( ! is_string( $date ) ) {
+			$date = '';
+		}
+
+		switch ( $kind ) {
+			case 'failure':
+				return array(
+					self::sample_row( 'Akismet Anti-spam', 'plugin', '5.3.5', '5.3.6', $date, 'failure' ),
+					self::sample_row( 'Twenty Twenty-Five', 'theme', '1.2', '1.3', $date, 'failure' ),
+				);
+			case 'fatal':
+				$row                  = self::sample_row( 'Akismet Anti-spam', 'plugin', '5.3.5', '5.3.6', $date, 'fatal' );
+				$row['fatal_message'] = 'Uncaught Error: Call to undefined function foo() in wp-content/plugins/akismet/akismet.php:100';
+				$row['detail_url']    = Functions::get_settings_url( 'logs' );
+				$row['detail_label']  = __( 'View logs', 'updatebee' );
+				return array( $row );
+			case 'available':
+				return array(
+					array_merge(
+						self::sample_row( 'Akismet Anti-spam', 'plugin', '5.3.5', '5.3.6', $date, 'available' ),
+						array(
+							'detail_url'   => esc_url( 'https://wordpress.org/plugins/akismet/#developers' ),
+							'detail_label' => __( 'Changelog', 'updatebee' ),
+						)
+					),
+					array_merge(
+						self::sample_row( 'Twenty Twenty-Five', 'theme', '1.2', '1.3', $date, 'available' ),
+						array(
+							'detail_url'   => esc_url( 'https://wordpress.org/themes/twentytwentyfive/' ),
+							'detail_label' => __( 'Theme details', 'updatebee' ),
+						)
+					),
+					array_merge(
+						self::sample_row( 'WordPress', 'core', '6.8', '6.8.1', $date, 'available' ),
+						array(
+							'detail_url'   => esc_url( 'https://codex.wordpress.org/Version_6.8.1' ),
+							'detail_label' => __( 'Changelog', 'updatebee' ),
+						)
+					),
+					self::sample_row( 'WordPress (en_US)', 'translation', '', '6.8.1', $date, 'available' ),
+				);
+			case 'success':
+				return array(
+					self::sample_row( 'Akismet Anti-spam', 'plugin', '5.3.5', '5.3.6', $date, 'success' ),
+					self::sample_row( 'Twenty Twenty-Five', 'theme', '1.2', '1.3', $date, 'success' ),
+					self::sample_row( 'WordPress', 'core', '6.8', '6.8.1', $date, 'success' ),
+					self::sample_row( 'WordPress (en_US)', 'translation', '', '6.8.1', $date, 'success' ),
+				);
+			default:
+				return array();
+		}
+	}
+
+	/**
+	 * One sample log row.
+	 *
+	 * @param string $name         Item name.
+	 * @param string $update_type  plugin|theme|core|translation.
+	 * @param string $from_version Installed version.
+	 * @param string $to_version   Target version.
+	 * @param string $date         Display date.
+	 * @param string $status       Update status.
+	 * @return array<string, string>
+	 */
+	private static function sample_row( string $name, string $update_type, string $from_version, string $to_version, string $date, string $status ): array {
+		return array(
+			'name'          => $name,
+			'update_type'   => $update_type,
+			'from_version'  => $from_version,
+			'to_version'    => $to_version,
+			'date'          => $date,
+			'update_status' => $status,
+		);
+	}
+
+	/**
 	 * Open a report table with optional Details column.
 	 *
 	 * @param bool $has_details Whether to include a Details header.

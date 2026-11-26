@@ -102,6 +102,15 @@ class Emails {
 				'fatalEmailRecipients'          => Email_Fatals::get_recipients_for_display(),
 				'fatalNotifySlack'              => (bool) Options::get_options( 'fatal_notify_slack' ),
 				'fatalSaveNonce'                => wp_create_nonce( 'updatebee-save-fatal-email-settings' ),
+				'fatalPreviewUrl'               => esc_url_raw(
+					add_query_arg(
+						array(
+							'nonce'  => wp_create_nonce( 'updatebee-preview-email-fatals' ),
+							'action' => 'updatebee_preview_email_fatals',
+						),
+						admin_url( 'admin-ajax.php' )
+					)
+				),
 				'successRetrieveNonce'          => wp_create_nonce( 'updatebee-retrieve-email-success-settings' ),
 				'successSaveNonce'              => wp_create_nonce( 'updatebee-save-email-success-settings' ),
 				'successResetNonce'             => wp_create_nonce( 'updatebee-reset-email-success-settings' ),

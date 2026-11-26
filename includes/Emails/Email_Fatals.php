@@ -13,6 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 use UpdateBee\Functions;
+use UpdateBee\Logs;
 use UpdateBee\Options;
 use UpdateBee\Slack\Slack_Fatals;
 use UpdateBee\Slack\Slack_Webhook;
@@ -28,6 +29,7 @@ class Email_Fatals {
 	 */
 	public function run(): void {
 		add_action( 'updatebee_automatic_updates_complete', array( $this, 'maybe_send_fatal_report' ), 9, 1 );
+		add_action( 'wp_ajax_updatebee_preview_email_fatals', array( $this, 'ajax_preview_email' ) );
 	}
 
 	/**
@@ -49,12 +51,8 @@ class Email_Fatals {
 		if ( ! empty( $recipients ) ) {
 			$body = Emails::get_update_report_email(
 				$filtered,
-				__( 'Fatal error after automatic updates', 'updatebee' ),
-				sprintf(
-					/* translators: %s: Plugin name. */
-					__( 'A PHP fatal error was detected after automatic updates. %s did not deactivate any plugins. WordPress Recovery Mode may still email a login link separately. WordPress may have restored a previous plugin version on its own.', 'updatebee' ),
-					Functions::get_plugin_name()
-				),
+				self::get_report_title(),
+				self::get_report_intro(),
 				''
 			);
 
@@ -80,6 +78,36 @@ class Email_Fatals {
 
 		$slack = new Slack_Fatals();
 		$slack->send_report( $updates );
+	}
+
+	/**
+	 * Preview the fatal report, using sample rows when no fatal logs exist.
+	 */
+	public function ajax_preview_email(): void {
+		if ( ! Functions::can_access_options() ) {
+			wp_die( esc_html__( 'Security check failed.', 'updatebee' ) );
+		}
+
+		$nonce = isset( $_GET['nonce'] ) ? sanitize_text_field( wp_unslash( $_GET['nonce'] ) ) : '';
+		if ( ! wp_verify_nonce( $nonce, 'updatebee-preview-email-fatals' ) ) {
+			wp_die( esc_html__( 'Security check failed.', 'updatebee' ) );
+		}
+
+		$updates   = self::rows_from_fatal_logs( Logs::get_recent_fatal_logs() );
+		$is_sample = empty( $updates );
+		$updates   = Emails::rows_for_preview( $updates, 'fatal' );
+
+		$email_body = Emails::get_update_report_email(
+			$updates,
+			self::get_report_title(),
+			Emails::preview_intro( self::get_report_intro(), $is_sample ),
+			''
+		);
+
+		add_filter( 'safe_style_css', array( Emails::class, 'allow_email_styles' ) );
+		echo wp_kses( $email_body, Functions::get_kses_allowed_html( false, true ) );
+		remove_filter( 'safe_style_css', array( Emails::class, 'allow_email_styles' ) );
+		exit;
 	}
 
 	/**
@@ -162,6 +190,85 @@ class Email_Fatals {
 	 */
 	public static function get_recipients_for_display(): array {
 		return self::get_recipients();
+	}
+
+	/**
+	 * Fatal report title.
+	 *
+	 * @return string
+	 */
+	private static function get_report_title(): string {
+		return __( 'Fatal error after automatic updates', 'updatebee' );
+	}
+
+	/**
+	 * Fatal report introduction.
+	 *
+	 * @return string
+	 */
+	private static function get_report_intro(): string {
+		return sprintf(
+			/* translators: %s: Plugin name. */
+			__( 'A PHP fatal error was detected after automatic updates. %s did not deactivate any plugins. WordPress Recovery Mode may still email a login link separately. WordPress may have restored a previous plugin version on its own.', 'updatebee' ),
+			Functions::get_plugin_name()
+		);
+	}
+
+	/**
+	 * Shape fatal log rows for the email template.
+	 *
+	 * @param array<int, array<string, mixed>> $logs Fatal log rows.
+	 * @return array<int, array<string, mixed>>
+	 */
+	private static function rows_from_fatal_logs( array $logs ): array {
+		$logs_url = Functions::get_settings_url( 'logs' );
+		$rows     = array();
+
+		foreach ( $logs as $log ) {
+			if ( ! is_array( $log ) ) {
+				continue;
+			}
+
+			$name = isset( $log['name'] ) ? (string) $log['name'] : '';
+			if ( '' === $name ) {
+				continue;
+			}
+
+			$rows[] = array(
+				'name'          => $name,
+				'update_type'   => isset( $log['update_type'] ) ? (string) $log['update_type'] : '',
+				'from_version'  => isset( $log['from_version'] ) ? (string) $log['from_version'] : '',
+				'to_version'    => isset( $log['to_version'] ) ? (string) $log['to_version'] : '',
+				'date'          => isset( $log['date'] ) ? (string) $log['date'] : '',
+				'update_status' => 'fatal',
+				'fatal_message' => self::first_fatal_line( isset( $log['raw'] ) ? (string) $log['raw'] : '' ),
+				'detail_url'    => $logs_url,
+				'detail_label'  => __( 'View logs', 'updatebee' ),
+			);
+		}
+
+		return $rows;
+	}
+
+	/**
+	 * First line of a fatal note, or a short fallback.
+	 *
+	 * @param string $notes Raw log notes.
+	 * @return string
+	 */
+	private static function first_fatal_line( string $notes ): string {
+		$notes = trim( $notes );
+		if ( '' === $notes ) {
+			return __( 'A PHP fatal error was detected after this update.', 'updatebee' );
+		}
+
+		$lines = preg_split( '/\r\n|\r|\n/', $notes );
+		$first = is_array( $lines ) ? trim( (string) ( $lines[0] ?? '' ) ) : '';
+		if ( '' === $first ) {
+			return __( 'A PHP fatal error was detected after this update.', 'updatebee' );
+		}
+
+		return $first;
 	}
 
 	/**

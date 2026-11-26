@@ -87,6 +87,7 @@ interface UpdateBeeEmails {
 	fatalEmailRecipients: string[];
 	fatalNotifySlack: boolean;
 	fatalSaveNonce: string;
+	fatalPreviewUrl: string;
 	successRetrieveNonce: string;
 	successSaveNonce: string;
 	successResetNonce: string;
