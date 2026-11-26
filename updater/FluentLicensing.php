@@ -392,7 +392,14 @@ class FluentLicensing {
 	}
 
 	private function apiRequest( $action, $data = array() ) {
-		$url     = $this->config['api_url'];
+		$url = isset( $this->config['api_url'] ) ? $this->config['api_url'] : '';
+		if ( ! $this->apiUrlIsHttps( $url ) ) {
+			return new \WP_Error(
+				'license_api_insecure',
+				__( 'The license server URL must use HTTPS.', 'updatebee' )
+			);
+		}
+
 		$fullUrl = add_query_arg(
 			array(
 				'fluent-cart' => $action,
@@ -448,6 +455,27 @@ class FluentLicensing {
 		}
 
 		return new \WP_Error( 'api_error', __( 'API request returned an empty or not JSON response.', 'updatebee' ), array() );
+	}
+
+	/**
+	 * Whether the license API URL uses HTTPS.
+	 *
+	 * License keys are only sent when this is true.
+	 *
+	 * @param mixed $url API URL from the licensing config.
+	 * @return bool
+	 */
+	private function apiUrlIsHttps( $url ) {
+		if ( ! is_string( $url ) || '' === $url ) {
+			return false;
+		}
+
+		$scheme = wp_parse_url( $url, PHP_URL_SCHEME );
+		if ( ! is_string( $scheme ) ) {
+			return false;
+		}
+
+		return 'https' === strtolower( $scheme );
 	}
 
 	public function getRenewUrl() {
