@@ -176,6 +176,7 @@ interface UpdateBeeLicenseView {
 
 interface UpdateBeeLicense {
 	configured: boolean;
+	keyDefined: boolean;
 	activateNonce: string;
 	checkNonce: string;
 	revokeNonce: string;

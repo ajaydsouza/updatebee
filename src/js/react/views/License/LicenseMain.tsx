@@ -82,6 +82,7 @@ const LicenseMain = () => {
 	} );
 
 	const isBusy = isSaving || isRevoking;
+	const keyDefined = Boolean( updatebeeLicense.keyDefined );
 
 	const showSnackbar = useCallback(
 		( message: string, type: SnackbarType ) => {
@@ -134,7 +135,7 @@ const LicenseMain = () => {
 		setIsSaving( true );
 		sendCommand< LicensePayload >( 'updatebee_activate_license', {
 			nonce: updatebeeLicense.activateNonce,
-			license_key: licenseKey.trim(),
+			license_key: keyDefined ? '' : licenseKey.trim(),
 		} )
 			.then( ( response ) => {
 				const payload = response.data.data;
@@ -165,7 +166,7 @@ const LicenseMain = () => {
 			.finally( () => {
 				setIsSaving( false );
 			} );
-	}, [ isBusy, licenseKey, showSnackbar ] );
+	}, [ isBusy, keyDefined, licenseKey, showSnackbar ] );
 
 	/**
 	 * Remove the license from this site.
@@ -213,30 +214,40 @@ const LicenseMain = () => {
 				</Card.Header>
 				<Card.Content>
 					<p className="updatebee-license-card-description">
-						{ __(
-							'A valid license key is required for access to automatic plugin upgrades and product support.',
-							'updatebee'
-						) }
+						{ keyDefined
+							? __(
+									'This license key is set in wp-config.php or an mu-plugin.',
+									'updatebee'
+								)
+							: __(
+									'A valid license key is required for access to automatic plugin upgrades and product support.',
+									'updatebee'
+								) }
 					</p>
-					<TextControl
-						label={ __( 'License Key (Required)', 'updatebee' ) }
-						type="password"
-						value={ licenseKey }
-						placeholder={
-							license.has_license
-								? '••••••••••••••••'
-								: __( 'Your license key', 'updatebee' )
-						}
-						onChange={ ( value ) => {
-							setLicenseKey( value );
-						} }
-						help={ __(
-							'The saved key stays hidden. Leave this field blank to check the key already stored on this site.',
-							'updatebee'
-						) }
-						disabled={ isBusy || ! updatebeeLicense.configured }
-						autoComplete="off"
-					/>
+					{ ! keyDefined && (
+						<TextControl
+							label={ __(
+								'License Key (Required)',
+								'updatebee'
+							) }
+							type="password"
+							value={ licenseKey }
+							placeholder={
+								license.has_license
+									? '••••••••••••••••'
+									: __( 'Your license key', 'updatebee' )
+							}
+							onChange={ ( value ) => {
+								setLicenseKey( value );
+							} }
+							help={ __(
+								'The saved key stays hidden. Leave this field blank to check the key already stored on this site.',
+								'updatebee'
+							) }
+							disabled={ isBusy || ! updatebeeLicense.configured }
+							autoComplete="off"
+						/>
+					) }
 					<p className="updatebee-license-actions">
 						<Button
 							variant="solid"
@@ -248,25 +259,29 @@ const LicenseMain = () => {
 							disabled={ isBusy || ! updatebeeLicense.configured }
 							onClick={ handleSave }
 						>
-							{ __( 'Save and Check License', 'updatebee' ) }
+							{ keyDefined
+								? __( 'Check License', 'updatebee' )
+								: __( 'Save and Check License', 'updatebee' ) }
 						</Button>
-						<span className="updatebee-license-revoke">
-							<Button
-								loading={ isRevoking }
-								loadingAnnouncement={ __(
-									'Revoking license…',
-									'updatebee'
-								) }
-								disabled={
-									isBusy ||
-									! license.has_license ||
-									! updatebeeLicense.configured
-								}
-								onClick={ handleRevoke }
-							>
-								{ __( 'Revoke License', 'updatebee' ) }
-							</Button>
-						</span>
+						{ ! keyDefined && (
+							<span className="updatebee-license-revoke">
+								<Button
+									loading={ isRevoking }
+									loadingAnnouncement={ __(
+										'Revoking license…',
+										'updatebee'
+									) }
+									disabled={
+										isBusy ||
+										! license.has_license ||
+										! updatebeeLicense.configured
+									}
+									onClick={ handleRevoke }
+								>
+									{ __( 'Revoke License', 'updatebee' ) }
+								</Button>
+							</span>
+						) }
 					</p>
 				</Card.Content>
 			</Card.Root>
@@ -396,9 +411,7 @@ const LicenseMain = () => {
 						</p>
 						<a
 							className="updatebee-license-upsell-link"
-							href={
-								'https://updatebee.com/?fluent-cart=instant_checkout&item_id=3&quantity=1'
-							}
+							href={ 'https://updatebee.com/checkout/lifetime/' }
 							target="_blank"
 							rel="noopener noreferrer"
 						>

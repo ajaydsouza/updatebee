@@ -25,6 +25,7 @@ use UpdateBee\Slack\Slack_Webhook;
 use UpdateBee\Uninstall;
 use UpdateBee\Updater\FluentLicensing;
 use UpdateBee\Updater\License_Details;
+use UpdateBee\Updater\License_Key;
 use UpdateBee\Updates\Automatic_Updater_Override;
 use UpdateBee\Updates\Fatal_Detection;
 use UpdateBee\Updates\Force_Update_Report;
@@ -2880,6 +2881,16 @@ class Ajax {
 			return;
 		}
 
+		$posted_error = License_Key::posted_key_error( $license_key );
+		if ( '' !== $posted_error ) {
+			wp_send_json_error(
+				array(
+					'message' => $posted_error,
+					'license' => License_Details::from_stored(),
+				)
+			);
+		}
+
 		$activated = $licensing->activate( $license_key );
 		if ( is_wp_error( $activated ) ) {
 			wp_send_json_error(
@@ -2972,6 +2983,16 @@ class Ajax {
 		}
 
 		check_ajax_referer( 'updatebee-revoke-license', 'nonce' );
+
+		$revoke_error = License_Key::revoke_error();
+		if ( '' !== $revoke_error ) {
+			wp_send_json_error(
+				array(
+					'message' => $revoke_error,
+					'license' => License_Details::from_stored(),
+				)
+			);
+		}
 
 		$licensing = $this->licensed_client();
 		if ( null === $licensing ) {

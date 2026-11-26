@@ -138,7 +138,7 @@ class FluentLicensing {
 	}
 
 	public function getStatus( $remoteFetch = false ) {
-		$currentLicense = $this->readLicenseOption();
+		$currentLicense = $this->licenseRecordForStatus();
 		if ( ! $currentLicense || empty( $currentLicense['license_key'] ) ) {
 			return $this->emptyLicense();
 		}
@@ -172,6 +172,11 @@ class FluentLicensing {
 	}
 
 	public function getCurrentLicenseKey() {
+		$defined = License_Key::defined_key();
+		if ( '' !== $defined ) {
+			return $defined;
+		}
+
 		$status = $this->getStatus();
 		return isset( $status['license_key'] ) ? $status['license_key'] : ''; // Return the current license key.
 	}
@@ -255,6 +260,37 @@ class FluentLicensing {
 			'renew_url'         => '',
 			'is_expired'        => false,
 		);
+	}
+
+	/**
+	 * License record used for status checks.
+	 *
+	 * A code-defined key keeps its stored activation record when the keys match.
+	 * A different or missing stored key is unregistered until activation finishes,
+	 * so another site's saved key is not treated as active.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function licenseRecordForStatus() {
+		$current_license = $this->readLicenseOption();
+		$defined         = License_Key::defined_key();
+		if ( '' === $defined ) {
+			return $current_license;
+		}
+
+		$stored_key = '';
+		if ( is_array( $current_license ) && isset( $current_license['license_key'] ) ) {
+			$stored_key = (string) $current_license['license_key'];
+		}
+
+		if ( '' !== $stored_key && hash_equals( $defined, $stored_key ) && is_array( $current_license ) ) {
+			return $current_license;
+		}
+
+		$unregistered                = $this->emptyLicense();
+		$unregistered['license_key'] = $defined;
+
+		return $unregistered;
 	}
 
 	/**
@@ -356,7 +392,14 @@ class FluentLicensing {
 	}
 
 	private function apiRequest( $action, $data = array() ) {
-		$url     = $this->config['api_url'];
+		$url = isset( $this->config['api_url'] ) ? $this->config['api_url'] : '';
+		if ( ! $this->apiUrlIsHttps( $url ) ) {
+			return new \WP_Error(
+				'license_api_insecure',
+				__( 'The license server URL must use HTTPS.', 'updatebee' )
+			);
+		}
+
 		$fullUrl = add_query_arg(
 			array(
 				'fluent-cart' => $action,
@@ -412,6 +455,27 @@ class FluentLicensing {
 		}
 
 		return new \WP_Error( 'api_error', __( 'API request returned an empty or not JSON response.', 'updatebee' ), array() );
+	}
+
+	/**
+	 * Whether the license API URL uses HTTPS.
+	 *
+	 * License keys are only sent when this is true.
+	 *
+	 * @param mixed $url API URL from the licensing config.
+	 * @return bool
+	 */
+	private function apiUrlIsHttps( $url ) {
+		if ( ! is_string( $url ) || '' === $url ) {
+			return false;
+		}
+
+		$scheme = wp_parse_url( $url, PHP_URL_SCHEME );
+		if ( ! is_string( $scheme ) ) {
+			return false;
+		}
+
+		return 'https' === strtolower( $scheme );
 	}
 
 	public function getRenewUrl() {

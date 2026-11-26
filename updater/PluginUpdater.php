@@ -479,7 +479,11 @@ class PluginUpdater {
 	}
 
 	private function getRemoteVersionInfo() {
-		$url     = $this->config['api_url'];
+		$url = isset( $this->config['api_url'] ) ? $this->config['api_url'] : '';
+		if ( ! $this->apiUrlIsHttps( $url ) ) {
+			return false;
+		}
+
 		$fullUrl = add_query_arg(
 			apply_filters(
 				'fluent_sl/api_request_query_params',
@@ -559,5 +563,26 @@ class PluginUpdater {
 		}
 
 		return $versionInfo; // Return the version info object.
+	}
+
+	/**
+	 * Whether the update API URL uses HTTPS.
+	 *
+	 * License keys are only sent when this is true.
+	 *
+	 * @param mixed $url API URL from the updater config.
+	 * @return bool
+	 */
+	private function apiUrlIsHttps( $url ) {
+		if ( ! is_string( $url ) || '' === $url ) {
+			return false;
+		}
+
+		$scheme = wp_parse_url( $url, PHP_URL_SCHEME );
+		if ( ! is_string( $scheme ) ) {
+			return false;
+		}
+
+		return 'https' === strtolower( $scheme );
 	}
 }

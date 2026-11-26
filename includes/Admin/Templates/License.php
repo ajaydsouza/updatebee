@@ -15,6 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 use UpdateBee\Branding;
 use UpdateBee\Functions;
 use UpdateBee\Updater\License_Details;
+use UpdateBee\Updater\License_Key;
 
 /**
  * Output the license tab and content.
@@ -111,6 +112,7 @@ class License {
 	public static function get_script_data(): array {
 		return array(
 			'configured'    => License_Details::is_configured(),
+			'keyDefined'    => License_Key::is_defined(),
 			'activateNonce' => wp_create_nonce( 'updatebee-activate-license' ),
 			'checkNonce'    => wp_create_nonce( 'updatebee-check-license' ),
 			'revokeNonce'   => wp_create_nonce( 'updatebee-revoke-license' ),
