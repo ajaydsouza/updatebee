@@ -1336,6 +1336,38 @@ class Logs {
 	}
 
 	/**
+	 * Recent fatal log rows for the email preview, including raw notes.
+	 *
+	 * @return array<int, array<string, mixed>>
+	 */
+	public static function get_recent_fatal_logs(): array {
+		global $wpdb;
+
+		$tablename   = \esc_sql( Table_Logs::get_table_name() );
+		$table_limit = absint( apply_filters( 'updatebee_log_table_limit', 100 ) );
+		if ( $table_limit < 1 ) {
+			$table_limit = 100;
+		}
+
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name is escaped with esc_sql.
+		$query = $wpdb->prepare(
+			"SELECT name, from_version, to_version, update_type, update_status, date, raw FROM {$tablename} WHERE update_status = %s ORDER BY date DESC LIMIT %d",
+			'fatal',
+			$table_limit
+		);
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Query uses an escaped table name and prepared values.
+		$results = $wpdb->get_results( $query, \ARRAY_A );
+
+		if ( empty( $results ) || ! is_array( $results ) ) {
+			return array();
+		}
+
+		return $results;
+	}
+
+	/**
 	 * Query logs by status.
 	 *
 	 * @param string|array<int, string> $status               success|security|failure|fatal or a list of those.

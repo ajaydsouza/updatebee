@@ -269,14 +269,13 @@ class Email_Updates_Available extends Email_Report {
 			static::get_supported_types( $options )
 		);
 
-		if ( empty( $rows ) ) {
-			wp_die( esc_html__( 'There are no updates available right now to send.', 'updatebee' ) );
-		}
+		$is_sample = empty( $rows );
+		$rows      = Emails::rows_for_preview( $rows, 'available' );
 
 		$email_body = Emails::get_update_report_email(
 			$rows,
 			static::get_report_title(),
-			static::get_report_intro(),
+			Emails::preview_intro( static::get_report_intro(), $is_sample ),
 			static::get_cron_hook()
 		);
 
