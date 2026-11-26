@@ -312,13 +312,22 @@ class Settings_Page {
 				$message = __( 'The WordPress automatic updater is disabled. Check your site configuration or contact your host. Force updates is also unavailable.', 'updatebee' );
 			}
 
-			wp_admin_notice( esc_html( $message ), array( 'type' => 'warning' ) );
+			wp_admin_notice(
+				esc_html( $message ),
+				array(
+					'type'               => 'warning',
+					'additional_classes' => array( 'updatebee-configuration-notice' ),
+				)
+			);
 		}
 
 		if ( defined( 'WP_AUTO_UPDATE_CORE' ) && false === WP_AUTO_UPDATE_CORE ) {
 			wp_admin_notice(
 				esc_html__( 'WP_AUTO_UPDATE_CORE is set to false. WordPress disables automatic core updates by default. UpdateBee’s major and minor update settings can override this default when the automatic updater is enabled.', 'updatebee' ),
-				array( 'type' => 'warning' )
+				array(
+					'type'               => 'warning',
+					'additional_classes' => array( 'updatebee-configuration-notice' ),
+				)
 			);
 		}
 	}
