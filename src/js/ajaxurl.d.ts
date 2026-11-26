@@ -10,6 +10,7 @@ declare const updatebeeDashboard: UpdateBeeDashboard;
 
 interface UpdateBeeUpcoming {
 	retrieveUpcomingNonce: string;
+	saveDelayNonce: string;
 	refreshNonce: string;
 	schedulesUrl: string;
 }

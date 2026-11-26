@@ -37,9 +37,11 @@ class UpcomingTest extends TestCase {
 			)
 		);
 
-		$items = Upcoming::get_list()['items'];
+		$list  = Upcoming::get_list();
+		$items = $list['items'];
 		$ids   = array_column( $items, 'Id' );
 
+		$this->assertSame( 0, $list['delay_updates'] );
 		$this->assertSame( array( 'hello.php' ), $ids );
 		$this->assertSame( 'plugin', $items[0]['Type'] );
 		$this->assertFalse( $items[0]['Blocked'] );
@@ -93,12 +95,78 @@ class UpcomingTest extends TestCase {
 	}
 
 	/**
+	 * A longer site delay moves a stamped plugin's schedule forward.
+	 */
+	public function test_schedule_moves_when_delay_changes(): void {
+		$stamp  = time();
+		$stamps = array(
+			'hello.php' => array(
+				'version' => '1.1',
+				'time'    => $stamp,
+			),
+		);
+
+		MonkeyFunctions\when( 'get_option' )->alias(
+			static function ( $key ) {
+				if ( 'date_format' === $key ) {
+					return 'Y-m-d';
+				}
+
+				if ( 'time_format' === $key ) {
+					return 'H:i';
+				}
+
+				return false;
+			}
+		);
+		MonkeyFunctions\when( 'wp_date' )->alias(
+			static function ( $format, $timestamp ) {
+				return gmdate( (string) $format, (int) $timestamp );
+			}
+		);
+
+		$this->stub_list_helpers(
+			array(
+				'delay_updates' => 1,
+			),
+			null,
+			$stamps
+		);
+		$short_list = Upcoming::get_list();
+		$short      = $this->row_by_id( $short_list, 'hello.php' );
+
+		Options::flush_cache();
+		$this->stub_list_helpers(
+			array(
+				'delay_updates' => 4,
+			),
+			null,
+			$stamps
+		);
+		$long_list = Upcoming::get_list();
+		$long      = $this->row_by_id( $long_list, 'hello.php' );
+
+		$this->assertSame( 1, $short_list['delay_updates'] );
+		$this->assertSame( 4, $long_list['delay_updates'] );
+		$this->assertSame(
+			gmdate( 'Y-m-d H:i', $stamp + DAY_IN_SECONDS ),
+			$short['Schedule']
+		);
+		$this->assertSame(
+			gmdate( 'Y-m-d H:i', $stamp + ( 4 * DAY_IN_SECONDS ) ),
+			$long['Schedule']
+		);
+		$this->assertNotSame( $short['Schedule'], $long['Schedule'] );
+	}
+
+	/**
 	 * Stub the WordPress calls used while building upcoming rows.
 	 *
 	 * @param array<string, mixed>       $options         Stored updatebee_options values.
 	 * @param array<string, object>|null $plugin_response Pending plugin offers. Null uses the default offers.
+	 * @param array<string, mixed>       $plugin_stamps   First-seen plugin update stamps.
 	 */
-	private function stub_list_helpers( array $options, ?array $plugin_response = null ): void {
+	private function stub_list_helpers( array $options, ?array $plugin_response = null, array $plugin_stamps = array() ): void {
 		if ( ! defined( 'WP_PLUGIN_DIR' ) ) {
 			define( 'WP_PLUGIN_DIR', ABSPATH . 'wp-content/plugins' );
 		}
@@ -131,9 +199,13 @@ class UpcomingTest extends TestCase {
 			}
 		);
 		MonkeyFunctions\when( 'get_site_option' )->alias(
-			static function ( $key, $default_value = false ) use ( $options ) {
+			static function ( $key, $default_value = false ) use ( $options, $plugin_stamps ) {
 				if ( 'updatebee_options' === $key ) {
 					return $options;
+				}
+
+				if ( Delay_Updates::PLUGIN_OPTION === $key ) {
+					return $plugin_stamps;
 				}
 
 				return $default_value;
@@ -182,6 +254,26 @@ class UpcomingTest extends TestCase {
 				);
 			}
 		);
+	}
+
+	/**
+	 * One upcoming row by asset id.
+	 *
+	 * @param array<string, mixed> $payload Upcoming list payload.
+	 * @param string               $id      Plugin file or theme stylesheet.
+	 * @return array<string, mixed> Matching row.
+	 */
+	private function row_by_id( array $payload, string $id ): array {
+		$items = isset( $payload['items'] ) && is_array( $payload['items'] ) ? $payload['items'] : array();
+		foreach ( $items as $item ) {
+			if ( is_array( $item ) && ( $item['Id'] ?? '' ) === $id ) {
+				return $item;
+			}
+		}
+
+		$this->fail( 'Upcoming row was not found.' );
+
+		return array();
 	}
 
 	/**
