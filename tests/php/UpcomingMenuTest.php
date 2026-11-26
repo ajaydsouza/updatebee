@@ -24,7 +24,7 @@ class UpcomingMenuTest extends TestCase {
 		return array(
 			'Upcoming Updates',
 			'manage_options',
-			'tools.php?page=updatebee&amp;tab=dashboard&amp;subtab=upcoming',
+			'tools.php?page=updatebee&amp;tab=upcoming',
 			'Upcoming Updates',
 		);
 	}
@@ -117,9 +117,9 @@ class UpcomingMenuTest extends TestCase {
 	}
 
 	/**
-	 * The menu slug is the settings screen with the Upcoming sub-tab selected.
+	 * The menu slug is the Upcoming tab.
 	 */
-	public function test_menu_slug_points_at_upcoming_subtab(): void {
+	public function test_menu_slug_points_at_upcoming_tab(): void {
 		MonkeyFunctions\when( 'is_plugin_active_for_network' )->justReturn( false );
 		MonkeyFunctions\when( 'is_multisite' )->justReturn( false );
 		MonkeyFunctions\when( 'is_network_admin' )->justReturn( false );
@@ -143,7 +143,7 @@ class UpcomingMenuTest extends TestCase {
 		$this->assertSame( 'Upcoming Updates', $item[0] );
 		$this->assertSame( 'manage_options', $item[1] );
 		$this->assertSame(
-			'tools.php?page=updatebee&amp;tab=dashboard&amp;subtab=upcoming',
+			'tools.php?page=updatebee&amp;tab=upcoming',
 			$item[2]
 		);
 	}

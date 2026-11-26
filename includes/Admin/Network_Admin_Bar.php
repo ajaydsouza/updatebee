@@ -72,7 +72,7 @@ class Network_Admin_Bar {
 					'id'     => 'updatebee-network-upcoming',
 					'parent' => 'network-admin',
 					'title'  => _x( 'Upcoming Updates', 'Toolbar menu item', 'updatebee' ),
-					'href'   => Functions::get_settings_url( 'dashboard', 'upcoming' ),
+					'href'   => Functions::get_settings_url( 'upcoming' ),
 				)
 			);
 		}

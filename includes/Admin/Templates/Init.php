@@ -22,6 +22,7 @@ class Init {
 	 */
 	public function run(): void {
 		new Dashboard();
+		new Upcoming();
 		new Plugins();
 		new Themes();
 		new Translations();

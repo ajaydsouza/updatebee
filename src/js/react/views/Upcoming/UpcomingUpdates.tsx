@@ -14,7 +14,7 @@ import {
 } from '@wordpress/dataviews';
 import { useCallback, useEffect, useMemo, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
-import { Button, Stack } from '@wordpress/ui';
+import { Button, Stack, useEnableWpCompatOverlaySlot } from '@wordpress/ui';
 import ChangelogModal from '../../components/ChangelogModal';
 import FloatingNotice from '../../components/FloatingNotice';
 import sendCommand from '../../../utils/SendCommand';
@@ -133,6 +133,7 @@ const versionLabel = ( item: UpcomingItem ): string =>
  * Upcoming updates table.
  */
 const UpcomingUpdates = () => {
+	useEnableWpCompatOverlaySlot();
 	const [ items, setItems ] = useState< UpcomingItem[] >( [] );
 	const [ nextRunLabel, setNextRunLabel ] = useState( '' );
 	const [ isLoading, setIsLoading ] = useState( true );
@@ -164,7 +165,7 @@ const UpcomingUpdates = () => {
 		return sendCommand< UpcomingPayload >(
 			'updatebee_retrieve_upcoming_updates',
 			{
-				nonce: updatebeeDashboard.retrieveUpcomingNonce,
+				nonce: updatebeeUpcoming.retrieveUpcomingNonce,
 			}
 		)
 			.then( ( response ) => {
@@ -350,7 +351,7 @@ const UpcomingUpdates = () => {
 		setIsChecking( true );
 		setNotice( null );
 		sendCommand< MessagePayload >( 'updatebee_refresh_updates', {
-			nonce: updatebeeDashboard.refreshNonce,
+			nonce: updatebeeUpcoming.refreshNonce,
 		} )
 			.then( ( response ) => {
 				showNotice(
@@ -409,7 +410,7 @@ const UpcomingUpdates = () => {
 							variant="outline"
 							onClick={ () => {
 								window.location.assign(
-									updatebeeDashboard.schedulesUrl
+									updatebeeUpcoming.schedulesUrl
 								);
 							} }
 						>
