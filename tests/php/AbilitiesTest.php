@@ -231,6 +231,32 @@ class AbilitiesTest extends TestCase {
 	}
 
 	/**
+	 * An invalid translation field rejects the request before an earlier valid field is saved.
+	 */
+	public function test_set_translation_policy_validates_all_fields_before_saving(): void {
+		MonkeyFunctions\when( 'wp_get_available_translations' )->justReturn(
+			array(
+				'da_DK' => array(
+					'english_name' => 'Danish',
+				),
+			)
+		);
+		MonkeyFunctions\when( 'apply_filters' )->returnArg( 2 );
+		MonkeyFunctions\expect( 'update_site_option' )->never();
+
+		$result = Policy::set_translation_policy(
+			array(
+				'slug'        => 'da_DK',
+				'auto_update' => true,
+				'blocked'     => 'yes',
+			)
+		);
+
+		$this->assertInstanceOf( \WP_Error::class, $result );
+		$this->assertSame( 'updatebee_invalid_policy_value', $result->get_error_code() );
+	}
+
+	/**
 	 * An invalid field rejects the request before an earlier valid field is saved.
 	 */
 	public function test_set_plugin_policy_validates_all_fields_before_saving(): void {

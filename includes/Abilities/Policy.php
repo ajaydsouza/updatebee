@@ -253,25 +253,29 @@ class Policy {
 			return $present;
 		}
 
-		if ( array_key_exists( 'auto_update', $input ) ) {
-			$valid = self::assert_bool( $input['auto_update'], 'auto_update' );
+		$changes = array();
+		foreach ( array( 'auto_update', 'blocked' ) as $field ) {
+			if ( ! array_key_exists( $field, $input ) ) {
+				continue;
+			}
+
+			$valid = self::assert_bool( $input[ $field ], $field );
 			if ( is_wp_error( $valid ) ) {
 				return $valid;
 			}
 
-			$saved = Functions::set_translation_auto_update( $slug, $input['auto_update'] );
+			$changes[ $field ] = $input[ $field ];
+		}
+
+		if ( array_key_exists( 'auto_update', $changes ) ) {
+			$saved = Functions::set_translation_auto_update( $slug, (bool) $changes['auto_update'] );
 			if ( null === $saved ) {
 				return self::save_failed();
 			}
 		}
 
-		if ( array_key_exists( 'blocked', $input ) ) {
-			$valid = self::assert_bool( $input['blocked'], 'blocked' );
-			if ( is_wp_error( $valid ) ) {
-				return $valid;
-			}
-
-			$saved = Functions::set_translation_blocked( $slug, $input['blocked'] );
+		if ( array_key_exists( 'blocked', $changes ) ) {
+			$saved = Functions::set_translation_blocked( $slug, (bool) $changes['blocked'] );
 			if ( null === $saved ) {
 				return self::save_failed();
 			}

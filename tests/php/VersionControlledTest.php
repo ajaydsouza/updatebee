@@ -198,6 +198,29 @@ class VersionControlledTest extends TestCase {
 	}
 
 	/**
+	 * A failed auto-update write returns that failure and does not clear the patch list.
+	 */
+	public function test_set_plugin_auto_update_returns_before_clearing_patches_on_failure(): void {
+		Options::flush_cache();
+		MonkeyFunctions\when( 'apply_filters' )->returnArg( 2 );
+		MonkeyFunctions\when( 'wp_parse_args' )->alias(
+			static function ( $args, $defaults ) {
+				if ( ! is_array( $args ) ) {
+					$args = array();
+				}
+				if ( ! is_array( $defaults ) ) {
+					$defaults = array();
+				}
+				return array_merge( $defaults, $args );
+			}
+		);
+		MonkeyFunctions\when( 'get_site_option' )->justReturn( array() );
+		MonkeyFunctions\expect( 'update_site_option' )->once()->andReturn( false );
+
+		$this->assertNull( Functions::set_plugin_auto_update( 'hello.php', false ) );
+	}
+
+	/**
 	 * A theme install path in the same manifest is version-controlled.
 	 */
 	public function test_theme_install_path_is_composer(): void {

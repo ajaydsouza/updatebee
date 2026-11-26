@@ -1159,6 +1159,10 @@ class Functions {
 		}
 
 		$result = self::update_option_list( 'auto_update_plugins', $file, $enabled );
+		if ( null === $result ) {
+			return null;
+		}
+
 		if ( ! $enabled ) {
 			self::update_option_list( 'auto_update_plugins_patches', $file, false );
 		}
@@ -1270,6 +1274,10 @@ class Functions {
 		}
 
 		$result = self::update_option_list( 'auto_update_themes', $stylesheet, $enabled );
+		if ( null === $result ) {
+			return null;
+		}
+
 		if ( ! $enabled ) {
 			self::update_option_list( 'auto_update_themes_patches', $stylesheet, false );
 		}
