@@ -1,7 +1,11 @@
 /**
  * Logs export drawer with CSV filters and date range.
  */
-import { SelectControl, TextControl } from '@wordpress/components';
+import {
+	CheckboxControl,
+	SelectControl,
+	TextControl,
+} from '@wordpress/components';
 import { useCallback, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import { Button, Drawer } from '@wordpress/ui';
@@ -11,7 +15,7 @@ type LogsExportDrawerProps = {
 };
 
 type UpdateOfferFilter = 'all' | 'automatic' | 'manual';
-type UpdateTypeFilter = 'all' | 'core' | 'plugin' | 'theme' | 'translation';
+type UpdateAssetType = 'plugin' | 'theme' | 'translation' | 'core';
 type UpdateStatusFilter =
 	| 'all'
 	| 'success'
@@ -23,10 +27,24 @@ type UpdateStatusFilter =
 
 type ExportFilters = {
 	updateOffer: UpdateOfferFilter;
-	updateType: UpdateTypeFilter;
+	updateTypes: Record< UpdateAssetType, boolean >;
 	updateStatus: UpdateStatusFilter;
 	dateFrom: string;
 	dateTo: string;
+};
+
+const assetTypeOrder: UpdateAssetType[] = [
+	'plugin',
+	'theme',
+	'translation',
+	'core',
+];
+
+const defaultUpdateTypes: Record< UpdateAssetType, boolean > = {
+	plugin: true,
+	theme: true,
+	translation: true,
+	core: true,
 };
 
 /**
@@ -49,10 +67,22 @@ dateFromDefault.setDate( dateFromDefault.getDate() - 60 );
 
 const defaultFilters: ExportFilters = {
 	updateOffer: 'all',
-	updateType: 'all',
+	updateTypes: defaultUpdateTypes,
 	updateStatus: 'all',
 	dateFrom: formatDateInput( dateFromDefault ),
 	dateTo: formatDateInput( today ),
+};
+
+/**
+ * Checked asset types in display order.
+ *
+ * @param updateTypes Asset type selections.
+ * @return Selected asset types.
+ */
+const getSelectedAssetTypes = (
+	updateTypes: Record< UpdateAssetType, boolean >
+): UpdateAssetType[] => {
+	return assetTypeOrder.filter( ( type ) => updateTypes[ type ] );
 };
 
 /**
@@ -66,11 +96,17 @@ const getExportUrl = ( filters: ExportFilters ): string => {
 		action: 'updatebee_export_logs',
 		nonce: updatebeeLogs.exportNonce,
 		update_offer: filters.updateOffer,
-		update_type: filters.updateType,
 		update_status: filters.updateStatus,
 		date_from: filters.dateFrom,
 		date_to: filters.dateTo,
 	} );
+
+	const selected = getSelectedAssetTypes( filters.updateTypes );
+	if ( selected.length < assetTypeOrder.length ) {
+		selected.forEach( ( type ) => {
+			params.append( 'update_type[]', type );
+		} );
+	}
 
 	return `${ ajaxurl }?${ params.toString() }`;
 };
@@ -85,6 +121,7 @@ const LogsExportDrawer = ( props: LogsExportDrawerProps ) => {
 	const [ isOpen, setIsOpen ] = useState( false );
 	const [ filters, setFilters ] = useState< ExportFilters >( defaultFilters );
 	const [ dateError, setDateError ] = useState( '' );
+	const [ typeError, setTypeError ] = useState( '' );
 
 	/**
 	 * Reset filters when the drawer closes.
@@ -96,6 +133,7 @@ const LogsExportDrawer = ( props: LogsExportDrawerProps ) => {
 		if ( ! nextOpen ) {
 			setFilters( defaultFilters );
 			setDateError( '' );
+			setTypeError( '' );
 		}
 	}, [] );
 
@@ -111,6 +149,28 @@ const LogsExportDrawer = ( props: LogsExportDrawerProps ) => {
 				...next,
 			} ) );
 			setDateError( '' );
+			setTypeError( '' );
+		},
+		[]
+	);
+
+	/**
+	 * Toggle one asset type checkbox.
+	 *
+	 * @param type    Asset type key.
+	 * @param checked Whether the type is included.
+	 */
+	const handleTypeChange = useCallback(
+		( type: UpdateAssetType, checked: boolean ) => {
+			setFilters( ( current ) => ( {
+				...current,
+				updateTypes: {
+					...current.updateTypes,
+					[ type ]: checked,
+				},
+			} ) );
+			setDateError( '' );
+			setTypeError( '' );
 		},
 		[]
 	);
@@ -119,6 +179,13 @@ const LogsExportDrawer = ( props: LogsExportDrawerProps ) => {
 	 * Validate dates and start the CSV download.
 	 */
 	const handleExport = useCallback( () => {
+		if ( 0 === getSelectedAssetTypes( filters.updateTypes ).length ) {
+			setTypeError(
+				__( 'Select at least one update type.', 'updatebee' )
+			);
+			return;
+		}
+
 		if (
 			'' !== filters.dateFrom &&
 			'' !== filters.dateTo &&
@@ -200,42 +267,52 @@ const LogsExportDrawer = ( props: LogsExportDrawerProps ) => {
 								}
 							} }
 						/>
-						<SelectControl
-							label={ __( 'Update Type', 'updatebee' ) }
-							value={ filters.updateType }
-							options={ [
-								{
-									label: __(
-										'All Update Types',
-										'updatebee'
-									),
-									value: 'all',
-								},
-								{
-									label: __( 'Core', 'updatebee' ),
-									value: 'core',
-								},
-								{
-									label: __( 'Plugin', 'updatebee' ),
-									value: 'plugin',
-								},
-								{
-									label: __( 'Theme', 'updatebee' ),
-									value: 'theme',
-								},
-								{
-									label: __( 'Translation', 'updatebee' ),
-									value: 'translation',
-								},
-							] }
-							onChange={ ( value ) => {
-								if ( 'string' === typeof value ) {
-									handleFilterChange( {
-										updateType: value,
-									} );
-								}
-							} }
-						/>
+						<fieldset className="updatebee-logs-export-types">
+							<legend>
+								{ __( 'Update type', 'updatebee' ) }
+							</legend>
+							<div className="updatebee-logs-export-type-options">
+								<CheckboxControl
+									label={ __( 'Plugins', 'updatebee' ) }
+									checked={ filters.updateTypes.plugin }
+									onChange={ ( checked ) => {
+										handleTypeChange( 'plugin', checked );
+									} }
+								/>
+								<CheckboxControl
+									label={ __( 'Themes', 'updatebee' ) }
+									checked={ filters.updateTypes.theme }
+									onChange={ ( checked ) => {
+										handleTypeChange( 'theme', checked );
+									} }
+								/>
+								<CheckboxControl
+									label={ __( 'Translations', 'updatebee' ) }
+									checked={ filters.updateTypes.translation }
+									onChange={ ( checked ) => {
+										handleTypeChange(
+											'translation',
+											checked
+										);
+									} }
+								/>
+								<CheckboxControl
+									label={ __( 'Core', 'updatebee' ) }
+									checked={ filters.updateTypes.core }
+									onChange={ ( checked ) => {
+										handleTypeChange( 'core', checked );
+									} }
+								/>
+								{ '' !== typeError && (
+									<p
+										className="updatebee-logs-export-error"
+										role="alert"
+									>
+										{ typeError }
+									</p>
+								) }
+							</div>
+						</fieldset>
 						<SelectControl
 							label={ __( 'Update Status', 'updatebee' ) }
 							value={ filters.updateStatus }

@@ -1235,8 +1235,20 @@ class Ajax {
 
 		check_ajax_referer( 'updatebee-export-logs', 'nonce' );
 
-		$update_offer  = isset( $_GET['update_offer'] ) ? sanitize_text_field( wp_unslash( $_GET['update_offer'] ) ) : 'all';
-		$update_type   = isset( $_GET['update_type'] ) ? sanitize_text_field( wp_unslash( $_GET['update_type'] ) ) : 'all';
+		$update_offer = isset( $_GET['update_offer'] ) ? sanitize_text_field( wp_unslash( $_GET['update_offer'] ) ) : 'all';
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Sanitized below.
+		$update_type_raw = isset( $_GET['update_type'] ) ? wp_unslash( $_GET['update_type'] ) : 'all';
+		if ( is_array( $update_type_raw ) ) {
+			$update_type = array();
+			foreach ( $update_type_raw as $type ) {
+				if ( ! is_string( $type ) ) {
+					continue;
+				}
+				$update_type[] = sanitize_text_field( $type );
+			}
+		} else {
+			$update_type = sanitize_text_field( (string) $update_type_raw );
+		}
 		$update_status = isset( $_GET['update_status'] ) ? sanitize_text_field( wp_unslash( $_GET['update_status'] ) ) : 'all';
 		$date_from     = isset( $_GET['date_from'] ) ? sanitize_text_field( wp_unslash( $_GET['date_from'] ) ) : '';
 		$date_to       = isset( $_GET['date_to'] ) ? sanitize_text_field( wp_unslash( $_GET['date_to'] ) ) : '';
