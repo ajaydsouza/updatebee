@@ -411,9 +411,7 @@ const LicenseMain = () => {
 						</p>
 						<a
 							className="updatebee-license-upsell-link"
-							href={
-								'https://updatebee.com/checkout/lifetime/'
-							}
+							href={ 'https://updatebee.com/checkout/lifetime/' }
 							target="_blank"
 							rel="noopener noreferrer"
 						>
