@@ -15,18 +15,25 @@ type UpcomingDelayModalProps = {
 };
 
 /**
- * Normalize a delay-days value.
+ * Read a delay the user typed.
  *
- * @param value Incoming days value.
- * @return Non-negative integer days.
+ * Blank, negative, and non-numeric values stay invalid. An entered 0 is allowed.
+ *
+ * @param value Field value.
+ * @return Whole days, or null when the value is not 0 or greater.
  */
-const normalizeDays = ( value: unknown ): number => {
-	const days = Number( value );
-	if ( Number.isFinite( days ) && days >= 0 ) {
-		return Math.floor( days );
+const parseEnteredDays = ( value: string ): number | null => {
+	const trimmed = value.trim();
+	if ( '' === trimmed ) {
+		return null;
 	}
 
-	return 0;
+	const days = Number( trimmed );
+	if ( ! Number.isFinite( days ) || 0 > days ) {
+		return null;
+	}
+
+	return Math.floor( days );
 };
 
 /**
@@ -38,10 +45,12 @@ const UpcomingDelayModal = ( props: UpcomingDelayModalProps ) => {
 	const { isOpen, delayDays, isSaving, errorMessage, onClose, onSave } =
 		props;
 	const [ days, setDays ] = useState( String( delayDays ) );
+	const [ validationError, setValidationError ] = useState( '' );
 
 	useEffect( () => {
 		if ( isOpen ) {
 			setDays( String( delayDays ) );
+			setValidationError( '' );
 		}
 	}, [ delayDays, isOpen ] );
 
@@ -58,9 +67,9 @@ const UpcomingDelayModal = ( props: UpcomingDelayModalProps ) => {
 			shouldCloseOnEsc={ ! isSaving }
 			isDismissible={ ! isSaving }
 		>
-			{ '' !== errorMessage && (
+			{ '' !== ( validationError || errorMessage ) && (
 				<Notice status="error" isDismissible={ false }>
-					{ errorMessage }
+					{ validationError || errorMessage }
 				</Notice>
 			) }
 			<TextControl
@@ -70,6 +79,7 @@ const UpcomingDelayModal = ( props: UpcomingDelayModalProps ) => {
 				value={ days }
 				onChange={ ( value ) => {
 					setDays( value );
+					setValidationError( '' );
 				} }
 				help={ __(
 					'Time in days for how long to delay an update. Use 0 for no delay. Individual plugins and themes can override this from their own settings.',
@@ -90,7 +100,19 @@ const UpcomingDelayModal = ( props: UpcomingDelayModalProps ) => {
 					isBusy={ isSaving }
 					disabled={ isSaving }
 					onClick={ () => {
-						onSave( normalizeDays( days ) );
+						const nextDays = parseEnteredDays( days );
+						if ( null === nextDays ) {
+							setValidationError(
+								__(
+									'Enter a whole number of 0 or more days.',
+									'updatebee'
+								)
+							);
+							return;
+						}
+
+						setValidationError( '' );
+						onSave( nextDays );
 					} }
 				>
 					{ __( 'Save delay', 'updatebee' ) }
