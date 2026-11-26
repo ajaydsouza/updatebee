@@ -5,6 +5,7 @@ interface UpdateBeeDashboard {
 	saveNonce: string;
 	resetNonce: string;
 	retrieveUpcomingNonce: string;
+	saveDelayNonce: string;
 	refreshNonce: string;
 	initialSubtab: string;
 	settingsUrl: string;

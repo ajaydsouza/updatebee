@@ -83,6 +83,7 @@ class Dashboard {
 				'saveNonce'             => wp_create_nonce( 'updatebee-save-dashboard-settings' ),
 				'resetNonce'            => wp_create_nonce( 'updatebee-reset-dashboard-settings' ),
 				'retrieveUpcomingNonce' => wp_create_nonce( 'updatebee-retrieve-upcoming-updates' ),
+				'saveDelayNonce'        => wp_create_nonce( 'updatebee-save-upcoming-delay' ),
 				'refreshNonce'          => wp_create_nonce( 'updatebee-refresh-updates' ),
 				'initialSubtab'         => 'upcoming' === $sub_tab ? 'upcoming' : 'settings',
 				'settingsUrl'           => esc_url_raw( Functions::get_settings_url( 'dashboard' ) ),

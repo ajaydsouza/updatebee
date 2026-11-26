@@ -14,6 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 use UpdateBee\Emails\Available_Updates;
 use UpdateBee\Functions;
+use UpdateBee\Options;
 
 /**
  * Build the upcoming-updates list.
@@ -21,7 +22,7 @@ use UpdateBee\Functions;
 class Upcoming {
 
 	/**
-	 * Pending plugin and theme rows plus the next automatic install time.
+	 * Pending plugin and theme rows, the next automatic install, and the site delay.
 	 *
 	 * @return array<string, mixed> List payload.
 	 */
@@ -50,6 +51,7 @@ class Upcoming {
 		return array(
 			'items'          => $rows,
 			'next_run_label' => self::next_install_label( $next_run ),
+			'delay_updates'  => absint( Options::get_options( 'delay_updates' ) ),
 		);
 	}
 
