@@ -13,6 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 use UpdateBee\Functions;
+use UpdateBee\Updates\Automatic_Updater_Override;
 use UpdateBee\Updates\Delay_Updates;
 
 /**
@@ -86,9 +87,10 @@ class Command_Palette {
 			self::SCRIPT_HANDLE,
 			self::OBJECT_NAME,
 			array(
-				'forceUpdatesNonce'   => wp_create_nonce( 'updatebee-force-updates' ),
-				'refreshUpdatesNonce' => wp_create_nonce( 'updatebee-refresh-updates' ),
-				'delayEnabled'        => Delay_Updates::is_enabled(),
+				'forceUpdatesNonce'              => wp_create_nonce( 'updatebee-force-updates' ),
+				'refreshUpdatesNonce'            => wp_create_nonce( 'updatebee-refresh-updates' ),
+				'delayEnabled'                   => Delay_Updates::is_enabled(),
+				'ignoreAutomaticUpdaterDisabled' => Automatic_Updater_Override::can_ignore_for_one_run(),
 			)
 		);
 

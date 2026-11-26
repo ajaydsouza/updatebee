@@ -24,6 +24,8 @@ class Register_Options_Page {
 	 * Class runner.
 	 */
 	public function run(): void {
+		add_action( 'admin_post_updatebee_save_automatic_updater_override', array( Settings_Page::class, 'save_automatic_updater_override' ) );
+
 		if ( Functions::is_multisite() ) {
 			add_action( 'network_admin_menu', array( $this, 'register_admin_menu' ) );
 		} else {

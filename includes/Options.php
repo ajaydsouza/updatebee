@@ -100,6 +100,7 @@ class Options {
 			'admin_bar_enabled'                => false,
 			'admin_bar_show_admin'             => true,
 			'admin_bar_show_frontend'          => true,
+			'automatic_updater_disabled_override' => false,
 		);
 
 		/**

@@ -16,6 +16,7 @@ use UpdateBee\Admin\Migrate\CompanionAutoUpdate;
 use UpdateBee\Admin\Migrate\EasyUpdatesManager;
 use UpdateBee\Admin\Settings_Transfer;
 use UpdateBee\Functions;
+use UpdateBee\Updates\Automatic_Updater_Override;
 use UpdateBee\Updates\Delay_Updates;
 
 /**
@@ -105,19 +106,20 @@ class Tools {
 	 */
 	public static function get_script_data(): array {
 		return array(
-			'pluginName'          => Functions::get_plugin_name(),
-			'forceUpdatesNonce'   => wp_create_nonce( 'updatebee-force-updates' ),
-			'delayEnabled'        => Delay_Updates::is_enabled(),
-			'triggerCronNonce'    => wp_create_nonce( 'updatebee-trigger-update-cron' ),
-			'refreshUpdatesNonce' => wp_create_nonce( 'updatebee-refresh-updates' ),
-			'eumDetected'         => EasyUpdatesManager::should_show_importer(),
-			'migrateEumNonce'     => wp_create_nonce( 'updatebee-migrate-eum' ),
-			'hideEumNonce'        => wp_create_nonce( 'updatebee-hide-eum-importer' ),
-			'cauDetected'         => CompanionAutoUpdate::should_show_importer(),
-			'migrateCauNonce'     => wp_create_nonce( 'updatebee-migrate-cau' ),
-			'hideCauNonce'        => wp_create_nonce( 'updatebee-hide-cau-importer' ),
-			'exportSettingsNonce' => wp_create_nonce( Settings_Transfer::EXPORT_NONCE_ACTION ),
-			'importSettingsNonce' => wp_create_nonce( Settings_Transfer::IMPORT_NONCE_ACTION ),
+			'pluginName'                     => Functions::get_plugin_name(),
+			'forceUpdatesNonce'              => wp_create_nonce( 'updatebee-force-updates' ),
+			'delayEnabled'                   => Delay_Updates::is_enabled(),
+			'ignoreAutomaticUpdaterDisabled' => Automatic_Updater_Override::can_ignore_for_one_run(),
+			'triggerCronNonce'               => wp_create_nonce( 'updatebee-trigger-update-cron' ),
+			'refreshUpdatesNonce'            => wp_create_nonce( 'updatebee-refresh-updates' ),
+			'eumDetected'                    => EasyUpdatesManager::should_show_importer(),
+			'migrateEumNonce'                => wp_create_nonce( 'updatebee-migrate-eum' ),
+			'hideEumNonce'                   => wp_create_nonce( 'updatebee-hide-eum-importer' ),
+			'cauDetected'                    => CompanionAutoUpdate::should_show_importer(),
+			'migrateCauNonce'                => wp_create_nonce( 'updatebee-migrate-cau' ),
+			'hideCauNonce'                   => wp_create_nonce( 'updatebee-hide-cau-importer' ),
+			'exportSettingsNonce'            => wp_create_nonce( Settings_Transfer::EXPORT_NONCE_ACTION ),
+			'importSettingsNonce'            => wp_create_nonce( Settings_Transfer::IMPORT_NONCE_ACTION ),
 		);
 	}
 }

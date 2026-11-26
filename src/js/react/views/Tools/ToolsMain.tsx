@@ -32,6 +32,7 @@ type ImporterKey = 'eum' | 'cau';
 
 type ToolsMessagePayload = {
 	message: string;
+	status?: 'completed' | 'no_updates' | 'blocked';
 };
 
 const getMigrateDescriptions = (): Record< ImporterKey, string > => ( {
@@ -160,7 +161,14 @@ const ToolsMain = () => {
 					const message =
 						response.data.data?.message ||
 						__( 'Action completed.', 'updatebee' );
-					showSnackbar( message, 'success' );
+					const status = response.data.data?.status;
+					let type: SnackbarType = 'success';
+					if ( 'blocked' === status ) {
+						type = 'warning';
+					} else if ( 'no_updates' === status ) {
+						type = 'info';
+					}
+					showSnackbar( message, type );
 					return true;
 				} )
 				.catch( () => {
@@ -217,16 +225,25 @@ const ToolsMain = () => {
 	/**
 	 * Run force updates after confirmation.
 	 *
-	 * @param skipDelay Whether this run should ignore the update delay.
+	 * @param skipDelay                      Whether this run should ignore the update delay.
+	 * @param ignoreAutomaticUpdaterDisabled Whether to ignore the updater constant for this run.
 	 */
-	const handleConfirmForceUpdates = ( skipDelay: boolean ) => {
+	const handleConfirmForceUpdates = (
+		skipDelay: boolean,
+		ignoreAutomaticUpdaterDisabled: boolean
+	) => {
 		setForceUpdatesOpen( false );
 		runToolAction(
 			'updatebee_force_updates',
 			updatebeeTools.forceUpdatesNonce,
 			'forceUpdates',
 			__( 'Force updates could not be completed.', 'updatebee' ),
-			skipDelay ? { skip_delay: true } : {}
+			{
+				...( skipDelay ? { skip_delay: true } : {} ),
+				...( ignoreAutomaticUpdaterDisabled
+					? { ignore_automatic_updater_disabled: true }
+					: {} ),
+			}
 		);
 	};
 
@@ -723,6 +740,9 @@ const ToolsMain = () => {
 			<ForceUpdatesModal
 				isOpen={ forceUpdatesOpen }
 				delayEnabled={ updatebeeTools.delayEnabled }
+				ignoreAutomaticUpdaterDisabled={
+					updatebeeTools.ignoreAutomaticUpdaterDisabled
+				}
 				onClose={ handleCloseForceUpdates }
 				onConfirm={ handleConfirmForceUpdates }
 			/>

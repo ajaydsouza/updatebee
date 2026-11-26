@@ -77,6 +77,7 @@ class OptionsTest extends TestCase {
 		$this->assertFalse( $options['admin_bar_enabled'] );
 		$this->assertTrue( $options['admin_bar_show_admin'] );
 		$this->assertTrue( $options['admin_bar_show_frontend'] );
+		$this->assertFalse( $options['automatic_updater_disabled_override'] );
 	}
 
 	/**

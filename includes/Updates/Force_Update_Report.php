@@ -18,6 +18,10 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 class Force_Update_Report {
 
+	public static function blocked_message(): string {
+		return __( 'WordPress still blocks automatic updates. The UpdateBee override cannot bypass file modification restrictions or other updater filters.', 'updatebee' );
+	}
+
 	/**
 	 * Summarize the updates WordPress attempted.
 	 *

@@ -25,6 +25,9 @@ class Init {
 	 */
 	public function run(): void {
 		add_action( 'init', array( $this, 'init' ) );
+		if ( Automatic_Updater_Override::is_enabled() ) {
+			add_filter( 'automatic_updater_disabled', array( Automatic_Updater_Override::class, 'filter_disabled' ), Automatic_Updater_Override::FILTER_PRIORITY );
+		}
 
 		Core::get_instance();
 		Plugins::get_instance();
