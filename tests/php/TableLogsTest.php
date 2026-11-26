@@ -242,6 +242,47 @@ class TableLogsTest extends TestCase {
 	}
 
 	/**
+	 * Test export query accepts several update types.
+	 */
+	public function test_get_logs_for_export_filters_multiple_update_types(): void {
+		$this->stub_table_helpers();
+		$wpdb = $this->create_wpdb_mock();
+		$this->set_mock_wpdb( $wpdb );
+
+		Table_Logs::get_logs_for_export(
+			array(
+				'update_type' => array( 'plugin', 'theme', 'not-a-type' ),
+			)
+		);
+
+		$this->assertStringContainsString( "update_type IN ('plugin', 'theme')", $wpdb->query_ran );
+	}
+
+	/**
+	 * Test an empty type list exports nothing.
+	 */
+	public function test_get_logs_for_export_empty_type_list_returns_no_rows(): void {
+		$this->stub_table_helpers();
+		$wpdb = $this->create_wpdb_mock(
+			array(
+				array(
+					'name' => 'Akismet',
+				),
+			)
+		);
+		$this->set_mock_wpdb( $wpdb );
+
+		$results = Table_Logs::get_logs_for_export(
+			array(
+				'update_type' => array(),
+			)
+		);
+
+		$this->assertSame( array(), $results );
+		$this->assertSame( '', $wpdb->query_ran );
+	}
+
+	/**
 	 * Test paginated logs accept skipped and delayed status filters.
 	 */
 	public function test_get_logs_paginated_accepts_skipped_and_delayed_status_filters(): void {

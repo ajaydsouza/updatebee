@@ -428,8 +428,26 @@ class Table_Logs extends Tables {
 			$values[] = $update_offer;
 		}
 
-		$update_type = is_string( $args['update_type'] ) ? $args['update_type'] : 'all';
-		if ( in_array( $update_type, array( 'core', 'plugin', 'theme', 'translation' ), true ) ) {
+		$allowed_types = array( 'core', 'plugin', 'theme', 'translation' );
+		$update_type   = $args['update_type'];
+		if ( is_array( $update_type ) ) {
+			$types = array();
+			foreach ( $update_type as $type ) {
+				if ( is_string( $type ) && in_array( $type, $allowed_types, true ) ) {
+					$types[] = $type;
+				}
+			}
+			$types = array_values( array_unique( $types ) );
+			if ( empty( $types ) ) {
+				return array();
+			}
+
+			$placeholders = implode( ', ', array_fill( 0, count( $types ), '%s' ) );
+			$where[]      = 'update_type IN (' . $placeholders . ')';
+			foreach ( $types as $type ) {
+				$values[] = $type;
+			}
+		} elseif ( is_string( $update_type ) && in_array( $update_type, $allowed_types, true ) ) {
 			$where[]  = 'update_type = %s';
 			$values[] = $update_type;
 		}
