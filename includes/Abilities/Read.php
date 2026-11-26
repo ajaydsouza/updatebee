@@ -95,7 +95,7 @@ class Read {
 				'active'             => in_array( $file, $active, true ),
 				'update_available'   => isset( $pending[ $file ] ),
 				'auto_update'        => ! $version_controlled && isset( $auto[ $file ] ),
-				'blocked'            => Functions::auto_updates_blocked( $file, 'plugin' ),
+				'blocked'            => Functions::auto_updates_blocked( $file, 'plugin' ) || Functions::plugin_updates_fully_blocked(),
 				'patches_only'       => ! $version_controlled && Functions::auto_updates_patches_only( $file, 'plugin' ),
 				'version_controlled' => $version_controlled,
 				'version_control'    => $version_controlled ? $version_control : '',
@@ -165,7 +165,7 @@ class Read {
 				'active'             => $stylesheet === $current,
 				'update_available'   => isset( $pending[ $stylesheet ] ),
 				'auto_update'        => ! $version_controlled && isset( $auto[ $stylesheet ] ),
-				'blocked'            => Functions::auto_updates_blocked( $stylesheet, 'theme' ),
+				'blocked'            => Functions::auto_updates_blocked( $stylesheet, 'theme' ) || Functions::theme_updates_fully_blocked(),
 				'patches_only'       => ! $version_controlled && Functions::auto_updates_patches_only( $stylesheet, 'theme' ),
 				'version_controlled' => $version_controlled,
 				'version_control'    => $version_controlled ? $version_control : '',
@@ -227,7 +227,7 @@ class Read {
 				'language'    => $language,
 				'type'        => 'core',
 				'auto_update' => isset( $auto[ $locale ] ),
-				'blocked'     => Functions::auto_updates_blocked( $locale, 'translation' ),
+				'blocked'     => Functions::auto_updates_blocked( $locale, 'translation' ) || Functions::translation_updates_fully_blocked(),
 			);
 		}
 

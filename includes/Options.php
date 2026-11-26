@@ -181,24 +181,54 @@ class Options {
 			 */
 			$cached_options = apply_filters( 'updatebee_options_save_pre', $cached_options, $key, $options, $force );
 			$cached_options = Functions::parse_args_r( $cached_options, self::get_defaults() );
-			update_site_option( self::$options_key, $cached_options );
 		} elseif ( is_array( $options ) && empty( $key ) ) {
 			$cached_options = Functions::parse_args_r( $options, $cached_options );
 			$cached_options = apply_filters( 'updatebee_options_save_pre', $cached_options, $key, $options, $force );
 			$cached_options = Functions::parse_args_r( $cached_options, self::get_defaults() );
-			update_site_option( self::$options_key, $cached_options );
 		} elseif ( is_array( $options ) && array_key_exists( $key, $cached_options ) ) {
 			$cached_options[ $key ] = $options;
 			$cached_options         = apply_filters( 'updatebee_options_save_pre', $cached_options, $key, $options, $force );
 			$cached_options         = Functions::parse_args_r( $cached_options, self::get_defaults() );
-			update_site_option( self::$options_key, $cached_options );
 		} else {
 			return null;
 		}
 
-		self::$options = $cached_options;
+		return self::persist_options( $cached_options );
+	}
+
+	/**
+	 * Write options, treating an unchanged stored value as success.
+	 *
+	 * update_site_option() returns false both when the value is unchanged and when the write fails.
+	 * A failed write leaves the previous cache in place.
+	 *
+	 * @param array<string, mixed> $options Options to store.
+	 * @return array<string, mixed>|null Stored options, or null when the write fails.
+	 */
+	private static function persist_options( array $options ) {
+		$saved = update_site_option( self::$options_key, $options );
+		if ( ! $saved && ! self::stored_options_match( $options ) ) {
+			return null;
+		}
+
+		self::$options = $options;
 
 		return self::$options;
+	}
+
+	/**
+	 * Whether the database already holds this options array.
+	 *
+	 * @param array<string, mixed> $options Options just written or left unchanged.
+	 * @return bool True when the stored value matches.
+	 */
+	private static function stored_options_match( array $options ): bool {
+		$stored = get_site_option( self::$options_key, array() );
+		if ( $options === $stored ) {
+			return true;
+		}
+
+		return function_exists( 'maybe_serialize' ) && maybe_serialize( $options ) === maybe_serialize( $stored );
 	}
 
 	/**

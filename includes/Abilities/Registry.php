@@ -308,8 +308,9 @@ class Registry {
 			'execute_callback'    => $execute,
 			'permission_callback' => array( self::class, 'can_execute' ),
 			'meta'                => array(
-				'public'      => true,
-				'annotations' => $annotations,
+				'public'       => true,
+				'show_in_rest' => true,
+				'annotations'  => $annotations,
 			),
 		);
 

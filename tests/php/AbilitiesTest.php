@@ -127,6 +127,7 @@ class AbilitiesTest extends TestCase {
 		foreach ( $expected as $name ) {
 			$this->assertArrayHasKey( $name, self::$abilities );
 			$this->assertTrue( self::$abilities[ $name ]['meta']['public'] );
+			$this->assertTrue( self::$abilities[ $name ]['meta']['show_in_rest'] );
 			$this->assertSame( array( Registry::class, 'can_execute' ), self::$abilities[ $name ]['permission_callback'] );
 		}
 
@@ -209,6 +210,50 @@ class AbilitiesTest extends TestCase {
 		$this->assertIsArray( $updated );
 		$this->assertSame( 'on', $updated['plugin_auto_updates'] );
 		$this->assertArrayNotHasKey( 'slack_webhook_url', $updated );
+	}
+
+	/**
+	 * A failed option write is reported as a policy save failure.
+	 */
+	public function test_set_update_policy_reports_save_failure(): void {
+		$this->stub_option_helpers();
+		MonkeyFunctions\when( 'get_site_option' )->justReturn( array() );
+		MonkeyFunctions\when( 'update_site_option' )->justReturn( false );
+
+		$result = Policy::set_update_policy(
+			array(
+				'plugin_auto_updates' => 'on',
+			)
+		);
+
+		$this->assertInstanceOf( \WP_Error::class, $result );
+		$this->assertSame( 'updatebee_policy_save_failed', $result->get_error_code() );
+	}
+
+	/**
+	 * An invalid field rejects the request before an earlier valid field is saved.
+	 */
+	public function test_set_plugin_policy_validates_all_fields_before_saving(): void {
+		MonkeyFunctions\when( 'get_plugins' )->justReturn(
+			array(
+				'akismet/akismet.php' => array(
+					'Name' => 'Akismet',
+				),
+			)
+		);
+		MonkeyFunctions\when( 'apply_filters' )->returnArg( 2 );
+		MonkeyFunctions\expect( 'update_site_option' )->never();
+
+		$result = Policy::set_plugin_policy(
+			array(
+				'file'    => 'akismet/akismet.php',
+				'blocked' => true,
+				'notes'   => 12,
+			)
+		);
+
+		$this->assertInstanceOf( \WP_Error::class, $result );
+		$this->assertSame( 'updatebee_invalid_policy_value', $result->get_error_code() );
 	}
 
 	/**

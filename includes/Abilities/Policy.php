@@ -148,83 +148,14 @@ class Policy {
 			return $present;
 		}
 
-		if ( array_key_exists( 'auto_update', $input ) ) {
-			$valid = self::assert_bool( $input['auto_update'], 'auto_update' );
-			if ( is_wp_error( $valid ) ) {
-				return $valid;
-			}
-
-			if ( $input['auto_update'] && Version_Controlled::is_plugin( $file ) ) {
-				return self::version_controlled_error( 'plugin' );
-			}
-
-			$saved = Functions::set_plugin_auto_update( $file, $input['auto_update'] );
-			if ( null === $saved ) {
-				return self::save_failed();
-			}
+		$changes = self::extension_changes( $input, 'plugin', $file );
+		if ( is_wp_error( $changes ) ) {
+			return $changes;
 		}
 
-		if ( array_key_exists( 'blocked', $input ) ) {
-			$valid = self::assert_bool( $input['blocked'], 'blocked' );
-			if ( is_wp_error( $valid ) ) {
-				return $valid;
-			}
-
-			$saved = Functions::set_plugin_blocked( $file, $input['blocked'] );
-			if ( null === $saved ) {
-				return self::save_failed();
-			}
-		}
-
-		if ( array_key_exists( 'patches_only', $input ) ) {
-			$valid = self::assert_bool( $input['patches_only'], 'patches_only' );
-			if ( is_wp_error( $valid ) ) {
-				return $valid;
-			}
-
-			if ( $input['patches_only'] && Version_Controlled::is_plugin( $file ) ) {
-				return self::version_controlled_error( 'plugin' );
-			}
-
-			$saved = Functions::set_plugin_patches_only( $file, $input['patches_only'] );
-			if ( null === $saved ) {
-				return self::save_failed();
-			}
-		}
-
-		if ( array_key_exists( 'delay_days', $input ) ) {
-			$days = self::delay_days_input( $input['delay_days'] );
-			if ( is_wp_error( $days ) ) {
-				return $days;
-			}
-
-			$saved = Table_Plugins::save_delay_settings( $file, $days );
-			if ( is_wp_error( $saved ) ) {
-				return $saved;
-			}
-		}
-
-		if ( array_key_exists( 'allow_untested', $input ) ) {
-			$allow = self::nullable_bool( $input['allow_untested'], 'allow_untested' );
-			if ( is_wp_error( $allow ) ) {
-				return $allow;
-			}
-
-			$saved = Table_Plugins::save_untested_setting( $file, $allow );
-			if ( is_wp_error( $saved ) ) {
-				return $saved;
-			}
-		}
-
-		if ( array_key_exists( 'notes', $input ) ) {
-			if ( ! is_string( $input['notes'] ) ) {
-				return new \WP_Error( 'updatebee_invalid_policy_value', __( 'Notes must be a string.', 'updatebee' ) );
-			}
-
-			$saved = Table_Plugins::save_notes( $file, $input['notes'] );
-			if ( is_wp_error( $saved ) ) {
-				return $saved;
-			}
+		$saved = self::save_plugin_changes( $file, $changes );
+		if ( is_wp_error( $saved ) ) {
+			return $saved;
 		}
 
 		$plugin = Read::plugin_by_file( $file );
@@ -271,83 +202,14 @@ class Policy {
 			return $present;
 		}
 
-		if ( array_key_exists( 'auto_update', $input ) ) {
-			$valid = self::assert_bool( $input['auto_update'], 'auto_update' );
-			if ( is_wp_error( $valid ) ) {
-				return $valid;
-			}
-
-			if ( $input['auto_update'] && Version_Controlled::is_theme( $stylesheet ) ) {
-				return self::version_controlled_error( 'theme' );
-			}
-
-			$saved = Functions::set_theme_auto_update( $stylesheet, $input['auto_update'] );
-			if ( null === $saved ) {
-				return self::save_failed();
-			}
+		$changes = self::extension_changes( $input, 'theme', $stylesheet );
+		if ( is_wp_error( $changes ) ) {
+			return $changes;
 		}
 
-		if ( array_key_exists( 'blocked', $input ) ) {
-			$valid = self::assert_bool( $input['blocked'], 'blocked' );
-			if ( is_wp_error( $valid ) ) {
-				return $valid;
-			}
-
-			$saved = Functions::set_theme_blocked( $stylesheet, $input['blocked'] );
-			if ( null === $saved ) {
-				return self::save_failed();
-			}
-		}
-
-		if ( array_key_exists( 'patches_only', $input ) ) {
-			$valid = self::assert_bool( $input['patches_only'], 'patches_only' );
-			if ( is_wp_error( $valid ) ) {
-				return $valid;
-			}
-
-			if ( $input['patches_only'] && Version_Controlled::is_theme( $stylesheet ) ) {
-				return self::version_controlled_error( 'theme' );
-			}
-
-			$saved = Functions::set_theme_patches_only( $stylesheet, $input['patches_only'] );
-			if ( null === $saved ) {
-				return self::save_failed();
-			}
-		}
-
-		if ( array_key_exists( 'delay_days', $input ) ) {
-			$days = self::delay_days_input( $input['delay_days'] );
-			if ( is_wp_error( $days ) ) {
-				return $days;
-			}
-
-			$saved = Table_Themes::save_delay_settings( $stylesheet, $days );
-			if ( is_wp_error( $saved ) ) {
-				return $saved;
-			}
-		}
-
-		if ( array_key_exists( 'allow_untested', $input ) ) {
-			$allow = self::nullable_bool( $input['allow_untested'], 'allow_untested' );
-			if ( is_wp_error( $allow ) ) {
-				return $allow;
-			}
-
-			$saved = Table_Themes::save_untested_setting( $stylesheet, $allow );
-			if ( is_wp_error( $saved ) ) {
-				return $saved;
-			}
-		}
-
-		if ( array_key_exists( 'notes', $input ) ) {
-			if ( ! is_string( $input['notes'] ) ) {
-				return new \WP_Error( 'updatebee_invalid_policy_value', __( 'Notes must be a string.', 'updatebee' ) );
-			}
-
-			$saved = Table_Themes::save_notes( $stylesheet, $input['notes'] );
-			if ( is_wp_error( $saved ) ) {
-				return $saved;
-			}
+		$saved = self::save_theme_changes( $stylesheet, $changes );
+		if ( is_wp_error( $saved ) ) {
+			return $saved;
 		}
 
 		$theme = Read::theme_by_stylesheet( $stylesheet );
@@ -421,6 +283,174 @@ class Policy {
 		}
 
 		return $translation;
+	}
+
+	/**
+	 * Validate every extension field before any of them are stored.
+	 *
+	 * @param array<string, mixed> $input Incoming fields.
+	 * @param string               $type  plugin or theme.
+	 * @param string               $item  Plugin basename or theme stylesheet.
+	 * @return array<string, mixed>|\WP_Error Normalized changes, or the first validation error.
+	 */
+	private static function extension_changes( array $input, string $type, string $item ) {
+		$changes            = array();
+		$version_controlled = 'theme' === $type ? Version_Controlled::is_theme( $item ) : Version_Controlled::is_plugin( $item );
+
+		foreach ( array( 'auto_update', 'blocked', 'patches_only' ) as $field ) {
+			if ( ! array_key_exists( $field, $input ) ) {
+				continue;
+			}
+
+			$valid = self::assert_bool( $input[ $field ], $field );
+			if ( is_wp_error( $valid ) ) {
+				return $valid;
+			}
+
+			if ( $input[ $field ] && $version_controlled && in_array( $field, array( 'auto_update', 'patches_only' ), true ) ) {
+				return self::version_controlled_error( $type );
+			}
+
+			$changes[ $field ] = $input[ $field ];
+		}
+
+		if ( array_key_exists( 'delay_days', $input ) ) {
+			$days = self::delay_days_input( $input['delay_days'] );
+			if ( is_wp_error( $days ) ) {
+				return $days;
+			}
+
+			$changes['delay_days'] = $days;
+		}
+
+		if ( array_key_exists( 'allow_untested', $input ) ) {
+			$allow = self::nullable_bool( $input['allow_untested'], 'allow_untested' );
+			if ( is_wp_error( $allow ) ) {
+				return $allow;
+			}
+
+			$changes['allow_untested'] = $allow;
+		}
+
+		if ( array_key_exists( 'notes', $input ) ) {
+			if ( ! is_string( $input['notes'] ) ) {
+				return new \WP_Error( 'updatebee_invalid_policy_value', __( 'Notes must be a string.', 'updatebee' ) );
+			}
+
+			$changes['notes'] = $input['notes'];
+		}
+
+		return $changes;
+	}
+
+	/**
+	 * Store plugin changes that already passed validation.
+	 *
+	 * @param string               $file    Plugin basename.
+	 * @param array<string, mixed> $changes Normalized fields.
+	 * @return true|\WP_Error True when every supplied field is saved.
+	 */
+	private static function save_plugin_changes( string $file, array $changes ) {
+		if ( array_key_exists( 'auto_update', $changes ) ) {
+			$saved = Functions::set_plugin_auto_update( $file, (bool) $changes['auto_update'] );
+			if ( null === $saved ) {
+				return self::save_failed();
+			}
+		}
+
+		if ( array_key_exists( 'blocked', $changes ) ) {
+			$saved = Functions::set_plugin_blocked( $file, (bool) $changes['blocked'] );
+			if ( null === $saved ) {
+				return self::save_failed();
+			}
+		}
+
+		if ( array_key_exists( 'patches_only', $changes ) ) {
+			$saved = Functions::set_plugin_patches_only( $file, (bool) $changes['patches_only'] );
+			if ( null === $saved ) {
+				return self::save_failed();
+			}
+		}
+
+		if ( array_key_exists( 'delay_days', $changes ) ) {
+			$days  = is_int( $changes['delay_days'] ) ? $changes['delay_days'] : null;
+			$saved = Table_Plugins::save_delay_settings( $file, $days );
+			if ( is_wp_error( $saved ) ) {
+				return $saved;
+			}
+		}
+
+		if ( array_key_exists( 'allow_untested', $changes ) ) {
+			$allow = is_bool( $changes['allow_untested'] ) ? $changes['allow_untested'] : null;
+			$saved = Table_Plugins::save_untested_setting( $file, $allow );
+			if ( is_wp_error( $saved ) ) {
+				return $saved;
+			}
+		}
+
+		if ( array_key_exists( 'notes', $changes ) ) {
+			$saved = Table_Plugins::save_notes( $file, (string) $changes['notes'] );
+			if ( is_wp_error( $saved ) ) {
+				return $saved;
+			}
+		}
+
+		return true;
+	}
+
+	/**
+	 * Store theme changes that already passed validation.
+	 *
+	 * @param string               $stylesheet Theme stylesheet.
+	 * @param array<string, mixed> $changes    Normalized fields.
+	 * @return true|\WP_Error True when every supplied field is saved.
+	 */
+	private static function save_theme_changes( string $stylesheet, array $changes ) {
+		if ( array_key_exists( 'auto_update', $changes ) ) {
+			$saved = Functions::set_theme_auto_update( $stylesheet, (bool) $changes['auto_update'] );
+			if ( null === $saved ) {
+				return self::save_failed();
+			}
+		}
+
+		if ( array_key_exists( 'blocked', $changes ) ) {
+			$saved = Functions::set_theme_blocked( $stylesheet, (bool) $changes['blocked'] );
+			if ( null === $saved ) {
+				return self::save_failed();
+			}
+		}
+
+		if ( array_key_exists( 'patches_only', $changes ) ) {
+			$saved = Functions::set_theme_patches_only( $stylesheet, (bool) $changes['patches_only'] );
+			if ( null === $saved ) {
+				return self::save_failed();
+			}
+		}
+
+		if ( array_key_exists( 'delay_days', $changes ) ) {
+			$days  = is_int( $changes['delay_days'] ) ? $changes['delay_days'] : null;
+			$saved = Table_Themes::save_delay_settings( $stylesheet, $days );
+			if ( is_wp_error( $saved ) ) {
+				return $saved;
+			}
+		}
+
+		if ( array_key_exists( 'allow_untested', $changes ) ) {
+			$allow = is_bool( $changes['allow_untested'] ) ? $changes['allow_untested'] : null;
+			$saved = Table_Themes::save_untested_setting( $stylesheet, $allow );
+			if ( is_wp_error( $saved ) ) {
+				return $saved;
+			}
+		}
+
+		if ( array_key_exists( 'notes', $changes ) ) {
+			$saved = Table_Themes::save_notes( $stylesheet, (string) $changes['notes'] );
+			if ( is_wp_error( $saved ) ) {
+				return $saved;
+			}
+		}
+
+		return true;
 	}
 
 	/**
