@@ -142,7 +142,8 @@ class ChangelogTest extends TestCase {
 					static function ( $args ) {
 						return is_array( $args )
 							&& 'changelog-api' === ( $args['slug'] ?? '' )
-							&& true === ( $args['fields']['sections'] ?? false );
+							&& true === ( $args['fields']['sections'] ?? false )
+							&& true === ( $args['fields']['downloadlink'] ?? false );
 					}
 				)
 			)

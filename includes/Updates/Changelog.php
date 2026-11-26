@@ -238,7 +238,9 @@ class Changelog {
 	}
 
 	/**
-	 * Plugin or theme information request with sections only.
+	 * Plugin or theme information request.
+	 *
+	 * Sections supply the changelog. The download link stays on so a WordPress.org response can be recognized.
 	 *
 	 * @param string $kind plugin or theme.
 	 * @param string $slug Directory or updater slug.
@@ -279,7 +281,7 @@ class Changelog {
 			'rating'            => false,
 			'ratings'           => false,
 			'downloaded'        => false,
-			'downloadlink'      => false,
+			'downloadlink'      => true,
 			'last_updated'      => false,
 			'added'             => false,
 			'tags'              => false,
