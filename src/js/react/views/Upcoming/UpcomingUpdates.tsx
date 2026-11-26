@@ -15,7 +15,7 @@ import {
 } from '@wordpress/dataviews';
 import { useCallback, useEffect, useMemo, useState } from '@wordpress/element';
 import { __, _n, sprintf } from '@wordpress/i18n';
-import { Button, Stack } from '@wordpress/ui';
+import { Button, Stack, useEnableWpCompatOverlaySlot } from '@wordpress/ui';
 import ChangelogModal from '../../components/ChangelogModal';
 import FloatingNotice from '../../components/FloatingNotice';
 import sendCommand from '../../../utils/SendCommand';
@@ -175,6 +175,7 @@ const delayNotice = ( days: number ): string => {
  * Upcoming updates table.
  */
 const UpcomingUpdates = () => {
+	useEnableWpCompatOverlaySlot();
 	const [ items, setItems ] = useState< UpcomingItem[] >( [] );
 	const [ nextRunLabel, setNextRunLabel ] = useState( '' );
 	const [ delayUpdates, setDelayUpdates ] = useState( 0 );
@@ -219,7 +220,7 @@ const UpcomingUpdates = () => {
 		return sendCommand< UpcomingPayload >(
 			'updatebee_retrieve_upcoming_updates',
 			{
-				nonce: updatebeeDashboard.retrieveUpcomingNonce,
+				nonce: updatebeeUpcoming.retrieveUpcomingNonce,
 			}
 		)
 			.then( ( response ) => {
@@ -258,7 +259,7 @@ const UpcomingUpdates = () => {
 			setNotice( null );
 
 			sendCommand< UpcomingPayload >( 'updatebee_save_upcoming_delay', {
-				nonce: updatebeeDashboard.saveDelayNonce,
+				nonce: updatebeeUpcoming.saveDelayNonce,
 				delay_updates: days,
 			} )
 				.then( ( response ) => {
@@ -455,7 +456,7 @@ const UpcomingUpdates = () => {
 		setIsChecking( true );
 		setNotice( null );
 		sendCommand< MessagePayload >( 'updatebee_refresh_updates', {
-			nonce: updatebeeDashboard.refreshNonce,
+			nonce: updatebeeUpcoming.refreshNonce,
 		} )
 			.then( ( response ) => {
 				showNotice(
@@ -514,7 +515,7 @@ const UpcomingUpdates = () => {
 							variant="outline"
 							onClick={ () => {
 								window.location.assign(
-									updatebeeDashboard.schedulesUrl
+									updatebeeUpcoming.schedulesUrl
 								);
 							} }
 						>

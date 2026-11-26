@@ -34,6 +34,10 @@ module.exports = {
 			process.cwd(),
 			'src/js/react/views/Dashboard/index.tsx'
 		),
+		upcoming: path.resolve(
+			process.cwd(),
+			'src/js/react/views/Upcoming/index.tsx'
+		),
 		plugins: path.resolve(
 			process.cwd(),
 			'src/js/react/views/Plugins/index.tsx'

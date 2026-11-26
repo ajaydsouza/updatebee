@@ -4,15 +4,18 @@ interface UpdateBeeDashboard {
 	retrieveNonce: string;
 	saveNonce: string;
 	resetNonce: string;
-	retrieveUpcomingNonce: string;
-	saveDelayNonce: string;
-	refreshNonce: string;
-	initialSubtab: string;
-	settingsUrl: string;
-	schedulesUrl: string;
 }
 
 declare const updatebeeDashboard: UpdateBeeDashboard;
+
+interface UpdateBeeUpcoming {
+	retrieveUpcomingNonce: string;
+	saveDelayNonce: string;
+	refreshNonce: string;
+	schedulesUrl: string;
+}
+
+declare const updatebeeUpcoming: UpdateBeeUpcoming;
 
 interface UpdateBeePlugins {
 	retrieveNonce: string;

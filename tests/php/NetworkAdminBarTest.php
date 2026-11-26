@@ -79,7 +79,7 @@ class NetworkAdminBarTest extends TestCase {
 
 		$upcoming = $bar->nodes['updatebee-network-upcoming'];
 		$this->assertSame( 'Upcoming Updates', $upcoming['title'] );
-		$this->assertSame( 'https://example.com/wp-admin/network/settings.php?page=updatebee&tab=dashboard&subtab=upcoming', $upcoming['href'] );
+		$this->assertSame( 'https://example.com/wp-admin/network/settings.php?page=updatebee&tab=upcoming', $upcoming['href'] );
 		$this->assertSame( 'network-admin', $upcoming['parent'] );
 
 		$sites_index = array_search( 'network-admin-s', array_keys( $bar->nodes ), true );
@@ -147,7 +147,7 @@ class NetworkAdminBarTest extends TestCase {
 					'id'     => 'updatebee-network-upcoming',
 					'parent' => 'network-admin',
 					'title'  => 'Upcoming Updates',
-					'href'   => 'https://example.com/wp-admin/network/settings.php?page=updatebee&tab=dashboard&subtab=upcoming',
+					'href'   => 'https://example.com/wp-admin/network/settings.php?page=updatebee&tab=upcoming',
 				),
 			)
 		);
@@ -307,7 +307,7 @@ class NetworkAdminBarTest extends TestCase {
 			'id'     => 'updatebee-network-upcoming',
 			'parent' => 'network-admin',
 			'title'  => 'Upcoming Updates',
-			'href'   => 'https://example.com/wp-admin/network/settings.php?page=updatebee&tab=dashboard&subtab=upcoming',
+			'href'   => 'https://example.com/wp-admin/network/settings.php?page=updatebee&tab=upcoming',
 		);
 
 		return $nodes;

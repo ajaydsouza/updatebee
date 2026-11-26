@@ -15,7 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 use UpdateBee\Functions;
 
 /**
- * Link the Dashboard menu to the Upcoming updates sub-tab.
+ * Link the Dashboard menu to the Upcoming tab.
  */
 class Upcoming_Menu {
 
@@ -76,14 +76,14 @@ class Upcoming_Menu {
 	}
 
 	/**
-	 * Relative admin URL for the Upcoming sub-tab.
+	 * Relative admin URL for the Upcoming tab.
 	 *
 	 * Ampersands are encoded the way core stores query links in the menu.
 	 *
 	 * @return string Menu slug.
 	 */
 	public static function menu_slug(): string {
-		$url  = Functions::get_settings_url( 'dashboard', 'upcoming' );
+		$url  = Functions::get_settings_url( 'upcoming' );
 		$base = Functions::is_multisite() ? network_admin_url() : admin_url();
 		if ( is_string( $base ) && '' !== $base && str_starts_with( $url, $base ) ) {
 			$url = substr( $url, strlen( $base ) );

@@ -55,11 +55,7 @@ class Dashboard {
 		if ( 'dashboard' !== $tab ) {
 			return;
 		}
-		$deps       = require Functions::get_plugin_dir( 'build/dashboard.asset.php' );
-		$style_deps = array( 'updatebee-admin' );
-		if ( wp_style_is( 'wp-dataviews', 'registered' ) ) {
-			$style_deps[] = 'wp-dataviews';
-		}
+		$deps = require Functions::get_plugin_dir( 'build/dashboard.asset.php' );
 
 		wp_enqueue_script(
 			'updatebee-dashboard',
@@ -72,24 +68,20 @@ class Dashboard {
 		wp_enqueue_style(
 			'updatebee-dashboard',
 			Functions::get_plugin_url( 'build/dashboard.css' ),
-			$style_deps,
+			array( 'updatebee-admin' ),
 			is_string( $deps['version'] ) ? $deps['version'] : Functions::get_plugin_version()
 		);
 		wp_localize_script(
 			'updatebee-dashboard',
 			'updatebeeDashboard',
 			array(
-				'retrieveNonce'         => wp_create_nonce( 'updatebee-retrieve-dashboard-settings' ),
-				'saveNonce'             => wp_create_nonce( 'updatebee-save-dashboard-settings' ),
-				'resetNonce'            => wp_create_nonce( 'updatebee-reset-dashboard-settings' ),
-				'retrieveUpcomingNonce' => wp_create_nonce( 'updatebee-retrieve-upcoming-updates' ),
-				'saveDelayNonce'        => wp_create_nonce( 'updatebee-save-upcoming-delay' ),
-				'refreshNonce'          => wp_create_nonce( 'updatebee-refresh-updates' ),
-				'initialSubtab'         => 'upcoming' === $sub_tab ? 'upcoming' : 'settings',
-				'settingsUrl'           => esc_url_raw( Functions::get_settings_url( 'dashboard' ) ),
-				'schedulesUrl'          => esc_url_raw( Functions::get_settings_url( 'cron' ) ),
+				'retrieveNonce' => wp_create_nonce( 'updatebee-retrieve-dashboard-settings' ),
+				'saveNonce'     => wp_create_nonce( 'updatebee-save-dashboard-settings' ),
+				'resetNonce'    => wp_create_nonce( 'updatebee-reset-dashboard-settings' ),
 			)
 		);
+
+		unset( $sub_tab );
 		?>
 		<div id="updatebee-dashboard-container"></div>
 		<?php
