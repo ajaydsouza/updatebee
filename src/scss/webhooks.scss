@@ -134,6 +134,13 @@
 	gap: 8px;
 }
 
+.updatebee-webhook-delete-footer {
+	display: flex;
+	justify-content: flex-end;
+	gap: 8px;
+	margin-top: 16px;
+}
+
 @media (max-width: 782px) {
 
 	.updatebee-webhooks-heading {

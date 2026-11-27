@@ -34,6 +34,25 @@ type WebhookEditProps = {
 	webhookId: string;
 };
 
+const SAVED_NOTICE_KEY = 'updatebeeWebhookSaved';
+
+const takeSavedNotice = (): boolean => {
+	let saved = false;
+
+	try {
+		if ( '1' === window.sessionStorage.getItem( SAVED_NOTICE_KEY ) ) {
+			saved = true;
+			window.sessionStorage.removeItem( SAVED_NOTICE_KEY );
+		}
+	} catch {
+		saved = false;
+	}
+
+	return saved;
+};
+
+const showSavedNotice = takeSavedNotice();
+
 const formFromEditor = ( webhook: WebhookEditor ): WebhookFormValues => ( {
 	name: webhook.name,
 	url: webhook.url,
@@ -56,7 +75,14 @@ const WebhookEdit = ( props: WebhookEditProps ) => {
 	const [ notice, setNotice ] = useState< {
 		status: 'success' | 'error';
 		message: string;
-	} | null >( null );
+	} | null >( () =>
+		showSavedNotice
+			? {
+					status: 'success',
+					message: __( 'Webhook saved.', 'updatebee' ),
+				}
+			: null
+	);
 
 	useEffect( () => {
 		if ( isNew ) {
@@ -141,6 +167,11 @@ const WebhookEdit = ( props: WebhookEditProps ) => {
 			.then( ( response ) => {
 				const saved = response.data.data.webhook;
 				if ( isNew && saved.id ) {
+					try {
+						window.sessionStorage.setItem( SAVED_NOTICE_KEY, '1' );
+					} catch {
+						// Private browsing can block storage. The edit screen still opens.
+					}
 					window.location.assign( webhookEditUrl( saved.id ) );
 					return;
 				}

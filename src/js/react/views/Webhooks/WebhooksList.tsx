@@ -423,7 +423,14 @@ const WebhooksList = () => {
 							'updatebee'
 						) }
 					</p>
-					<div className="updatebee-webhook-edit-actions">
+					<div className="updatebee-webhook-delete-footer">
+						<Button
+							variant="secondary"
+							disabled={ isBusy }
+							onClick={ () => setPendingDelete( null ) }
+						>
+							{ __( 'Cancel', 'updatebee' ) }
+						</Button>
 						<Button
 							variant="primary"
 							isDestructive
@@ -432,13 +439,6 @@ const WebhooksList = () => {
 							onClick={ confirmDelete }
 						>
 							{ __( 'Delete', 'updatebee' ) }
-						</Button>
-						<Button
-							variant="secondary"
-							disabled={ isBusy }
-							onClick={ () => setPendingDelete( null ) }
-						>
-							{ __( 'Cancel', 'updatebee' ) }
 						</Button>
 					</div>
 				</Modal>
