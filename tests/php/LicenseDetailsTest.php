@@ -202,4 +202,60 @@ class LicenseDetailsTest extends TestCase {
 		$this->assertFalse( License_Details::is_active( $past ) );
 		$this->assertFalse( License_Details::present( $past )['is_active'] );
 	}
+
+	/**
+	 * An active license keeps the check success message.
+	 */
+	public function test_check_notice_keeps_success_for_an_active_license(): void {
+		$this->stub_formatters();
+
+		$view   = License_Details::present(
+			array(
+				'license_key' => 'secret-key',
+				'status'      => 'valid',
+				'expires'     => '2027-09-15 00:00:00',
+			)
+		);
+		$notice = License_Details::check_notice( $view, 'License checked successfully.' );
+
+		$this->assertFalse( $notice['error'] );
+		$this->assertSame( 'License checked successfully.', $notice['message'] );
+	}
+
+	/**
+	 * An invalid stored license is an error, not a successful check.
+	 */
+	public function test_check_notice_rejects_an_invalid_license(): void {
+		$this->stub_formatters();
+
+		$view   = License_Details::present(
+			array(
+				'license_key' => 'secret-key',
+				'status'      => 'invalid',
+			)
+		);
+		$notice = License_Details::check_notice( $view, 'License checked successfully.' );
+
+		$this->assertTrue( $notice['error'] );
+		$this->assertSame( 'This license is not valid.', $notice['message'] );
+	}
+
+	/**
+	 * An expired license stays a warning instead of a successful check.
+	 */
+	public function test_check_notice_warns_when_the_license_is_expired(): void {
+		$this->stub_formatters();
+
+		$view   = License_Details::present(
+			array(
+				'license_key' => 'secret-key',
+				'status'      => 'expired',
+				'expires'     => '2020-01-01 00:00:00',
+			)
+		);
+		$notice = License_Details::check_notice( $view, 'License checked successfully.' );
+
+		$this->assertFalse( $notice['error'] );
+		$this->assertSame( 'This license is expired.', $notice['message'] );
+	}
 }

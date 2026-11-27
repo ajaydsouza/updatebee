@@ -155,6 +155,7 @@ interface UpdateBeeAdvanced {
 	brandingAuthor?: string;
 	brandingUrl?: string;
 	brandingHideLicenseTab?: boolean;
+	brandingHideHeaderLinks?: boolean;
 	canHideLicenseTab?: boolean;
 	brandingDefaults?: UpdateBeeBrandingDefaults;
 }

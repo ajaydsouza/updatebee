@@ -3012,7 +3012,8 @@ class Ajax {
 			)
 		);
 
-		$stored_hide    = (bool) Branding::get_stored()['branding_hide_license_tab'];
+		$stored         = Branding::get_stored();
+		$stored_hide    = (bool) $stored['branding_hide_license_tab'];
 		$requested_hide = $stored_hide;
 		if ( isset( $_POST['hide_license_tab'] ) ) {
 			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Boolean is sanitized below.
@@ -3027,18 +3028,29 @@ class Ajax {
 			$stored_hide
 		);
 
+		$requested_header_links = (bool) $stored['branding_hide_header_links'];
+		if ( isset( $_POST['hide_header_links'] ) ) {
+			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Boolean is sanitized below.
+			$raw_header_links = wp_unslash( $_POST['hide_header_links'] );
+			if ( ! is_array( $raw_header_links ) ) {
+				$requested_header_links = Functions::sanitize_rest_boolean( $raw_header_links );
+			}
+		}
+		$to_save['branding_hide_header_links'] = $requested_header_links;
+
 		Branding::update_stored( $to_save );
 
-		// Name, description, author, URL, and the License tab are printed with the page.
+		// Name, description, author, URL, and the header links are printed with the page.
 		wp_send_json_success(
 			array(
-				'name'           => Branding::get_saved_name(),
-				'description'    => Branding::get_saved_description(),
-				'author'         => Branding::get_saved_author(),
-				'url'            => Branding::get_saved_url(),
-				'hideLicenseTab' => (bool) Branding::get_stored()['branding_hide_license_tab'],
-				'message'        => __( 'Branding settings have been saved.', 'updatebee' ),
-				'reload'         => true,
+				'name'            => Branding::get_saved_name(),
+				'description'     => Branding::get_saved_description(),
+				'author'          => Branding::get_saved_author(),
+				'url'             => Branding::get_saved_url(),
+				'hideLicenseTab'  => (bool) Branding::get_stored()['branding_hide_license_tab'],
+				'hideHeaderLinks' => (bool) Branding::get_stored()['branding_hide_header_links'],
+				'message'         => __( 'Branding settings have been saved.', 'updatebee' ),
+				'reload'          => true,
 			)
 		);
 	}
@@ -3254,12 +3266,18 @@ class Ajax {
 			);
 		}
 
-		wp_send_json_success(
-			array(
-				'message' => $message,
-				'license' => License_Details::present( $remote ),
-			)
+		$license = License_Details::present( $remote );
+		$notice  = License_Details::check_notice( $license, $message );
+		$payload = array(
+			'message' => $notice['message'],
+			'license' => $license,
 		);
+
+		if ( $notice['error'] ) {
+			wp_send_json_error( $payload );
+		}
+
+		wp_send_json_success( $payload );
 	}
 
 	/**

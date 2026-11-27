@@ -26,6 +26,7 @@ type BrandingPayload = {
 	author?: string;
 	url?: string;
 	hideLicenseTab?: boolean;
+	hideHeaderLinks?: boolean;
 	reload?: boolean;
 };
 
@@ -64,6 +65,9 @@ const BrandingDrawer = ( props: BrandingDrawerProps ) => {
 	const savedHideLicenseTab = Boolean(
 		updatebeeAdvanced.brandingHideLicenseTab
 	);
+	const savedHideHeaderLinks = Boolean(
+		updatebeeAdvanced.brandingHideHeaderLinks
+	);
 	const [ draftName, setDraftName ] = useState( savedName );
 	const [ draftDescription, setDraftDescription ] =
 		useState( savedDescription );
@@ -71,6 +75,8 @@ const BrandingDrawer = ( props: BrandingDrawerProps ) => {
 	const [ draftUrl, setDraftUrl ] = useState( savedUrl );
 	const [ draftHideLicenseTab, setDraftHideLicenseTab ] =
 		useState( savedHideLicenseTab );
+	const [ draftHideHeaderLinks, setDraftHideHeaderLinks ] =
+		useState( savedHideHeaderLinks );
 
 	/**
 	 * Revert drawer drafts to the last saved values.
@@ -81,9 +87,11 @@ const BrandingDrawer = ( props: BrandingDrawerProps ) => {
 		setDraftAuthor( savedAuthor );
 		setDraftUrl( savedUrl );
 		setDraftHideLicenseTab( savedHideLicenseTab );
+		setDraftHideHeaderLinks( savedHideHeaderLinks );
 	}, [
 		savedAuthor,
 		savedDescription,
+		savedHideHeaderLinks,
 		savedHideLicenseTab,
 		savedName,
 		savedUrl,
@@ -126,6 +134,7 @@ const BrandingDrawer = ( props: BrandingDrawerProps ) => {
 			author: draftAuthor.trim(),
 			url: draftUrl.trim(),
 			hide_license_tab: canHideLicenseTab && draftHideLicenseTab,
+			hide_header_links: draftHideHeaderLinks,
 		} )
 			.then( () => {
 				window.location.reload();
@@ -145,6 +154,7 @@ const BrandingDrawer = ( props: BrandingDrawerProps ) => {
 		draftAuthor,
 		draftDescription,
 		canHideLicenseTab,
+		draftHideHeaderLinks,
 		draftHideLicenseTab,
 		draftName,
 		draftUrl,
@@ -198,6 +208,14 @@ const BrandingDrawer = ( props: BrandingDrawerProps ) => {
 					{ canHideLicenseTab && savedHideLicenseTab && (
 						<p className="updatebee-advanced-keywords-preview">
 							{ __( 'License tab hidden', 'updatebee' ) }
+						</p>
+					) }
+					{ savedHideHeaderLinks && (
+						<p className="updatebee-advanced-keywords-preview">
+							{ __(
+								'Documentation and support links hidden',
+								'updatebee'
+							) }
 						</p>
 					) }
 				</Card.Content>
@@ -274,6 +292,21 @@ const BrandingDrawer = ( props: BrandingDrawerProps ) => {
 											'updatebee'
 										)
 							}
+						/>
+						<ToggleControl
+							label={ __(
+								'Hide documentation and support links',
+								'updatebee'
+							) }
+							checked={ draftHideHeaderLinks }
+							disabled={ isSaving }
+							onChange={ ( checked: boolean ) => {
+								setDraftHideHeaderLinks( checked );
+							} }
+							help={ __(
+								'Removes the Documentation and Support links from the admin header.',
+								'updatebee'
+							) }
 						/>
 					</div>
 				</Drawer.Content>

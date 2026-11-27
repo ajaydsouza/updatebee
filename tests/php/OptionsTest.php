@@ -163,11 +163,12 @@ class OptionsTest extends TestCase {
 	 */
 	public function test_reset_options_clears_branding_when_unlocked(): void {
 		$branding = array(
-			'branding_name'             => 'Stored Agency',
-			'branding_description'      => '',
-			'branding_author'           => '',
-			'branding_url'              => '',
-			'branding_hide_license_tab' => true,
+			'branding_name'              => 'Stored Agency',
+			'branding_description'       => '',
+			'branding_author'            => '',
+			'branding_url'               => '',
+			'branding_hide_license_tab'  => true,
+			'branding_hide_header_links' => true,
 		);
 		$this->stub_branding_reset_store( $branding );
 
@@ -175,6 +176,7 @@ class OptionsTest extends TestCase {
 
 		$this->assertSame( '', $branding['branding_name'] );
 		$this->assertFalse( $branding['branding_hide_license_tab'] );
+		$this->assertFalse( $branding['branding_hide_header_links'] );
 	}
 
 	/**
@@ -182,11 +184,12 @@ class OptionsTest extends TestCase {
 	 */
 	public function test_reset_options_keeps_branding_when_locked(): void {
 		$branding = array(
-			'branding_name'             => 'Stored Agency',
-			'branding_description'      => 'Managed updates.',
-			'branding_author'           => 'Agency Co',
-			'branding_url'              => 'https://agency.example/',
-			'branding_hide_license_tab' => true,
+			'branding_name'              => 'Stored Agency',
+			'branding_description'       => 'Managed updates.',
+			'branding_author'            => 'Agency Co',
+			'branding_url'               => 'https://agency.example/',
+			'branding_hide_license_tab'  => true,
+			'branding_hide_header_links' => true,
 		);
 		$this->stub_branding_reset_store( $branding );
 		Branding::set_license_active_override( true );
@@ -204,6 +207,7 @@ class OptionsTest extends TestCase {
 
 		$this->assertSame( 'Stored Agency', $branding['branding_name'] );
 		$this->assertTrue( $branding['branding_hide_license_tab'] );
+		$this->assertTrue( $branding['branding_hide_header_links'] );
 		$this->assertSame( 'off', Options::get_options( 'major_auto_updates' ) );
 	}
 

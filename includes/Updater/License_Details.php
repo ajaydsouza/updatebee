@@ -88,6 +88,46 @@ class License_Details {
 	}
 
 	/**
+	 * Snackbar copy after a remote license check.
+	 *
+	 * An active license keeps the success message. An expired license stays a warning. Anything else is an error.
+	 *
+	 * @param array<string, mixed> $view    Presented license from present().
+	 * @param string               $success Message when the license is active.
+	 * @return array{message: string, error: bool}
+	 */
+	public static function check_notice( array $view, string $success ): array {
+		$status    = isset( $view['status'] ) ? (string) $view['status'] : '';
+		$is_active = ! empty( $view['is_active'] );
+
+		if ( $is_active && 'valid' === $status ) {
+			return array(
+				'message' => $success,
+				'error'   => false,
+			);
+		}
+
+		if ( empty( $view['has_license'] ) ) {
+			return array(
+				'message' => __( 'Please provide a valid license key.', 'updatebee' ),
+				'error'   => true,
+			);
+		}
+
+		if ( 'expired' === $status || ( 'valid' === $status && ! $is_active ) ) {
+			return array(
+				'message' => __( 'This license is expired.', 'updatebee' ),
+				'error'   => false,
+			);
+		}
+
+		return array(
+			'message' => __( 'This license is not valid.', 'updatebee' ),
+			'error'   => true,
+		);
+	}
+
+	/**
 	 * Local license record, without a remote check.
 	 *
 	 * @return array<string, mixed>
