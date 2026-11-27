@@ -8,6 +8,7 @@ export const DATAVIEWS_STORAGE_KEYS = {
 	translations: 'updatebee:dataviews:v1:translations',
 	cronEvents: 'updatebee:dataviews:v1:cron-events',
 	upcoming: 'updatebee:dataviews:v1:upcoming',
+	webhooks: 'updatebee:dataviews:v1:webhooks',
 } as const;
 
 type PersistableView = Omit< View, 'search' | 'page' > & {

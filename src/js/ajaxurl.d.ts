@@ -190,3 +190,22 @@ interface UpdateBeeLicense {
 }
 
 declare const updatebeeLicense: UpdateBeeLicense;
+
+interface UpdateBeeWebhookDelivery {
+	time: string;
+	status: number;
+	error: string;
+}
+
+interface UpdateBeeWebhooks {
+	screen: 'list' | 'edit';
+	webhookId: string;
+	listUrl: string;
+	newUrl: string;
+	listNonce: string;
+	retrieveNonce: string;
+	saveNonce: string;
+	testNonce: string;
+}
+
+declare const updatebeeWebhooks: UpdateBeeWebhooks;

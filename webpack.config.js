@@ -62,6 +62,10 @@ module.exports = {
 			process.cwd(),
 			'src/js/react/views/Emails/index.tsx'
 		),
+		webhooks: path.resolve(
+			process.cwd(),
+			'src/js/react/views/Webhooks/index.tsx'
+		),
 		cron: path.resolve(
 			process.cwd(),
 			'src/js/react/views/Cron/index.tsx'

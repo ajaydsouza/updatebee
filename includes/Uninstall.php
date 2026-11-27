@@ -24,6 +24,7 @@ use UpdateBee\Tables\Table_Logs;
 use UpdateBee\Tables\Table_Plugins;
 use UpdateBee\Tables\Table_Themes;
 use UpdateBee\Updates\Delay_Updates;
+use UpdateBee\Webhooks\Store as Webhook_Store;
 
 /**
  * Delete this plugin's options, tables, cron events, and transients.
@@ -108,6 +109,7 @@ class Uninstall {
 			Email_Updates_Available::LAST_SEND_KEY,
 			EasyUpdatesManager::HIDE_OPTION,
 			CompanionAutoUpdate::HIDE_OPTION,
+			Webhook_Store::OPTION_KEY,
 		);
 	}
 
