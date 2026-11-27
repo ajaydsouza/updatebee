@@ -3266,12 +3266,18 @@ class Ajax {
 			);
 		}
 
-		wp_send_json_success(
-			array(
-				'message' => $message,
-				'license' => License_Details::present( $remote ),
-			)
+		$license = License_Details::present( $remote );
+		$notice  = License_Details::check_notice( $license, $message );
+		$payload = array(
+			'message' => $notice['message'],
+			'license' => $license,
 		);
+
+		if ( $notice['error'] ) {
+			wp_send_json_error( $payload );
+		}
+
+		wp_send_json_success( $payload );
 	}
 
 	/**

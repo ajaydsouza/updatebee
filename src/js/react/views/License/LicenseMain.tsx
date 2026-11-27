@@ -144,9 +144,7 @@ const LicenseMain = () => {
 				showSnackbar(
 					payload.message ||
 						__( 'License activated successfully.', 'updatebee' ),
-					'expired' === payload.license?.status
-						? 'warning'
-						: 'success'
+					payload.license?.is_active ? 'success' : 'warning'
 				);
 			} )
 			.catch( ( error: unknown ) => {
