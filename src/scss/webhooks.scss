@@ -9,6 +9,30 @@
 	padding-bottom: 96px;
 }
 
+.updatebee-webhooks-main .dataviews-view-table__primary-column-content,
+.updatebee-webhooks-main .dataviews-title-field {
+	min-width: 0;
+	max-width: 100%;
+	overflow: hidden;
+}
+
+.updatebee-webhooks-main .dataviews-view-table tbody .dataviews-view-table__cell-content-wrapper:has(.updatebee-webhook-url, .updatebee-webhook-reports) {
+	display: block;
+	width: 100%;
+	overflow: hidden;
+	white-space: nowrap;
+	overflow-wrap: normal;
+	text-decoration: none;
+}
+
+.updatebee-webhook-url,
+.updatebee-webhook-reports {
+	display: block;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
 .updatebee-webhooks-heading {
 	display: flex;
 	align-items: flex-start;
@@ -34,6 +58,10 @@
 	font-size: 1.75rem;
 	font-weight: 600;
 	line-height: 1.2;
+}
+
+.dataviews-title-field--clickable {
+	text-decoration: none;
 }
 
 .updatebee-webhook-edit-header .description {

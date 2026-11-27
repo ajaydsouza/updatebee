@@ -7,7 +7,7 @@ import {
 	type Field,
 	type View,
 } from '@wordpress/dataviews';
-import { Button, Modal } from '@wordpress/components';
+import { Button, Modal, Tooltip } from '@wordpress/components';
 import { useCallback, useEffect, useMemo, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import { Card, Stack } from '@wordpress/ui';
@@ -16,7 +16,7 @@ import { DATAVIEWS_STORAGE_KEYS } from '../../../utils/dataviews-view-storage';
 import { ErrorFallback } from '../../components/ErrorBoundary';
 import Loader from '../../components/Loader';
 import usePersistedDataView from '../../hooks/usePersistedDataView';
-import { deliveryLabel, reportLabel } from './labels';
+import { deliveryLabel, reportLabel, webhookEditUrl } from './labels';
 import type { WebhookListItem } from './types';
 import { getWebhookActions } from './webhook-actions';
 import WebhooksFooter, {
@@ -39,20 +39,23 @@ const tableColumnStyles = {
 		maxWidth: '240px',
 	},
 	enabledLabel: {
-		width: '120px',
-		maxWidth: '140px',
+		width: '8rem',
+		minWidth: '8rem',
+		maxWidth: '8rem',
 	},
 	url: {
-		width: '280px',
-		maxWidth: '420px',
-	},
-	reportsLabel: {
-		width: '220px',
+		width: '240px',
 		maxWidth: '280px',
 	},
+	reportsLabel: {
+		width: '16rem',
+		minWidth: '16rem',
+		maxWidth: '22rem',
+	},
 	lastDeliveryLabel: {
-		width: '180px',
-		maxWidth: '240px',
+		width: '14rem',
+		minWidth: '14rem',
+		maxWidth: '16rem',
 	},
 };
 
@@ -274,12 +277,24 @@ const WebhooksList = () => {
 				type: 'text',
 				label: __( 'Webhook URL', 'updatebee' ),
 				enableGlobalSearch: true,
+				render: ( { item } ) => (
+					<span className="updatebee-webhook-url" title={ item.url }>
+						{ item.url }
+					</span>
+				),
 			},
 			{
 				id: 'reportsLabel',
 				type: 'text',
 				label: __( 'Reports', 'updatebee' ),
 				enableGlobalSearch: true,
+				render: ( { item } ) => (
+					<Tooltip text={ item.reportsLabel }>
+						<span className="updatebee-webhook-reports">
+							{ item.reportsLabel }
+						</span>
+					</Tooltip>
+				),
 			},
 			{
 				id: 'lastDeliveryLabel',
@@ -357,6 +372,11 @@ const WebhooksList = () => {
 						isLoading={ isBusy }
 						paginationInfo={ paginationInfo }
 						getItemId={ ( item ) => item.id }
+						renderItemLink={ ( { item, children, ...props } ) => (
+							<a { ...props } href={ webhookEditUrl( item.id ) }>
+								{ children }
+							</a>
+						) }
 						defaultLayouts={ {
 							table: {
 								layout: {
