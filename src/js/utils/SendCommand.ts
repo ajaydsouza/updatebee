@@ -6,6 +6,15 @@ import qs from 'qs';
 
 export type SendCommandData = Record< string, unknown >;
 
+export type SendCommandOptions = {
+	/**
+	 * Keep empty arrays in this request body.
+	 *
+	 * Off by default. Other admin-ajax calls still omit empty arrays.
+	 */
+	allowEmptyArrays?: boolean;
+};
+
 export interface WpAjaxSuccess< T > {
 	success: true;
 	data: T;
@@ -61,13 +70,15 @@ export function getWpAjaxErrorMessage( data: unknown ): string | undefined {
  *
  * Non-success WP JSON (`success: false`) rejects so callers can use `.catch`.
  *
- * @param action Admin-ajax action name.
- * @param data   POST body fields.
+ * @param action  Admin-ajax action name.
+ * @param data    POST body fields.
+ * @param options Per-request encoding options. Empty arrays stay omitted unless asked for.
  * @return Axios response promise.
  */
 export default function sendCommand< T = unknown >(
 	action: string,
-	data: SendCommandData = {}
+	data: SendCommandData = {},
+	options: SendCommandOptions = {}
 ): Promise< AxiosResponse< WpAjaxSuccess< T > > > {
 	const payload: SendCommandData = {
 		nonce: false,
@@ -84,7 +95,10 @@ export default function sendCommand< T = unknown >(
 		paramsSerializer( params: Record< string, string > ) {
 			return qs.stringify( params, { arrayFormat: 'brackets' } );
 		},
-		data: qs.stringify( payload ),
+		data: qs.stringify(
+			payload,
+			options.allowEmptyArrays ? { allowEmptyArrays: true } : undefined
+		),
 	} ).then( ( response ) => {
 		if ( ! response.data || true !== response.data.success ) {
 			const message =

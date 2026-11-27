@@ -234,6 +234,58 @@ class AvailableUpdatesEmailTest extends TestCase {
 	}
 
 	/**
+	 * An explicit empty recipient list does not fall back to saved addresses.
+	 */
+	public function test_send_now_empty_lists_do_not_reuse_saved_recipients(): void {
+		MonkeyFunctions\when( 'check_ajax_referer' )->justReturn( true );
+		MonkeyFunctions\when( 'is_multisite' )->justReturn( false );
+		MonkeyFunctions\when( 'is_network_admin' )->justReturn( false );
+		MonkeyFunctions\when( 'is_plugin_active_for_network' )->justReturn( false );
+		MonkeyFunctions\when( 'current_user_can' )->justReturn( true );
+		MonkeyFunctions\when( 'wp_parse_args' )->alias(
+			static function ( $args, $defaults ) {
+				return array_merge( (array) $defaults, (array) $args );
+			}
+		);
+		MonkeyFunctions\when( 'get_site_option' )->alias(
+			static function ( $key, $fallback = array() ) {
+				if ( 'updatebee_email_updates_available' === $key ) {
+					return array(
+						'to_field'  => array( 'saved@example.com' ),
+						'bcc_field' => array( 'bcc@example.com' ),
+					);
+				}
+				return $fallback;
+			}
+		);
+		MonkeyFunctions\when( 'sanitize_text_field' )->returnArg( 1 );
+		MonkeyFunctions\when( 'wp_send_json_error' )->alias(
+			static function ( $data = null ): void {
+				$message = '';
+				if ( is_array( $data ) && isset( $data['message'] ) ) {
+					$message = (string) $data['message'];
+				}
+
+				// phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Test double, not rendered output.
+				throw new \RuntimeException( $message );
+			}
+		);
+
+		$_POST = array(
+			'toField'       => array( '' ),
+			'bccField'      => array( '' ),
+			'notifySlack'   => 'false',
+			'notifyDiscord' => 'false',
+		);
+
+		$report = new Email_Updates_Available();
+
+		$this->expectException( \RuntimeException::class );
+		$this->expectExceptionMessage( 'Enter at least one email address or enable Slack or Discord notifications.' );
+		$report->ajax_send_now();
+	}
+
+	/**
 	 * Immediate report hook is disabled for available updates.
 	 */
 	public function test_maybe_send_immediate_report_is_noop(): void {

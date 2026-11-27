@@ -252,7 +252,9 @@ const EmailReportFormFields = ( props: EmailReportFormFieldsProps ) => {
 					includeTranslations: values.includeTranslations,
 					notifySlack: values.notifySlack,
 					notifyDiscord: values.notifyDiscord,
-				}
+				},
+				// Cleared token fields must stay in the body. An omitted list makes Send now reuse saved recipients.
+				{ allowEmptyArrays: true }
 			);
 			const payload = response.data.data;
 			onNotify(
