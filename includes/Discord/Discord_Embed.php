@@ -198,6 +198,32 @@ class Discord_Embed {
 	}
 
 	/**
+	 * Version span for one item, with the separator it needs.
+	 *
+	 * A known pair is " — 5.7.1 → 5.7.2". A new version with no previous
+	 * version is " → 11.3.1", so the line does not show an empty dash.
+	 *
+	 * @param string $from Previous version.
+	 * @param string $to   New version.
+	 * @return string
+	 */
+	public static function version_clause( string $from, string $to ): string {
+		$from = trim( $from );
+		$to   = trim( $to );
+		if ( '' !== $from && '' !== $to ) {
+			return ' — ' . $from . ' → ' . $to;
+		}
+		if ( '' !== $to ) {
+			return ' → ' . $to;
+		}
+		if ( '' !== $from ) {
+			return ' — ' . $from;
+		}
+
+		return '';
+	}
+
+	/**
 	 * Heading plus its item lines.
 	 *
 	 * @param string             $heading Section heading.

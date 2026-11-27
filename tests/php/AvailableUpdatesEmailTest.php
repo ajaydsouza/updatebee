@@ -346,12 +346,24 @@ class AvailableUpdatesEmailTest extends TestCase {
 					'to_version'    => '5.1',
 					'update_status' => 'available',
 				),
+				array(
+					'name'          => 'WooCommerce (fr_FR)',
+					'update_type'   => 'translation',
+					'from_version'  => '',
+					'to_version'    => '11.3.1',
+					'update_status' => 'available',
+				),
 			)
 		);
 
 		$this->assertCount( 1, $posted );
 		$this->assertStringContainsString( '"embeds"', $posted[0] );
 		$this->assertStringNotContainsString( '"blocks"', $posted[0] );
+		$payload     = json_decode( $posted[0], true );
+		$description = $payload['embeds'][0]['description'];
+		$this->assertStringContainsString( 'Akismet — 5.0 → 5.1', $description );
+		$this->assertStringContainsString( 'WooCommerce (fr_FR) → 11.3.1', $description );
+		$this->assertStringNotContainsString( '— —', $description );
 		$this->assertStringContainsString( 'Akismet', $posted[0] );
 		$this->assertStringContainsString( 'update available', $posted[0] );
 		$this->assertStringContainsString( 'Example', $posted[0] );

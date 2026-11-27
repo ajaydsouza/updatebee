@@ -170,6 +170,40 @@ class DiscordReportTest extends TestCase {
 	}
 
 	/**
+	 * A translation with no previous version does not leave an empty dash.
+	 */
+	public function test_missing_from_version_omits_empty_version_slot(): void {
+		$this->stub_helpers();
+
+		$report = new Discord_Report();
+		$report->send_report(
+			array(
+				array(
+					'name'          => 'Translations for WooCommerce',
+					'update_type'   => 'translation',
+					'from_version'  => '',
+					'to_version'    => '11.3.1',
+					'update_status' => 'success',
+				),
+				array(
+					'name'          => 'Akismet',
+					'update_type'   => 'plugin',
+					'from_version'  => '5.7.1',
+					'to_version'    => '5.7.2',
+					'update_status' => 'success',
+				),
+			),
+			'automatic'
+		);
+
+		$payload     = json_decode( $this->posted_bodies[0], true );
+		$description = $payload['embeds'][0]['description'];
+		$this->assertStringContainsString( 'Translations for WooCommerce — success → 11.3.1', $description );
+		$this->assertStringContainsString( 'Akismet — success — 5.7.1 → 5.7.2', $description );
+		$this->assertStringNotContainsString( '— →', $description );
+	}
+
+	/**
 	 * A delay-only batch does not post when delayed rows are skipped.
 	 */
 	public function test_skip_delayed_skips_post_when_batch_is_only_delays(): void {

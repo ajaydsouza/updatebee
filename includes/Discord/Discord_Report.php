@@ -133,13 +133,7 @@ class Discord_Report {
 				if ( 'security' === $status_label ) {
 					$status_label = __( 'Success - Security Release', 'updatebee' );
 				}
-				return sprintf(
-					'%1$s — %2$s — %3$s → %4$s',
-					$row['name'],
-					$status_label,
-					$row['from_version'],
-					$row['to_version']
-				);
+				return $row['name'] . ' — ' . $status_label . Discord_Embed::version_clause( $row['from_version'], $row['to_version'] );
 			}
 		);
 

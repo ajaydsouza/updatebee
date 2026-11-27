@@ -69,13 +69,7 @@ class Discord_Fatals {
 				$type_label = Slack_Row_Groups::type_heading( $row['update_type'] );
 				$from       = '' !== $row['from_version'] ? $row['from_version'] : '—';
 				$to         = '' !== $row['to_version'] ? $row['to_version'] : '—';
-				$line       = sprintf(
-					'%1$s — %2$s — %3$s → %4$s',
-					$row['name'],
-					$type_label,
-					$from,
-					$to
-				);
+				$line       = $row['name'] . ' — ' . $type_label . Discord_Embed::version_clause( $from, $to );
 				if ( '' !== $row['fatal_message'] ) {
 					$line .= "\n" . $row['fatal_message'];
 				}

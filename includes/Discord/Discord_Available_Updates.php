@@ -60,13 +60,7 @@ class Discord_Available_Updates {
 		$groups = Discord_Embed::groups(
 			$rows,
 			static function ( array $row ): string {
-				$from = '' !== $row['from_version'] ? $row['from_version'] : '—';
-				$line = sprintf(
-					'%1$s — %2$s → %3$s',
-					$row['name'],
-					$from,
-					$row['to_version']
-				);
+				$line = $row['name'] . Discord_Embed::version_clause( $row['from_version'], $row['to_version'] );
 				if ( '' !== $row['detail_url'] ) {
 					$label = '' !== $row['detail_label'] ? $row['detail_label'] : __( 'Details', 'updatebee' );
 					$line .= ' — [' . $label . '](' . $row['detail_url'] . ')';
