@@ -1,0 +1,165 @@
+/**
+ * Webhooks DataViews screen and editor.
+ */
+
+@import "../../node_modules/@wordpress/dataviews/build-style/style.css";
+
+.updatebee-webhooks-main,
+.updatebee-webhook-edit {
+	padding-bottom: 96px;
+}
+
+.updatebee-webhooks-main .dataviews-view-table__primary-column-content,
+.updatebee-webhooks-main .dataviews-title-field {
+	min-width: 0;
+	max-width: 100%;
+	overflow: hidden;
+}
+
+.updatebee-webhooks-main .dataviews-view-table tbody .dataviews-view-table__cell-content-wrapper:has(.updatebee-webhook-url, .updatebee-webhook-reports) {
+	display: block;
+	width: 100%;
+	overflow: hidden;
+	white-space: nowrap;
+	overflow-wrap: normal;
+	text-decoration: none;
+}
+
+.updatebee-webhook-url,
+.updatebee-webhook-reports {
+	display: block;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.updatebee-webhooks-heading {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: 16px;
+}
+
+.updatebee-webhooks-heading .description,
+.updatebee-webhook-edit .description {
+	margin: 8px 0 0;
+}
+
+.updatebee-webhook-edit-header {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 12px;
+	margin-bottom: 8px;
+}
+
+.updatebee-webhook-edit-title {
+	margin: 4px 0 0;
+	font-size: 1.75rem;
+	font-weight: 600;
+	line-height: 1.2;
+}
+
+.dataviews-title-field--clickable {
+	text-decoration: none;
+}
+
+.updatebee-webhook-edit-header .description {
+	margin: 0;
+	max-width: 46rem;
+}
+
+.updatebee-webhook-enabled {
+	display: block;
+	margin-top: 1.5rem;
+	margin-bottom: 0;
+
+	.components-base-control__field {
+		margin-bottom: 0.5rem;
+	}
+
+	.components-base-control__help {
+		position: static;
+	}
+}
+
+.updatebee-webhook-edit .components-notice {
+	margin: 0 0 1.5rem;
+}
+
+.updatebee-webhook-edit .components-base-control__help {
+	display: block;
+	margin-top: 8px;
+	margin-bottom: 1.5rem;
+}
+
+.updatebee-webhook-edit .updatebee-webhook-headers-help {
+	margin: 8px 0 1.5rem;
+}
+
+.updatebee-webhook-header-row {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+	gap: 12px;
+	align-items: start;
+	margin-bottom: 12px;
+}
+
+.updatebee-webhook-header-actions {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+
+	/* Sit on the inputs, below the Name and Value labels. */
+	height: 40px;
+	margin-top: 24px;
+}
+
+.updatebee-webhook-checks {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.updatebee-webhook-edit-fields {
+	margin: 0;
+	padding: 0;
+	border: 0;
+	min-inline-size: 0;
+}
+
+.updatebee-webhook-edit-actions {
+	display: flex;
+	flex-direction: column;
+	align-items: stretch;
+	margin-top: 16px;
+}
+
+.updatebee-webhook-edit-buttons {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+}
+
+.updatebee-webhook-delete-footer {
+	display: flex;
+	justify-content: flex-end;
+	gap: 8px;
+	margin-top: 16px;
+}
+
+@media (max-width: 782px) {
+
+	.updatebee-webhooks-heading {
+		flex-direction: column;
+	}
+
+	.updatebee-webhook-header-row {
+		grid-template-columns: 1fr;
+	}
+
+	.updatebee-webhook-header-actions {
+		height: auto;
+		margin-top: 0;
+	}
+}

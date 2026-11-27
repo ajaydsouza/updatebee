@@ -28,6 +28,7 @@ class Init {
 		new Translations();
 		new Logs();
 		new Emails();
+		new Webhooks();
 		new Cron();
 		new Tools();
 		new License();

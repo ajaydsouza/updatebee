@@ -60,6 +60,7 @@ class UninstallTest extends TestCase {
 				'updatebee_email_updates_available_last_send',
 				'updatebee_hide_eum_importer',
 				'updatebee_hide_cau_importer',
+				'updatebee_webhooks',
 				'updatebee_branding',
 			),
 			$deleted_site_meta

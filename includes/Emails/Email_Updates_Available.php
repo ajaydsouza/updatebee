@@ -181,8 +181,29 @@ class Email_Updates_Available extends Email_Report {
 	 * @return array{delivered: bool, message: string}
 	 */
 	private function deliver_report( array $options, bool $force_refresh, bool $update_last_send ): array {
-		$data = $force_refresh ? Available_Updates::refresh_and_capture() : Available_Updates::current_transients();
-		$rows = Available_Updates::build_rows_from_data( $data, static::get_supported_types( $options ) );
+		$data         = $force_refresh ? Available_Updates::refresh_and_capture() : Available_Updates::current_transients();
+		$rows         = Available_Updates::build_rows_from_data( $data, static::get_supported_types( $options ) );
+		$webhook_rows = Available_Updates::build_rows_from_data(
+			$data,
+			array(
+				'core'         => true,
+				'plugins'      => true,
+				'themes'       => true,
+				'translations' => true,
+			)
+		);
+		if ( ! empty( $webhook_rows ) && static::is_enabled( $options ) ) {
+			/**
+			 * Fires when the available-updates job has rows and its schedule is on.
+			 *
+			 * Outgoing webhooks listen here. Scheduled delivery and Send now both
+			 * pass the saved schedule. A schedule of none skips this action.
+			 * Email and Slack delivery below is unchanged.
+			 *
+			 * @param array<int, array<string, mixed>> $webhook_rows Log-shaped available-update rows.
+			 */
+			do_action( 'updatebee_available_updates_report', $webhook_rows );
+		}
 		if ( empty( $rows ) ) {
 			return array(
 				'delivered' => false,

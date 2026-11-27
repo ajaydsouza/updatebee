@@ -30,6 +30,8 @@ use UpdateBee\Emails\Email_Fatals;
 use UpdateBee\Emails\Email_Successes;
 use UpdateBee\Emails\Email_Updates_Available;
 use UpdateBee\Slack\Slack_Report;
+use UpdateBee\Webhooks\Dispatcher as Webhook_Dispatcher;
+use UpdateBee\Webhooks\Rest as Webhook_Rest;
 use UpdateBee\Tables\{
 	Tables,
 	Table_Logs,
@@ -164,6 +166,20 @@ class Plugin {
 	 * @var Slack_Report
 	 */
 	private Slack_Report $slack_report;
+
+	/**
+	 * Outgoing webhook reports.
+	 *
+	 * @var Webhook_Dispatcher
+	 */
+	private Webhook_Dispatcher $webhook_dispatcher;
+
+	/**
+	 * Outgoing webhook admin AJAX.
+	 *
+	 * @var Webhook_Rest
+	 */
+	private Webhook_Rest $webhook_rest;
 
 	/**
 	 * Email updates available reports.
@@ -326,5 +342,11 @@ class Plugin {
 
 		$this->slack_report = new Slack_Report();
 		$this->slack_report->run();
+
+		$this->webhook_dispatcher = new Webhook_Dispatcher();
+		$this->webhook_dispatcher->run();
+
+		$this->webhook_rest = new Webhook_Rest();
+		$this->webhook_rest->run();
 	}
 }
