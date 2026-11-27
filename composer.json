@@ -1,7 +1,7 @@
 {
 	"name": "mediaron/updatebee",
 	"description": "Take complete control over your automatic WordPress updates.",
-	"version": "1.3.1",
+	"version": "1.3.5",
 	"type": "wordpress-plugin",
 	"license": "GPL-3.0-or-later",
 	"require": {
