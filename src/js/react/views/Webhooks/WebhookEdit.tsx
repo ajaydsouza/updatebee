@@ -279,187 +279,212 @@ const WebhookEdit = ( props: WebhookEditProps ) => {
 				</Card.Header>
 				<Card.Content>
 					{ renderFormNotice() }
-					<TextControl
-						label={ __( 'Name', 'updatebee' ) }
-						value={ form.name }
-						onChange={ ( name ) =>
-							setForm( ( current ) => ( { ...current, name } ) )
-						}
-						help={ __( 'Shown in the webhook list.', 'updatebee' ) }
-						required
-					/>
-					<ToggleControl
-						className="updatebee-webhook-enabled"
-						label={ __( 'Enabled', 'updatebee' ) }
-						checked={ form.enabled }
-						onChange={ ( enabled ) =>
-							setForm( ( current ) => ( {
-								...current,
-								enabled,
-							} ) )
-						}
-						help={ __(
-							'Disabled webhooks stay in the list and are not sent.',
-							'updatebee'
-						) }
-					/>
-					<TextControl
-						label={ __( 'Webhook URL', 'updatebee' ) }
-						type="url"
-						value={ form.url }
-						onChange={ ( url ) =>
-							setForm( ( current ) => ( { ...current, url } ) )
-						}
-						help={ __(
-							'HTTPS only. The JSON report is posted to this URL.',
-							'updatebee'
-						) }
-						required
-						autoComplete="off"
-					/>
-					<SelectControl
-						label={ __( 'Request method', 'updatebee' ) }
-						value={ form.method }
-						options={ [
-							{ label: 'POST', value: 'POST' },
-							{ label: 'PUT', value: 'PUT' },
-							{ label: 'PATCH', value: 'PATCH' },
-						] }
-						onChange={ ( method ) =>
-							setForm( ( current ) => ( {
-								...current,
-								method: method as WebhookMethod,
-							} ) )
-						}
-						help={ __( 'The body is always JSON.', 'updatebee' ) }
-					/>
-					<h3>{ __( 'Request headers', 'updatebee' ) }</h3>
-					<p className="description updatebee-webhook-headers-help">
-						{ __(
-							'Add an Authorization header or another static header. Content-Type is set to JSON.',
-							'updatebee'
-						) }
-					</p>
-					{ form.headers.map( ( header, index ) => (
-						<div
-							className="updatebee-webhook-header-row"
-							key={ `header-${ index }` }
-						>
-							<div>
-								<SelectControl
-									label={ __( 'Name', 'updatebee' ) }
-									value={ header.name }
-									options={ HEADER_NAME_OPTIONS }
-									onChange={ ( name ) =>
-										updateHeader( index, { name } )
-									}
-								/>
-								{ 'custom' === header.name && (
-									<TextControl
-										label={ __(
-											'Custom header name',
-											'updatebee'
-										) }
-										value={ header.customName }
-										onChange={ ( customName ) =>
-											updateHeader( index, {
-												customName,
-											} )
+					<fieldset
+						className="updatebee-webhook-edit-fields"
+						disabled={ isSaving }
+					>
+						<TextControl
+							label={ __( 'Name', 'updatebee' ) }
+							value={ form.name }
+							onChange={ ( name ) =>
+								setForm( ( current ) => ( {
+									...current,
+									name,
+								} ) )
+							}
+							help={ __(
+								'Shown in the webhook list.',
+								'updatebee'
+							) }
+							required
+						/>
+						<ToggleControl
+							className="updatebee-webhook-enabled"
+							label={ __( 'Enabled', 'updatebee' ) }
+							checked={ form.enabled }
+							onChange={ ( enabled ) =>
+								setForm( ( current ) => ( {
+									...current,
+									enabled,
+								} ) )
+							}
+							help={ __(
+								'Disabled webhooks stay in the list and are not sent.',
+								'updatebee'
+							) }
+						/>
+						<TextControl
+							label={ __( 'Webhook URL', 'updatebee' ) }
+							type="url"
+							value={ form.url }
+							onChange={ ( url ) =>
+								setForm( ( current ) => ( {
+									...current,
+									url,
+								} ) )
+							}
+							help={ __(
+								'HTTPS only. The JSON report is posted to this URL.',
+								'updatebee'
+							) }
+							required
+							autoComplete="off"
+						/>
+						<SelectControl
+							label={ __( 'Request method', 'updatebee' ) }
+							value={ form.method }
+							options={ [
+								{ label: 'POST', value: 'POST' },
+								{ label: 'PUT', value: 'PUT' },
+								{ label: 'PATCH', value: 'PATCH' },
+							] }
+							onChange={ ( method ) =>
+								setForm( ( current ) => ( {
+									...current,
+									method: method as WebhookMethod,
+								} ) )
+							}
+							help={ __(
+								'The body is always JSON.',
+								'updatebee'
+							) }
+						/>
+						<h3>{ __( 'Request headers', 'updatebee' ) }</h3>
+						<p className="description updatebee-webhook-headers-help">
+							{ __(
+								'Add an Authorization header or another static header. Content-Type is set to JSON.',
+								'updatebee'
+							) }
+						</p>
+						{ form.headers.map( ( header, index ) => (
+							<div
+								className="updatebee-webhook-header-row"
+								key={ `header-${ index }` }
+							>
+								<div>
+									<SelectControl
+										label={ __( 'Name', 'updatebee' ) }
+										value={ header.name }
+										options={ HEADER_NAME_OPTIONS }
+										onChange={ ( name ) =>
+											updateHeader( index, { name } )
 										}
-										autoComplete="off"
 									/>
-								) }
-							</div>
-							<TextControl
-								label={ __( 'Value', 'updatebee' ) }
-								value={ header.value }
-								onChange={ ( value ) =>
-									updateHeader( index, { value } )
-								}
-								autoComplete="off"
-							/>
-							<div className="updatebee-webhook-header-actions">
-								<Button
-									icon="plus"
-									label={ __( 'Add header', 'updatebee' ) }
-									disabled={ form.headers.length >= 20 }
-									onClick={ () =>
-										setForm( ( current ) => ( {
-											...current,
-											headers: [
-												...current.headers,
-												emptyHeader(),
-											],
-										} ) )
+									{ 'custom' === header.name && (
+										<TextControl
+											label={ __(
+												'Custom header name',
+												'updatebee'
+											) }
+											value={ header.customName }
+											onChange={ ( customName ) =>
+												updateHeader( index, {
+													customName,
+												} )
+											}
+											autoComplete="off"
+										/>
+									) }
+								</div>
+								<TextControl
+									label={ __( 'Value', 'updatebee' ) }
+									value={ header.value }
+									onChange={ ( value ) =>
+										updateHeader( index, { value } )
 									}
+									autoComplete="off"
 								/>
-								{ form.headers.length > 1 && (
+								<div className="updatebee-webhook-header-actions">
 									<Button
-										icon="minus"
+										icon="plus"
 										label={ __(
-											'Remove header',
+											'Add header',
 											'updatebee'
 										) }
+										disabled={ form.headers.length >= 20 }
 										onClick={ () =>
 											setForm( ( current ) => ( {
 												...current,
-												headers: current.headers.filter(
-													( _header, headerIndex ) =>
-														headerIndex !== index
-												),
+												headers: [
+													...current.headers,
+													emptyHeader(),
+												],
 											} ) )
 										}
 									/>
-								) }
-							</div>
-						</div>
-					) ) }
-					<h3>{ __( 'Reports', 'updatebee' ) }</h3>
-					<div className="updatebee-webhook-checks">
-						{ REPORT_FIELDS.map( ( report ) => (
-							<ToggleControl
-								key={ report }
-								label={ reportLabel( report ) }
-								checked={ form.reports[ report ] }
-								onChange={ ( checked ) =>
-									setForm( ( current ) => ( {
-										...current,
-										reports: {
-											...current.reports,
-											[ report ]: checked,
-										},
-									} ) )
-								}
-								help={
-									'available' === report
-										? __(
-												'Sent when the Available Updates email runs.',
+									{ form.headers.length > 1 && (
+										<Button
+											icon="minus"
+											label={ __(
+												'Remove header',
 												'updatebee'
-											)
-										: undefined
-								}
-							/>
+											) }
+											onClick={ () =>
+												setForm( ( current ) => ( {
+													...current,
+													headers:
+														current.headers.filter(
+															(
+																_header,
+																headerIndex
+															) =>
+																headerIndex !==
+																index
+														),
+												} ) )
+											}
+										/>
+									) }
+								</div>
+							</div>
 						) ) }
-					</div>
-					<h3>{ __( 'Update types', 'updatebee' ) }</h3>
-					<div className="updatebee-webhook-checks">
-						{ TYPE_FIELDS.map( ( type ) => (
-							<CheckboxControl
-								key={ type.key }
-								label={ type.label }
-								checked={ form.types[ type.key ] }
-								onChange={ ( checked ) =>
-									setForm( ( current ) => ( {
-										...current,
-										types: {
-											...current.types,
-											[ type.key ]: checked,
-										},
-									} ) )
-								}
-							/>
-						) ) }
-					</div>
+						<h3>{ __( 'Reports', 'updatebee' ) }</h3>
+						<div className="updatebee-webhook-checks">
+							{ REPORT_FIELDS.map( ( report ) => (
+								<ToggleControl
+									key={ report }
+									label={ reportLabel( report ) }
+									checked={ form.reports[ report ] }
+									onChange={ ( checked ) =>
+										setForm( ( current ) => ( {
+											...current,
+											reports: {
+												...current.reports,
+												[ report ]: checked,
+											},
+										} ) )
+									}
+									help={
+										'available' === report
+											? __(
+													'Sent when the Available Updates email runs.',
+													'updatebee'
+												)
+											: undefined
+									}
+								/>
+							) ) }
+						</div>
+						<h3>{ __( 'Update types', 'updatebee' ) }</h3>
+						<div className="updatebee-webhook-checks">
+							{ TYPE_FIELDS.map( ( type ) => (
+								<CheckboxControl
+									key={ type.key }
+									label={ type.label }
+									checked={ form.types[ type.key ] }
+									onChange={ ( checked ) =>
+										setForm( ( current ) => ( {
+											...current,
+											types: {
+												...current.types,
+												[ type.key ]: checked,
+											},
+										} ) )
+									}
+								/>
+							) ) }
+						</div>
+					</fieldset>
 					<div className="updatebee-webhook-edit-actions">
 						{ renderFormNotice() }
 						<div className="updatebee-webhook-edit-buttons">

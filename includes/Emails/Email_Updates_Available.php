@@ -192,13 +192,13 @@ class Email_Updates_Available extends Email_Report {
 				'translations' => true,
 			)
 		);
-		if ( ! empty( $webhook_rows ) ) {
+		if ( ! empty( $webhook_rows ) && static::is_enabled( $options ) ) {
 			/**
-			 * Fires when the available-updates email job has rows to report.
+			 * Fires when the available-updates job has rows and its schedule is on.
 			 *
-			 * Outgoing webhooks listen here so they follow this job, including Send now.
-			 * Rows include every update type. Each webhook applies its own type flags.
-			 * The job does not run when the Available Updates email schedule is off.
+			 * Outgoing webhooks listen here. Scheduled delivery and Send now both
+			 * pass the saved schedule. A schedule of none skips this action.
+			 * Email and Slack delivery below is unchanged.
 			 *
 			 * @param array<int, array<string, mixed>> $webhook_rows Log-shaped available-update rows.
 			 */

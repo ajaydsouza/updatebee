@@ -62,6 +62,40 @@ class WebhooksTest extends TestCase {
 	}
 
 	/**
+	 * Percent-encoding in a URL or header value survives sanitizing.
+	 *
+	 * The text-field double removes %XX the way production sanitize_text_field() does.
+	 */
+	public function test_sanitize_preserves_percent_encoded_url_and_header_value(): void {
+		MonkeyFunctions\when( 'sanitize_text_field' )->alias(
+			static function ( $value ) {
+				$value = is_string( $value ) ? trim( $value ) : '';
+				$value = preg_replace( '/%[a-f0-9]{2}/i', '', $value );
+
+				return is_string( $value ) ? $value : '';
+			}
+		);
+
+		$result = Store::sanitize(
+			array(
+				'name'    => 'Ops',
+				'url'     => "https://example.com/hook%2Fpath\r\n",
+				'method'  => 'POST',
+				'headers' => array(
+					array(
+						'name'  => 'Authorization',
+						'value' => "Bearer abc%2Fdef\n",
+					),
+				),
+			)
+		);
+
+		$this->assertIsArray( $result );
+		$this->assertSame( 'https://example.com/hook%2Fpath', $result['url'] );
+		$this->assertSame( 'Bearer abc%2Fdef', $result['headers'][0]['value'] );
+	}
+
+	/**
 	 * Methods other than POST, PUT, and PATCH are rejected.
 	 */
 	public function test_sanitize_rejects_unknown_method(): void {

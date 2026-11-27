@@ -176,7 +176,7 @@ class Store {
 			);
 		}
 
-		$url = self::text( $input['url'] ?? '' );
+		$url = self::literal( $input['url'] ?? '' );
 		$url = esc_url_raw( $url );
 		if ( ! self::is_https_url( $url ) ) {
 			return new \WP_Error(
@@ -508,7 +508,7 @@ class Store {
 				continue;
 			}
 
-			$value = str_replace( array( "\r", "\n" ), '', self::text( $row['value'] ?? '' ) );
+			$value = self::literal( $row['value'] ?? '' );
 			$value = self::truncate( $value, 1000 );
 			if ( '' === $value ) {
 				continue;
@@ -591,6 +591,25 @@ class Store {
 		}
 
 		return $name;
+	}
+
+	/**
+	 * Scalar text that keeps percent-encoding.
+	 *
+	 * sanitize_text_field() deletes %XX sequences. Webhook URLs and header
+	 * values need those characters. Line breaks are still removed.
+	 *
+	 * @param mixed $value Raw value.
+	 * @return string
+	 */
+	private static function literal( $value ): string {
+		if ( ! is_string( $value ) && ! is_numeric( $value ) ) {
+			return '';
+		}
+
+		$value = str_replace( array( "\r", "\n" ), '', (string) $value );
+
+		return trim( $value );
 	}
 
 	/**
