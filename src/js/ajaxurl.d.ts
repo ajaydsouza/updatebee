@@ -50,6 +50,9 @@ interface UpdateBeeLogs {
 	slackEnabled: boolean;
 	slackSkipDelayed: boolean;
 	slackWebhookConfigured: boolean;
+	discordEnabled: boolean;
+	discordSkipDelayed: boolean;
+	discordWebhookConfigured: boolean;
 }
 
 declare const updatebeeLogs: UpdateBeeLogs;
@@ -90,6 +93,7 @@ interface UpdateBeeEmails {
 	fatalErrorDetection: boolean;
 	fatalEmailRecipients: string[];
 	fatalNotifySlack: boolean;
+	fatalNotifyDiscord: boolean;
 	fatalSaveNonce: string;
 	fatalPreviewUrl: string;
 	successRetrieveNonce: string;
@@ -103,6 +107,7 @@ interface UpdateBeeEmails {
 	updatesAvailableResetNonce: string;
 	updatesAvailableSendNowNonce: string;
 	slackWebhookConfigured: boolean;
+	discordWebhookConfigured: boolean;
 }
 
 declare const updatebeeEmails: UpdateBeeEmails;
@@ -138,6 +143,7 @@ interface UpdateBeeAdvanced {
 	upgradeNoticeKeywords: string;
 	upgradeNoticeKeywordsEnabled: boolean;
 	slackWebhookUrl: string;
+	discordWebhookUrl: string;
 	adminBarEnabled: boolean;
 	adminBarShowAdmin: boolean;
 	adminBarShowFrontend: boolean;

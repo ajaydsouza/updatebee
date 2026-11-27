@@ -28,6 +28,7 @@ use UpdateBee\Cron\Updates_Cron;
 use UpdateBee\Emails\Email_Failures;
 use UpdateBee\Emails\Email_Fatals;
 use UpdateBee\Emails\Email_Successes;
+use UpdateBee\Discord\Discord_Report;
 use UpdateBee\Emails\Email_Updates_Available;
 use UpdateBee\Slack\Slack_Report;
 use UpdateBee\Webhooks\Dispatcher as Webhook_Dispatcher;
@@ -166,6 +167,13 @@ class Plugin {
 	 * @var Slack_Report
 	 */
 	private Slack_Report $slack_report;
+
+	/**
+	 * Discord reports after updates finish.
+	 *
+	 * @var Discord_Report
+	 */
+	private Discord_Report $discord_report;
 
 	/**
 	 * Outgoing webhook reports.
@@ -342,6 +350,9 @@ class Plugin {
 
 		$this->slack_report = new Slack_Report();
 		$this->slack_report->run();
+
+		$this->discord_report = new Discord_Report();
+		$this->discord_report->run();
 
 		$this->webhook_dispatcher = new Webhook_Dispatcher();
 		$this->webhook_dispatcher->run();

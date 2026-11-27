@@ -12,6 +12,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+use UpdateBee\Discord\Discord_Available_Updates;
+use UpdateBee\Discord\Discord_Webhook;
 use UpdateBee\Functions;
 use UpdateBee\Slack\Slack_Available_Updates;
 
@@ -28,8 +30,9 @@ class Email_Updates_Available extends Email_Report {
 	 * {@inheritDoc}
 	 */
 	public static function get_defaults(): array {
-		$defaults                 = parent::get_defaults();
-		$defaults['notify_slack'] = false;
+		$defaults                   = parent::get_defaults();
+		$defaults['notify_slack']   = false;
+		$defaults['notify_discord'] = false;
 
 		return $defaults;
 	}
@@ -144,6 +147,9 @@ class Email_Updates_Available extends Email_Report {
 		$notify_slack         = isset( $_POST['notifySlack'] )
 			? Functions::sanitize_rest_boolean( sanitize_text_field( wp_unslash( $_POST['notifySlack'] ) ) )
 			: (bool) ( $saved['notify_slack'] ?? false );
+		$notify_discord       = isset( $_POST['notifyDiscord'] )
+			? Functions::sanitize_rest_boolean( sanitize_text_field( wp_unslash( $_POST['notifyDiscord'] ) ) )
+			: (bool) ( $saved['notify_discord'] ?? false );
 
 		if ( $notify_slack && ! \UpdateBee\Slack\Slack_Webhook::is_configured() ) {
 			return new \WP_Error(
@@ -152,10 +158,17 @@ class Email_Updates_Available extends Email_Report {
 			);
 		}
 
-		if ( empty( $to_field ) && empty( $bcc_field ) && ! $notify_slack ) {
+		if ( $notify_discord && ! Discord_Webhook::is_configured() ) {
+			return new \WP_Error(
+				'updatebee_discord_not_configured',
+				__( 'Discord webhook is not configured. Add it in Advanced settings.', 'updatebee' )
+			);
+		}
+
+		if ( empty( $to_field ) && empty( $bcc_field ) && ! $notify_slack && ! $notify_discord ) {
 			return new \WP_Error(
 				'updatebee_no_recipients',
-				__( 'Enter at least one email address or enable Slack notifications.', 'updatebee' )
+				__( 'Enter at least one email address or enable Slack or Discord notifications.', 'updatebee' )
 			);
 		}
 
@@ -168,6 +181,7 @@ class Email_Updates_Available extends Email_Report {
 			'include_themes'       => $include_themes,
 			'include_translations' => $include_translations,
 			'notify_slack'         => $notify_slack,
+			'notify_discord'       => $notify_discord,
 			'send_schedule'        => $saved['send_schedule'] ?? 'none',
 		);
 	}
@@ -211,8 +225,9 @@ class Email_Updates_Available extends Email_Report {
 			);
 		}
 
-		$sent_email = false;
-		$sent_slack = false;
+		$sent_email   = false;
+		$sent_slack   = false;
+		$sent_discord = false;
 
 		if ( $this->should_send_email( $options ) ) {
 			$body = Emails::get_update_report_email(
@@ -231,25 +246,53 @@ class Email_Updates_Available extends Email_Report {
 			$sent_slack = true;
 		}
 
-		if ( ! $sent_email && ! $sent_slack ) {
-			return array(
-				'delivered' => false,
-				'message'   => __( 'Nothing was sent. Add recipients or enable Slack.', 'updatebee' ),
-			);
+		if ( ! empty( $options['notify_discord'] ) && Discord_Webhook::is_configured() ) {
+			$discord      = new Discord_Available_Updates();
+			$sent_discord = $discord->send_report( $rows );
 		}
 
-		if ( $sent_email && $sent_slack ) {
-			$message = __( 'Available updates report sent by email and Slack.', 'updatebee' );
-		} elseif ( $sent_slack ) {
-			$message = __( 'Available updates report sent to Slack.', 'updatebee' );
-		} else {
-			$message = __( 'Available updates report sent by email.', 'updatebee' );
+		if ( ! $sent_email && ! $sent_slack && ! $sent_discord ) {
+			return array(
+				'delivered' => false,
+				'message'   => __( 'Nothing was sent. Add recipients or enable Slack or Discord.', 'updatebee' ),
+			);
 		}
 
 		return array(
 			'delivered' => true,
-			'message'   => $message,
+			'message'   => $this->delivery_message( $sent_email, $sent_slack, $sent_discord ),
 		);
+	}
+
+	/**
+	 * Success message for the channels that received the report.
+	 *
+	 * @param bool $sent_email   Whether email was sent.
+	 * @param bool $sent_slack   Whether Slack was sent.
+	 * @param bool $sent_discord Whether Discord was sent.
+	 * @return string
+	 */
+	private function delivery_message( bool $sent_email, bool $sent_slack, bool $sent_discord ): string {
+		if ( $sent_email && $sent_slack && $sent_discord ) {
+			return __( 'Available updates report sent by email, Slack, and Discord.', 'updatebee' );
+		}
+		if ( $sent_email && $sent_slack ) {
+			return __( 'Available updates report sent by email and Slack.', 'updatebee' );
+		}
+		if ( $sent_email && $sent_discord ) {
+			return __( 'Available updates report sent by email and Discord.', 'updatebee' );
+		}
+		if ( $sent_slack && $sent_discord ) {
+			return __( 'Available updates report sent to Slack and Discord.', 'updatebee' );
+		}
+		if ( $sent_slack ) {
+			return __( 'Available updates report sent to Slack.', 'updatebee' );
+		}
+		if ( $sent_discord ) {
+			return __( 'Available updates report sent to Discord.', 'updatebee' );
+		}
+
+		return __( 'Available updates report sent by email.', 'updatebee' );
 	}
 
 	/**
@@ -339,12 +382,21 @@ class Email_Updates_Available extends Email_Report {
 		$include_translations = filter_var( wp_unslash( $_POST['includeTranslations'] ?? false ), FILTER_VALIDATE_BOOLEAN );
 		$send_schedule        = isset( $_POST['sendSchedule'] ) ? sanitize_text_field( wp_unslash( $_POST['sendSchedule'] ) ) : 'none';
 		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Boolean flags validated below.
-		$notify_slack = filter_var( wp_unslash( $_POST['notifySlack'] ?? false ), FILTER_VALIDATE_BOOLEAN );
+		$notify_slack   = filter_var( wp_unslash( $_POST['notifySlack'] ?? false ), FILTER_VALIDATE_BOOLEAN );
+		$notify_discord = filter_var( wp_unslash( $_POST['notifyDiscord'] ?? false ), FILTER_VALIDATE_BOOLEAN );
 
 		if ( $notify_slack && ! \UpdateBee\Slack\Slack_Webhook::is_configured() ) {
 			wp_send_json_error(
 				array(
 					'message' => __( 'Slack webhook is not configured. Add it in Advanced settings.', 'updatebee' ),
+				)
+			);
+		}
+
+		if ( $notify_discord && ! Discord_Webhook::is_configured() ) {
+			wp_send_json_error(
+				array(
+					'message' => __( 'Discord webhook is not configured. Add it in Advanced settings.', 'updatebee' ),
 				)
 			);
 		}
@@ -358,10 +410,10 @@ class Email_Updates_Available extends Email_Report {
 		$to_field  = array_values( array_filter( array_map( 'sanitize_email', $to_field ), 'is_email' ) );
 		$bcc_field = array_values( array_filter( array_map( 'sanitize_email', $bcc_field ), 'is_email' ) );
 
-		if ( 'custom' === $send_schedule && empty( $to_field ) && empty( $bcc_field ) && ! $notify_slack ) {
+		if ( 'custom' === $send_schedule && empty( $to_field ) && empty( $bcc_field ) && ! $notify_slack && ! $notify_discord ) {
 			wp_send_json_error(
 				array(
-					'message' => __( 'Enter at least one email address or enable Slack notifications.', 'updatebee' ),
+					'message' => __( 'Enter at least one email address or enable Slack or Discord notifications.', 'updatebee' ),
 				)
 			);
 		}
@@ -390,6 +442,7 @@ class Email_Updates_Available extends Email_Report {
 			'include_translations' => $include_translations,
 			'send_schedule'        => $send_schedule,
 			'notify_slack'         => $notify_slack,
+			'notify_discord'       => $notify_discord,
 			'schedule'             => $schedule_options['schedule'] ?? 'twelve-hours',
 			'day'                  => $schedule_options['day'] ?? 'sunday',
 			'week'                 => $week,

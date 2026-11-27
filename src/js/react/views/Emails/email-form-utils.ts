@@ -16,6 +16,7 @@ type RetrievePayload = {
 	include_themes?: boolean;
 	include_translations?: boolean;
 	notify_slack?: boolean;
+	notify_discord?: boolean;
 	send_schedule?: SendSchedule;
 	schedule_options?: Partial< ScheduleOptions >;
 	schedule?: string;
@@ -63,6 +64,7 @@ export const defaultEmailReportValues = (): EmailReportFormValues => ( {
 	sendSchedule: 'none',
 	scheduleOptions: defaultScheduleOptions(),
 	notifySlack: false,
+	notifyDiscord: false,
 	logCutoffDays: 7,
 } );
 
@@ -107,6 +109,7 @@ export const mapPayloadToFormValues = (
 		sendSchedule: payload.send_schedule ?? 'none',
 		scheduleOptions,
 		notifySlack: true === payload.notify_slack,
+		notifyDiscord: true === payload.notify_discord,
 		logCutoffDays: payload.log_cutoff_days ?? 7,
 	};
 };
@@ -121,6 +124,7 @@ type ResetCamelPayload = {
 	includeTranslations?: boolean;
 	sendSchedule?: SendSchedule;
 	notifySlack?: boolean;
+	notifyDiscord?: boolean;
 	schedule?: string;
 	day?: string;
 	week?: string;
@@ -147,6 +151,8 @@ export const mapResetPayloadToFormValues = (
 		include_themes: payload.includeThemes,
 		include_translations: payload.includeTranslations,
 		send_schedule: payload.sendSchedule,
+		notify_slack: payload.notifySlack,
+		notify_discord: payload.notifyDiscord,
 		schedule: payload.schedule,
 		day: payload.day,
 		week: payload.week,

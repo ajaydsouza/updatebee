@@ -160,10 +160,38 @@ class AbilitiesTest extends TestCase {
 		$this->assertSame( 'on', $policy['major_auto_updates'] );
 		$this->assertSame( 'on', $policy['minor_auto_updates'] );
 		$this->assertTrue( $policy['slack_configured'] );
+		$this->assertFalse( $policy['discord_configured'] );
 		$this->assertArrayNotHasKey( 'slack_webhook_url', $policy );
+		$this->assertArrayNotHasKey( 'discord_webhook_url', $policy );
 		$this->assertArrayNotHasKey( 'branding_name', $policy );
 		$this->assertArrayNotHasKey( 'branding_description', $policy );
 		$this->assertNotSame( 'https://hooks.slack.com/services/T00/B00/secret', $policy['upgrade_notice_keywords'] );
+	}
+
+	/**
+	 * A saved Discord webhook is reported as configured without returning the URL.
+	 */
+	public function test_get_update_policy_reports_discord_without_url(): void {
+		$this->stub_option_helpers();
+		MonkeyFunctions\when( 'wp_parse_url' )->alias(
+			static function ( $url ) {
+				$parts = parse_url( (string) $url ); // phpcs:ignore WordPress.WP.AlternativeFunctions.parse_url_parse_url -- Stub for wp_parse_url().
+				return false === $parts ? false : $parts;
+			}
+		);
+		MonkeyFunctions\expect( 'get_site_option' )
+			->once()
+			->with( 'updatebee_options', array() )
+			->andReturn(
+				array(
+					'discord_webhook_url' => 'https://discord.com/api/webhooks/123456789012345678/abcdefghijklmnopqrstuvwxyz',
+				)
+			);
+
+		$policy = Read::get_update_policy();
+
+		$this->assertTrue( $policy['discord_configured'] );
+		$this->assertArrayNotHasKey( 'discord_webhook_url', $policy );
 	}
 
 	/**

@@ -34,6 +34,9 @@ const FatalEmailsCard = ( props: FatalEmailsCardProps ) => {
 	const [ notifySlack, setNotifySlack ] = useState(
 		Boolean( updatebeeEmails.fatalNotifySlack )
 	);
+	const [ notifyDiscord, setNotifyDiscord ] = useState(
+		Boolean( updatebeeEmails.fatalNotifyDiscord )
+	);
 	const [ isSaving, setIsSaving ] = useState( false );
 	const [ recipientError, setRecipientError ] = useState( '' );
 	const recipientErrorTimer = useRef< number | undefined >( undefined );
@@ -113,12 +116,14 @@ const FatalEmailsCard = ( props: FatalEmailsCardProps ) => {
 				fatal_error_detection?: boolean;
 				fatal_email_recipients?: string[];
 				fatal_notify_slack?: boolean;
+				fatal_notify_discord?: boolean;
 				message?: string;
 			} >( 'updatebee_save_fatal_email_settings', {
 				nonce: updatebeeEmails.fatalSaveNonce,
 				enabled,
 				recipients,
 				notifySlack,
+				notifyDiscord,
 			} );
 			const saved = response.data.data.fatal_error_detection;
 			if ( 'boolean' === typeof saved ) {
@@ -129,6 +134,11 @@ const FatalEmailsCard = ( props: FatalEmailsCardProps ) => {
 			}
 			if ( 'boolean' === typeof response.data.data.fatal_notify_slack ) {
 				setNotifySlack( response.data.data.fatal_notify_slack );
+			}
+			if (
+				'boolean' === typeof response.data.data.fatal_notify_discord
+			) {
+				setNotifyDiscord( response.data.data.fatal_notify_discord );
 			}
 			onNotify(
 				response.data.data.message ??
@@ -146,7 +156,7 @@ const FatalEmailsCard = ( props: FatalEmailsCardProps ) => {
 		} finally {
 			setIsSaving( false );
 		}
-	}, [ enabled, notifySlack, onNotify, recipients ] );
+	}, [ enabled, notifyDiscord, notifySlack, onNotify, recipients ] );
 
 	return (
 		<Card.Root className="updatebee-emails-card">
@@ -239,6 +249,25 @@ const FatalEmailsCard = ( props: FatalEmailsCardProps ) => {
 										)
 									: __(
 											'Add a Slack webhook URL in Advanced settings to enable this.',
+											'updatebee'
+										)
+							}
+						/>
+						<CheckboxControl
+							label={ __( 'Send to Discord', 'updatebee' ) }
+							checked={ notifyDiscord }
+							disabled={
+								! updatebeeEmails.discordWebhookConfigured
+							}
+							onChange={ setNotifyDiscord }
+							help={
+								updatebeeEmails.discordWebhookConfigured
+									? __(
+											'Uses the Discord webhook saved under Advanced settings.',
+											'updatebee'
+										)
+									: __(
+											'Add a Discord webhook URL in Advanced settings to enable this.',
 											'updatebee'
 										)
 							}

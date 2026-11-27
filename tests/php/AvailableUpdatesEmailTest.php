@@ -9,7 +9,9 @@ namespace UpdateBee\Tests;
 
 use Brain\Monkey\Functions as MonkeyFunctions;
 use ReflectionClass;
+use ReflectionMethod;
 use UpdateBee\Admin\Ajax;
+use UpdateBee\Discord\Discord_Available_Updates;
 use UpdateBee\Emails\Available_Updates;
 use UpdateBee\Emails\Email_Updates_Available;
 use UpdateBee\Emails\Emails;
@@ -232,6 +234,58 @@ class AvailableUpdatesEmailTest extends TestCase {
 	}
 
 	/**
+	 * An explicit empty recipient list does not fall back to saved addresses.
+	 */
+	public function test_send_now_empty_lists_do_not_reuse_saved_recipients(): void {
+		MonkeyFunctions\when( 'check_ajax_referer' )->justReturn( true );
+		MonkeyFunctions\when( 'is_multisite' )->justReturn( false );
+		MonkeyFunctions\when( 'is_network_admin' )->justReturn( false );
+		MonkeyFunctions\when( 'is_plugin_active_for_network' )->justReturn( false );
+		MonkeyFunctions\when( 'current_user_can' )->justReturn( true );
+		MonkeyFunctions\when( 'wp_parse_args' )->alias(
+			static function ( $args, $defaults ) {
+				return array_merge( (array) $defaults, (array) $args );
+			}
+		);
+		MonkeyFunctions\when( 'get_site_option' )->alias(
+			static function ( $key, $fallback = array() ) {
+				if ( 'updatebee_email_updates_available' === $key ) {
+					return array(
+						'to_field'  => array( 'saved@example.com' ),
+						'bcc_field' => array( 'bcc@example.com' ),
+					);
+				}
+				return $fallback;
+			}
+		);
+		MonkeyFunctions\when( 'sanitize_text_field' )->returnArg( 1 );
+		MonkeyFunctions\when( 'wp_send_json_error' )->alias(
+			static function ( $data = null ): void {
+				$message = '';
+				if ( is_array( $data ) && isset( $data['message'] ) ) {
+					$message = (string) $data['message'];
+				}
+
+				// phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Test double, not rendered output.
+				throw new \RuntimeException( $message );
+			}
+		);
+
+		$_POST = array(
+			'toField'       => array( '' ),
+			'bccField'      => array( '' ),
+			'notifySlack'   => 'false',
+			'notifyDiscord' => 'false',
+		);
+
+		$report = new Email_Updates_Available();
+
+		$this->expectException( \RuntimeException::class );
+		$this->expectExceptionMessage( 'Enter at least one email address or enable Slack or Discord notifications.' );
+		$report->ajax_send_now();
+	}
+
+	/**
 	 * Immediate report hook is disabled for available updates.
 	 */
 	public function test_maybe_send_immediate_report_is_noop(): void {
@@ -277,6 +331,199 @@ class AvailableUpdatesEmailTest extends TestCase {
 		);
 
 		$this->assertStringContainsString( 'Updates available', $message['blocks'][0]['text']['text'] );
+	}
+
+	/**
+	 * Discord available digest posts an embed, not Slack blocks.
+	 */
+	public function test_discord_available_send_posts_embed(): void {
+		MonkeyFunctions\when( 'get_site_option' )->alias(
+			static function ( $key, $fallback = false ) {
+				if ( 'updatebee_options' === $key ) {
+					return array(
+						'discord_webhook_url' => 'https://discord.com/api/webhooks/123456789012345678/abcdefghijklmnopqrstuvwxyz',
+						'discord_enabled'     => true,
+					);
+				}
+				return $fallback;
+			}
+		);
+		MonkeyFunctions\when( 'wp_parse_args' )->alias(
+			static function ( $args, $defaults ) {
+				return array_merge( (array) $defaults, (array) $args );
+			}
+		);
+		MonkeyFunctions\when( 'apply_filters' )->returnArg( 2 );
+		MonkeyFunctions\when( 'get_bloginfo' )->justReturn( 'Example' );
+		MonkeyFunctions\when( 'home_url' )->justReturn( 'https://example.com/' );
+		MonkeyFunctions\when( 'esc_url_raw' )->returnArg( 1 );
+		MonkeyFunctions\when( 'wp_json_encode' )->alias(
+			static function ( $data ) {
+				// phpcs:ignore WordPress.WP.AlternativeFunctions.json_encode_json_encode -- Test double for wp_json_encode().
+				return (string) json_encode( $data );
+			}
+		);
+		MonkeyFunctions\when( 'admin_url' )->justReturn( 'https://example.com/wp-admin/tools.php?page=updatebee' );
+		MonkeyFunctions\when( 'is_multisite' )->justReturn( false );
+		MonkeyFunctions\when( 'add_query_arg' )->returnArg( 2 );
+		MonkeyFunctions\when( 'sanitize_title' )->returnArg( 1 );
+		MonkeyFunctions\when( 'wp_parse_url' )->alias(
+			static function ( $url ) {
+				$parts = parse_url( (string) $url ); // phpcs:ignore WordPress.WP.AlternativeFunctions.parse_url_parse_url -- Stub for wp_parse_url().
+				return false === $parts ? false : $parts;
+			}
+		);
+		MonkeyFunctions\when( '_n' )->alias(
+			static function ( $single, $plural, $number ) {
+				unset( $plural );
+				return sprintf( $single, $number );
+			}
+		);
+
+		$posted = array();
+		MonkeyFunctions\when( 'wp_safe_remote_post' )->alias(
+			static function ( $url, $args = array() ) use ( &$posted ) {
+				unset( $url );
+				$posted[] = isset( $args['body'] ) ? (string) $args['body'] : '';
+				return array();
+			}
+		);
+
+		$discord = new Discord_Available_Updates();
+		$discord->send_report(
+			array(
+				array(
+					'name'          => 'Akismet',
+					'update_type'   => 'plugin',
+					'from_version'  => '5.0',
+					'to_version'    => '5.1',
+					'update_status' => 'available',
+				),
+				array(
+					'name'          => 'WooCommerce (fr_FR)',
+					'update_type'   => 'translation',
+					'from_version'  => '',
+					'to_version'    => '11.3.1',
+					'update_status' => 'available',
+				),
+			)
+		);
+
+		$this->assertCount( 1, $posted );
+		$this->assertStringContainsString( '"embeds"', $posted[0] );
+		$this->assertStringNotContainsString( '"blocks"', $posted[0] );
+		$payload     = json_decode( $posted[0], true );
+		$description = $payload['embeds'][0]['description'];
+		$this->assertStringContainsString( 'Akismet — 5.0 → 5.1', $description );
+		$this->assertStringContainsString( 'WooCommerce (fr_FR) → 11.3.1', $description );
+		$this->assertStringNotContainsString( '— —', $description );
+		$this->assertStringContainsString( 'Akismet', $posted[0] );
+		$this->assertStringContainsString( 'update available', $posted[0] );
+		$this->assertStringContainsString( 'Example', $posted[0] );
+		$this->assertStringNotContainsString( '"fields"', $posted[0] );
+		$this->assertFalse( $discord->send_report( array() ) );
+	}
+
+	/**
+	 * A rejected Discord response is not reported as a successful send.
+	 */
+	public function test_deliver_report_does_not_claim_discord_when_the_webhook_fails(): void {
+		if ( ! defined( 'WP_PLUGIN_DIR' ) ) {
+			define( 'WP_PLUGIN_DIR', dirname( UPDATEBEE_FILE, 2 ) );
+		}
+
+		MonkeyFunctions\when( 'get_site_option' )->alias(
+			static function ( $key, $fallback = false ) {
+				if ( 'updatebee_options' === $key ) {
+					return array(
+						'discord_webhook_url' => 'https://discord.com/api/webhooks/123456789012345678/abcdefghijklmnopqrstuvwxyz',
+					);
+				}
+				return $fallback;
+			}
+		);
+		MonkeyFunctions\when( 'get_site_transient' )->alias(
+			static function ( $key ) {
+				if ( 'update_plugins' === $key ) {
+					return (object) array(
+						'response' => array(
+							'updatebee/updatebee.php' => (object) array(
+								'new_version' => '9.9.9',
+							),
+						),
+					);
+				}
+				return false;
+			}
+		);
+		MonkeyFunctions\when( 'wp_parse_args' )->alias(
+			static function ( $args, $defaults ) {
+				return array_merge( (array) $defaults, (array) $args );
+			}
+		);
+		MonkeyFunctions\when( 'apply_filters' )->returnArg( 2 );
+		MonkeyFunctions\when( 'current_time' )->justReturn( '2026-01-01 12:00:00' );
+		MonkeyFunctions\when( 'get_plugin_data' )->justReturn(
+			array(
+				'Name'    => 'UpdateBee',
+				'Version' => '1.0.0',
+			)
+		);
+		MonkeyFunctions\when( 'get_bloginfo' )->justReturn( 'Example' );
+		MonkeyFunctions\when( 'home_url' )->justReturn( 'https://example.com/' );
+		MonkeyFunctions\when( 'esc_url_raw' )->returnArg( 1 );
+		MonkeyFunctions\when( 'wp_json_encode' )->alias(
+			static function ( $data ) {
+				// phpcs:ignore WordPress.WP.AlternativeFunctions.json_encode_json_encode -- Test double for wp_json_encode().
+				return (string) json_encode( $data );
+			}
+		);
+		MonkeyFunctions\when( 'admin_url' )->justReturn( 'https://example.com/wp-admin/tools.php?page=updatebee' );
+		MonkeyFunctions\when( 'is_multisite' )->justReturn( false );
+		MonkeyFunctions\when( 'add_query_arg' )->returnArg( 2 );
+		MonkeyFunctions\when( 'sanitize_title' )->returnArg( 1 );
+		MonkeyFunctions\when( 'wp_parse_url' )->alias(
+			static function ( $url ) {
+				$parts = parse_url( (string) $url ); // phpcs:ignore WordPress.WP.AlternativeFunctions.parse_url_parse_url -- Stub for wp_parse_url().
+				return false === $parts ? false : $parts;
+			}
+		);
+		MonkeyFunctions\when( '_n' )->alias(
+			static function ( $single, $plural, $number ) {
+				unset( $plural );
+				return sprintf( $single, $number );
+			}
+		);
+		MonkeyFunctions\when( 'wp_safe_remote_post' )->justReturn(
+			array(
+				'response' => array(
+					'code' => 400,
+				),
+			)
+		);
+
+		$report = new Email_Updates_Available();
+		$method = new ReflectionMethod( Email_Updates_Available::class, 'deliver_report' );
+		$method->setAccessible( true );
+		$result = $method->invoke(
+			$report,
+			array(
+				'notify_discord'       => true,
+				'notify_slack'         => false,
+				'to_field'             => array(),
+				'bcc_field'            => array(),
+				'include_plugins'      => true,
+				'include_themes'       => false,
+				'include_core'         => false,
+				'include_translations' => false,
+				'send_schedule'        => 'none',
+			),
+			false,
+			false
+		);
+
+		$this->assertFalse( $result['delivered'] );
+		$this->assertStringNotContainsString( 'sent to Discord', $result['message'] );
 	}
 
 	/**

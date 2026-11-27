@@ -267,4 +267,89 @@ class EmailFatalsTest extends TestCase {
 
 		$this->assertSame( array(), $this->posted_bodies );
 	}
+
+	/**
+	 * Discord stays quiet when notify is off even with a webhook.
+	 */
+	public function test_maybe_send_skips_discord_when_notify_off(): void {
+		$this->stub_options(
+			array(
+				'fatal_error_detection'  => true,
+				'fatal_notify_discord'   => false,
+				'fatal_email_recipients' => array(),
+				'admin_email'            => '',
+				'discord_webhook_url'    => 'https://discord.com/api/webhooks/123456789012345678/abcdefghijklmnopqrstuvwxyz',
+			)
+		);
+		$this->stub_discord_url_parser();
+		MonkeyFunctions\expect( 'wp_mail' )->never();
+		MonkeyFunctions\expect( 'wp_safe_remote_post' )->never();
+
+		$emails = new Email_Fatals();
+		$emails->maybe_send_fatal_report( $this->sample_fatal_updates() );
+
+		$this->assertSame( array(), $this->posted_bodies );
+	}
+
+	/**
+	 * Discord posts an embed when notify is on and a webhook is saved.
+	 */
+	public function test_maybe_send_posts_discord_when_notify_on(): void {
+		$this->stub_options(
+			array(
+				'fatal_error_detection'  => true,
+				'fatal_notify_discord'   => true,
+				'fatal_email_recipients' => array(),
+				'admin_email'            => '',
+				'discord_webhook_url'    => 'https://discord.com/api/webhooks/123456789012345678/abcdefghijklmnopqrstuvwxyz',
+			)
+		);
+		$this->stub_slack_message_helpers();
+		$this->stub_discord_url_parser();
+
+		$emails = new Email_Fatals();
+		$emails->maybe_send_fatal_report( $this->sample_fatal_updates() );
+
+		$this->assertCount( 1, $this->posted_bodies );
+		$this->assertStringContainsString( '"embeds"', $this->posted_bodies[0] );
+		$this->assertStringNotContainsString( '"blocks"', $this->posted_bodies[0] );
+		$this->assertStringContainsString( 'Hello Dolly', $this->posted_bodies[0] );
+		$this->assertStringContainsString( 'fatal after automatic updates', $this->posted_bodies[0] );
+		$this->assertStringContainsString( 'Example Site', $this->posted_bodies[0] );
+		$this->assertStringNotContainsString( '"fields"', $this->posted_bodies[0] );
+	}
+
+	/**
+	 * A missing Discord webhook skips the alert even when notify is on.
+	 */
+	public function test_maybe_send_skips_discord_when_webhook_missing(): void {
+		$this->stub_options(
+			array(
+				'fatal_error_detection'  => true,
+				'fatal_notify_discord'   => true,
+				'fatal_email_recipients' => array(),
+				'admin_email'            => '',
+				'discord_webhook_url'    => '',
+			)
+		);
+		MonkeyFunctions\expect( 'wp_mail' )->never();
+		MonkeyFunctions\expect( 'wp_safe_remote_post' )->never();
+
+		$emails = new Email_Fatals();
+		$emails->maybe_send_fatal_report( $this->sample_fatal_updates() );
+
+		$this->assertSame( array(), $this->posted_bodies );
+	}
+
+	/**
+	 * Parse Discord webhook URLs with PHP's parser.
+	 */
+	private function stub_discord_url_parser(): void {
+		MonkeyFunctions\when( 'wp_parse_url' )->alias(
+			static function ( $url ) {
+				$parts = parse_url( (string) $url ); // phpcs:ignore WordPress.WP.AlternativeFunctions.parse_url_parse_url -- Stub for wp_parse_url().
+				return false === $parts ? false : $parts;
+			}
+		);
+	}
 }

@@ -66,6 +66,9 @@ class OptionsTest extends TestCase {
 		$this->assertSame( '', $options['slack_webhook_url'] );
 		$this->assertFalse( $options['slack_enabled'] );
 		$this->assertFalse( $options['slack_skip_delayed'] );
+		$this->assertSame( '', $options['discord_webhook_url'] );
+		$this->assertFalse( $options['discord_enabled'] );
+		$this->assertFalse( $options['discord_skip_delayed'] );
 		$this->assertSame( 0, $options['delay_updates'] );
 		$this->assertSame( "security\nCSRF\nXSS\nCVE\nSSRF", $options['upgrade_notice_keywords'] );
 		$this->assertFalse( $options['upgrade_notice_keywords_enabled'] );
@@ -73,6 +76,7 @@ class OptionsTest extends TestCase {
 		$this->assertTrue( $options['fatal_error_detection'] );
 		$this->assertSame( array(), $options['fatal_email_recipients'] );
 		$this->assertFalse( $options['fatal_notify_slack'] );
+		$this->assertFalse( $options['fatal_notify_discord'] );
 		$this->assertArrayNotHasKey( 'branding_name', $options );
 		$this->assertFalse( $options['admin_bar_enabled'] );
 		$this->assertTrue( $options['admin_bar_show_admin'] );

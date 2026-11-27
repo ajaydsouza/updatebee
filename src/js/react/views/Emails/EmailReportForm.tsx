@@ -55,7 +55,7 @@ const validateRecipients = (
 	if (
 		'updates-available' === reportKind &&
 		'custom' === values.sendSchedule &&
-		values.notifySlack
+		( values.notifySlack || values.notifyDiscord )
 	) {
 		return '';
 	}
@@ -86,7 +86,7 @@ const validateRecipients = (
  * @return Error message or empty string.
  */
 const validateSendNowRecipients = ( values: EmailReportFormValues ): string => {
-	if ( values.notifySlack ) {
+	if ( values.notifySlack || values.notifyDiscord ) {
 		return '';
 	}
 
@@ -94,7 +94,7 @@ const validateSendNowRecipients = ( values: EmailReportFormValues ): string => {
 
 	if ( 0 === allEmails.length ) {
 		return __(
-			'Enter at least one recipient or enable Slack notifications.',
+			'Enter at least one recipient or enable Slack or Discord notifications.',
 			'updatebee'
 		);
 	}
@@ -143,6 +143,7 @@ const EmailReportFormFields = ( props: EmailReportFormFieldsProps ) => {
 	const scheduleOptions = watch( 'scheduleOptions' );
 	const toField = watch( 'toField' );
 	const bccField = watch( 'bccField' );
+	const notifyDiscord = watch( 'notifyDiscord' );
 
 	const onSubmit = useCallback(
 		async ( values: EmailReportFormValues ) => {
@@ -166,6 +167,7 @@ const EmailReportFormFields = ( props: EmailReportFormFieldsProps ) => {
 					sendSchedule: values.sendSchedule,
 					scheduleOptions: values.scheduleOptions,
 					notifySlack: values.notifySlack,
+					notifyDiscord: values.notifyDiscord,
 					logCutoffDays: values.logCutoffDays,
 				} );
 				onSaved( values.sendSchedule );
@@ -249,7 +251,10 @@ const EmailReportFormFields = ( props: EmailReportFormFieldsProps ) => {
 					includeThemes: values.includeThemes,
 					includeTranslations: values.includeTranslations,
 					notifySlack: values.notifySlack,
-				}
+					notifyDiscord: values.notifyDiscord,
+				},
+				// Cleared token fields must stay in the body. An omitted list makes Send now reuse saved recipients.
+				{ allowEmptyArrays: true }
 			);
 			const payload = response.data.data;
 			onNotify(
@@ -459,6 +464,38 @@ const EmailReportFormFields = ( props: EmailReportFormFieldsProps ) => {
 								)
 							: __(
 									'Add a Slack webhook URL in Advanced settings to enable this.',
+									'updatebee'
+								)
+					}
+				/>
+			) }
+			{ 'updates-available' === reportKind && (
+				<CheckboxControl
+					label={ __( 'Send to Discord', 'updatebee' ) }
+					checked={ notifyDiscord }
+					disabled={
+						! updatebeeEmails.discordWebhookConfigured &&
+						! notifyDiscord
+					}
+					onChange={ ( checked ) => {
+						if (
+							checked &&
+							! updatebeeEmails.discordWebhookConfigured
+						) {
+							return;
+						}
+						setValue( 'notifyDiscord', checked, {
+							shouldDirty: true,
+						} );
+					} }
+					help={
+						updatebeeEmails.discordWebhookConfigured
+							? __(
+									'Uses the Discord webhook saved under Advanced settings. Applies to scheduled runs and Send now.',
+									'updatebee'
+								)
+							: __(
+									'Add a Discord webhook URL in Advanced settings to enable this.',
 									'updatebee'
 								)
 					}
