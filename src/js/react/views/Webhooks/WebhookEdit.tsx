@@ -211,6 +211,16 @@ const WebhookEdit = ( props: WebhookEditProps ) => {
 	}
 
 	const busy = isSaving || isTesting;
+	const renderFormNotice = () =>
+		notice ? (
+			<Notice
+				status={ notice.status }
+				isDismissible
+				onRemove={ () => setNotice( null ) }
+			>
+				{ notice.message }
+			</Notice>
+		) : null;
 
 	return (
 		<div className="updatebee-webhook-edit">
@@ -237,15 +247,7 @@ const WebhookEdit = ( props: WebhookEditProps ) => {
 					</div>
 				</Card.Header>
 				<Card.Content>
-					{ notice && (
-						<Notice
-							status={ notice.status }
-							isDismissible
-							onRemove={ () => setNotice( null ) }
-						>
-							{ notice.message }
-						</Notice>
-					) }
+					{ renderFormNotice() }
 					<TextControl
 						label={ __( 'Name', 'updatebee' ) }
 						value={ form.name }
@@ -428,22 +430,25 @@ const WebhookEdit = ( props: WebhookEditProps ) => {
 						) ) }
 					</div>
 					<div className="updatebee-webhook-edit-actions">
-						<Button
-							variant="primary"
-							isBusy={ isSaving }
-							disabled={ busy }
-							onClick={ saveWebhook }
-						>
-							{ __( 'Save webhook', 'updatebee' ) }
-						</Button>
-						<Button
-							variant="secondary"
-							isBusy={ isTesting }
-							disabled={ busy }
-							onClick={ sendTest }
-						>
-							{ __( 'Send test', 'updatebee' ) }
-						</Button>
+						{ renderFormNotice() }
+						<div className="updatebee-webhook-edit-buttons">
+							<Button
+								variant="primary"
+								isBusy={ isSaving }
+								disabled={ busy }
+								onClick={ saveWebhook }
+							>
+								{ __( 'Save webhook', 'updatebee' ) }
+							</Button>
+							<Button
+								variant="secondary"
+								isBusy={ isTesting }
+								disabled={ busy }
+								onClick={ sendTest }
+							>
+								{ __( 'Send test', 'updatebee' ) }
+							</Button>
+						</div>
 					</div>
 				</Card.Content>
 			</Card.Root>
