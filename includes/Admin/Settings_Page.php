@@ -89,6 +89,16 @@ class Settings_Page {
 					<?php endif; ?>
 				</a>
 			</h1>
+			<?php if ( ! Branding::hides_header_links() ) : ?>
+				<nav class="updatebee-settings-header__links" aria-label="<?php esc_attr_e( 'Documentation and support', 'updatebee' ); ?>">
+					<a class="updatebee-settings-header__link" href="https://updatebee.com/docs/" target="_blank" rel="noopener noreferrer">
+						<?php esc_html_e( 'Documentation', 'updatebee' ); ?>
+					</a>
+					<a class="updatebee-settings-header__link" href="https://updatebee.com/support/" target="_blank" rel="noopener noreferrer">
+						<?php esc_html_e( 'Support', 'updatebee' ); ?>
+					</a>
+				</nav>
+			<?php endif; ?>
 		</header>
 		<?php
 	}

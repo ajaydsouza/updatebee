@@ -309,8 +309,9 @@ class BrandingTest extends TestCase {
 		MonkeyFunctions\when( 'apply_filters' )->alias(
 			static function ( $hook, $value ) {
 				if ( 'updatebee_branding' === $hook && is_array( $value ) ) {
-					$value['name']         = 'Filtered Agency';
-					$value['hide_license'] = true;
+					$value['name']              = 'Filtered Agency';
+					$value['hide_license']      = true;
+					$value['hide_header_links'] = true;
 					return $value;
 				}
 
@@ -320,13 +321,15 @@ class BrandingTest extends TestCase {
 
 		$config = Branding::resolve_locked_config(
 			array(
-				'name'         => 'Constant Agency',
-				'hide_license' => false,
+				'name'              => 'Constant Agency',
+				'hide_license'      => false,
+				'hide_header_links' => false,
 			)
 		);
 
 		$this->assertSame( 'Filtered Agency', $config['name'] );
 		$this->assertTrue( $config['hide_license'] );
+		$this->assertTrue( $config['hide_header_links'] );
 	}
 
 	/**
@@ -357,6 +360,71 @@ class BrandingTest extends TestCase {
 		$this->assertSame( 'https://agency.example/', Branding::get_saved_url() );
 		$this->assertTrue( Branding::hides_license_tab() );
 		$this->assertSame( 'Stored Agency', Branding::get_stored()['branding_name'] );
+	}
+
+	/**
+	 * A saved choice hides the header links without a license.
+	 */
+	public function test_hides_header_links_reads_stored_value_without_a_license(): void {
+		$this->stub_options(
+			array(
+				'branding_hide_header_links' => true,
+			)
+		);
+		Branding::set_license_active_override( false );
+
+		$this->assertFalse( Branding::is_locked() );
+		$this->assertTrue( Branding::hides_header_links() );
+	}
+
+	/**
+	 * An active lock uses hide_header_links instead of the saved choice.
+	 */
+	public function test_hides_header_links_uses_lock_value_when_license_is_active(): void {
+		$this->stub_options(
+			array(
+				'branding_hide_header_links' => false,
+			)
+		);
+		$this->stub_sanitizers();
+		$this->force_lock(
+			array(
+				'hide_header_links' => true,
+			)
+		);
+
+		$this->assertTrue( Branding::is_locked() );
+		$this->assertTrue( Branding::hides_header_links() );
+		$this->assertFalse( Branding::get_stored()['branding_hide_header_links'] );
+	}
+
+	/**
+	 * An inactive license ignores a lock and keeps the saved header-link choice.
+	 */
+	public function test_hides_header_links_ignores_lock_when_license_is_inactive(): void {
+		$this->stub_options(
+			array(
+				'branding_hide_header_links' => true,
+			)
+		);
+		$this->stub_sanitizers();
+		Branding::set_license_active_override( false );
+		MonkeyFunctions\when( 'apply_filters' )->alias(
+			static function ( $hook, $value ) {
+				if ( 'updatebee_branding_locked' === $hook ) {
+					return true;
+				}
+				if ( 'updatebee_branding' === $hook && is_array( $value ) ) {
+					$value['hide_header_links'] = false;
+					return $value;
+				}
+
+				return $value;
+			}
+		);
+
+		$this->assertFalse( Branding::is_locked() );
+		$this->assertTrue( Branding::hides_header_links() );
 	}
 
 	/**

@@ -162,8 +162,9 @@ class SettingsTransferTest extends TestCase {
 	public function test_export_includes_branding_when_unlocked(): void {
 		$this->stub_export_environment(
 			array(
-				'delay_updates' => 4,
-				'branding_name' => 'Stored Agency',
+				'delay_updates'              => 4,
+				'branding_name'              => 'Stored Agency',
+				'branding_hide_header_links' => true,
 			)
 		);
 
@@ -171,6 +172,7 @@ class SettingsTransferTest extends TestCase {
 
 		$this->assertIsArray( $document['options'] );
 		$this->assertSame( 'Stored Agency', $document['options']['branding_name'] );
+		$this->assertTrue( $document['options']['branding_hide_header_links'] );
 	}
 
 	/**
@@ -190,6 +192,7 @@ class SettingsTransferTest extends TestCase {
 		$this->assertIsArray( $document['options'] );
 		$this->assertArrayNotHasKey( 'branding_name', $document['options'] );
 		$this->assertArrayNotHasKey( 'branding_hide_license_tab', $document['options'] );
+		$this->assertArrayNotHasKey( 'branding_hide_header_links', $document['options'] );
 		$this->assertSame( 4, $document['options']['delay_updates'] );
 	}
 
@@ -313,11 +316,12 @@ class SettingsTransferTest extends TestCase {
 	 */
 	private function empty_branding(): array {
 		return array(
-			'branding_name'             => '',
-			'branding_description'      => '',
-			'branding_author'           => '',
-			'branding_url'              => '',
-			'branding_hide_license_tab' => false,
+			'branding_name'              => '',
+			'branding_description'       => '',
+			'branding_author'            => '',
+			'branding_url'               => '',
+			'branding_hide_license_tab'  => false,
+			'branding_hide_header_links' => false,
 		);
 	}
 

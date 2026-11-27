@@ -39,6 +39,7 @@ class Branding {
 		'branding_author',
 		'branding_url',
 		'branding_hide_license_tab',
+		'branding_hide_header_links',
 	);
 
 	/**
@@ -137,15 +138,16 @@ class Branding {
 	 * Locked branding values after the updatebee_branding filter.
 	 *
 	 * @param array<string, mixed> $constant Raw UPDATEBEE_BRANDING values.
-	 * @return array{name: string, description: string, author: string, url: string, hide_license: bool}
+	 * @return array{name: string, description: string, author: string, url: string, hide_license: bool, hide_header_links: bool}
 	 */
 	public static function resolve_locked_config( array $constant ): array {
 		$values = array(
-			'name'         => '',
-			'description'  => '',
-			'author'       => '',
-			'url'          => '',
-			'hide_license' => false,
+			'name'              => '',
+			'description'       => '',
+			'author'            => '',
+			'url'               => '',
+			'hide_license'      => false,
+			'hide_header_links' => false,
 		);
 
 		foreach ( $values as $key => $fallback ) {
@@ -158,7 +160,7 @@ class Branding {
 		/**
 		 * Locked branding values.
 		 *
-		 * @param array{name: string, description: string, author: string, url: string, hide_license: bool} $values Branding values.
+		 * @param array{name: string, description: string, author: string, url: string, hide_license: bool, hide_header_links: bool} $values Branding values.
 		 */
 		$filtered = apply_filters( 'updatebee_branding', $values );
 		if ( ! is_array( $filtered ) ) {
@@ -449,6 +451,21 @@ class Branding {
 	}
 
 	/**
+	 * Whether the Documentation and Support links should be omitted.
+	 *
+	 * A lock uses its own hide_header_links value. Otherwise the saved choice applies with or without a license.
+	 *
+	 * @return bool
+	 */
+	public static function hides_header_links(): bool {
+		if ( self::is_locked() ) {
+			return self::locked_config()['hide_header_links'];
+		}
+
+		return (bool) self::get_stored()['branding_hide_header_links'];
+	}
+
+	/**
 	 * Value to store for the hide-license toggle.
 	 *
 	 * An inactive license keeps the saved choice and does not accept a new one.
@@ -496,7 +513,7 @@ class Branding {
 	/**
 	 * Sanitized lock values for this request.
 	 *
-	 * @return array{name: string, description: string, author: string, url: string, hide_license: bool}
+	 * @return array{name: string, description: string, author: string, url: string, hide_license: bool, hide_header_links: bool}
 	 */
 	private static function locked_config(): array {
 		return self::resolve_locked_config( self::constant_config() );
@@ -540,11 +557,12 @@ class Branding {
 	 */
 	private static function defaults(): array {
 		return array(
-			'branding_name'             => '',
-			'branding_description'      => '',
-			'branding_author'           => '',
-			'branding_url'              => '',
-			'branding_hide_license_tab' => false,
+			'branding_name'              => '',
+			'branding_description'       => '',
+			'branding_author'            => '',
+			'branding_url'               => '',
+			'branding_hide_license_tab'  => false,
+			'branding_hide_header_links' => false,
 		);
 	}
 
@@ -561,7 +579,7 @@ class Branding {
 				continue;
 			}
 
-			if ( 'branding_hide_license_tab' === $key ) {
+			if ( in_array( $key, array( 'branding_hide_license_tab', 'branding_hide_header_links' ), true ) ) {
 				$stored[ $key ] = (bool) $raw[ $key ];
 				continue;
 			}
@@ -644,7 +662,7 @@ class Branding {
 	 * Sanitize one locked branding config.
 	 *
 	 * @param array<string, mixed> $config Raw lock values.
-	 * @return array{name: string, description: string, author: string, url: string, hide_license: bool}
+	 * @return array{name: string, description: string, author: string, url: string, hide_license: bool, hide_header_links: bool}
 	 */
 	private static function sanitize_lock_config( array $config ): array {
 		$sanitized = self::sanitize_settings(
@@ -657,18 +675,19 @@ class Branding {
 		);
 
 		return array(
-			'name'         => $sanitized['branding_name'],
-			'description'  => $sanitized['branding_description'],
-			'author'       => $sanitized['branding_author'],
-			'url'          => $sanitized['branding_url'],
-			'hide_license' => self::is_truthy( $config['hide_license'] ?? false ),
+			'name'              => $sanitized['branding_name'],
+			'description'       => $sanitized['branding_description'],
+			'author'            => $sanitized['branding_author'],
+			'url'               => $sanitized['branding_url'],
+			'hide_license'      => self::is_truthy( $config['hide_license'] ?? false ),
+			'hide_header_links' => self::is_truthy( $config['hide_header_links'] ?? false ),
 		);
 	}
 
 	/**
-	 * Whether a lock flag should hide the License tab.
+	 * Whether a lock flag is on.
 	 *
-	 * @param mixed $value Raw hide_license value.
+	 * @param mixed $value Raw lock flag.
 	 * @return bool
 	 */
 	private static function is_truthy( $value ): bool {

@@ -107,15 +107,16 @@ class Advanced {
 		);
 
 		if ( ! $script_data['brandingLocked'] ) {
-			$branding_defaults                     = Branding::get_header_defaults();
-			$script_data['brandingSaveNonce']      = wp_create_nonce( 'updatebee-save-branding-settings' );
-			$script_data['brandingName']           = Branding::get_saved_name();
-			$script_data['brandingDescription']    = Branding::get_saved_description();
-			$script_data['brandingAuthor']         = Branding::get_saved_author();
-			$script_data['brandingUrl']            = Branding::get_saved_url();
-			$script_data['brandingHideLicenseTab'] = (bool) Branding::get_stored()['branding_hide_license_tab'];
-			$script_data['canHideLicenseTab']      = License_Details::is_active();
-			$script_data['brandingDefaults']       = array(
+			$branding_defaults                      = Branding::get_header_defaults();
+			$script_data['brandingSaveNonce']       = wp_create_nonce( 'updatebee-save-branding-settings' );
+			$script_data['brandingName']            = Branding::get_saved_name();
+			$script_data['brandingDescription']     = Branding::get_saved_description();
+			$script_data['brandingAuthor']          = Branding::get_saved_author();
+			$script_data['brandingUrl']             = Branding::get_saved_url();
+			$script_data['brandingHideLicenseTab']  = (bool) Branding::get_stored()['branding_hide_license_tab'];
+			$script_data['brandingHideHeaderLinks'] = (bool) Branding::get_stored()['branding_hide_header_links'];
+			$script_data['canHideLicenseTab']       = License_Details::is_active();
+			$script_data['brandingDefaults']        = array(
 				'name'        => $branding_defaults['name'],
 				'description' => $branding_defaults['description'],
 				'author'      => $branding_defaults['author'],
