@@ -218,6 +218,27 @@ body {
 	.updatebee-settings-tabs .nav-tab-wrapper {
 		flex-basis: 6.5rem;
 		width: 6.5rem;
+		z-index: 30;
+	}
+
+	.updatebee-settings-tabs .nav-tab-wrapper .nav-tab:hover::after,
+	.updatebee-settings-tabs .nav-tab-wrapper .nav-tab:focus-visible::after {
+		content: attr(data-label);
+		position: absolute;
+		z-index: 1001;
+		top: 50%;
+		left: calc(100% + 0.5rem);
+		transform: translateY(-50%);
+		padding: 0.5rem 0.75rem;
+		border: 1px solid transparent;
+		border-radius: 4px;
+		background-color: var(--wpds-color-background-interactive-neutral-strong-active);
+		color: var(--wpds-color-background-interactive-neutral);
+		font-size: 13px;
+		font-weight: 500;
+		line-height: 1.4;
+		white-space: nowrap;
+		pointer-events: none;
 	}
 }
 
@@ -246,26 +267,6 @@ body {
 		white-space: nowrap;
 		border: 0;
 	}
-}
-
-.updatebee-settings-tabs .nav-tab-wrapper .nav-tab:hover::after,
-.updatebee-settings-tabs .nav-tab-wrapper .nav-tab:focus-visible::after {
-	content: attr(data-label);
-	position: absolute;
-	z-index: 2;
-	top: 50%;
-	left: calc(100% + 0.5rem);
-	transform: translateY(-50%);
-	padding: 0.5rem 0.75rem;
-	border: 1px solid transparent;
-	border-radius: 4px;
-	background-color: var(--wpds-color-background-interactive-neutral-strong-active);
-	color: var(--wpds-color-background-interactive-neutral);
-	font-size: 13px;
-	font-weight: 500;
-	line-height: 1.4;
-	white-space: nowrap;
-	pointer-events: none;
 }
 
 .updatebee-settings-tabs .nav-tab-wrapper .nav-tab:hover,
