@@ -45,6 +45,10 @@ WP_CLI="php /path/to/wp-cli.phar" npm run i18n   # WP_CLI is optional when `wp` 
 
 To add a language, copy `languages/updatebee.pot` to `languages/updatebee-<locale>.po` (for example `updatebee-de_DE.po`), translate it, and commit the `.po`.
 
+## AI abilities
+
+UpdateBee registers public WordPress Abilities API endpoints for update policy, installed plugins and themes, logs, and the tools-screen actions. Agents reach them through the REST API or, with MCP Adapter installed, through the default MCP server. Connection steps, inputs, and error codes are in [docs/abilities.md](docs/abilities.md).
+
 ## Quality checks
 
 ```bash
