@@ -143,6 +143,7 @@ const EmailReportFormFields = ( props: EmailReportFormFieldsProps ) => {
 	const scheduleOptions = watch( 'scheduleOptions' );
 	const toField = watch( 'toField' );
 	const bccField = watch( 'bccField' );
+	const notifyDiscord = watch( 'notifyDiscord' );
 
 	const onSubmit = useCallback(
 		async ( values: EmailReportFormValues ) => {
@@ -469,9 +470,18 @@ const EmailReportFormFields = ( props: EmailReportFormFieldsProps ) => {
 			{ 'updates-available' === reportKind && (
 				<CheckboxControl
 					label={ __( 'Send to Discord', 'updatebee' ) }
-					checked={ watch( 'notifyDiscord' ) }
-					disabled={ ! updatebeeEmails.discordWebhookConfigured }
+					checked={ notifyDiscord }
+					disabled={
+						! updatebeeEmails.discordWebhookConfigured &&
+						! notifyDiscord
+					}
 					onChange={ ( checked ) => {
+						if (
+							checked &&
+							! updatebeeEmails.discordWebhookConfigured
+						) {
+							return;
+						}
 						setValue( 'notifyDiscord', checked, {
 							shouldDirty: true,
 						} );

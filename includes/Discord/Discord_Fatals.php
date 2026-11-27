@@ -23,12 +23,15 @@ class Discord_Fatals {
 	/**
 	 * Send an embed fatal-detection alert.
 	 *
+	 * The fatal-email caller can read this result. A failed delivery does not throw.
+	 *
 	 * @param array<int, array<string, mixed>> $updates Logged update rows.
+	 * @return bool Whether Discord accepted the payload.
 	 */
-	public function send_report( array $updates ): void {
+	public function send_report( array $updates ): bool {
 		$rows = $this->normalize_rows( $updates );
 		if ( empty( $rows ) ) {
-			return;
+			return false;
 		}
 
 		$message = $this->build_message( $rows );
@@ -41,10 +44,10 @@ class Discord_Fatals {
 		 */
 		$message = apply_filters( 'updatebee_discord_fatals_message', $message, $rows );
 		if ( ! is_array( $message ) || empty( $message ) ) {
-			return;
+			return false;
 		}
 
-		Discord_Webhook::post( $message );
+		return Discord_Webhook::post( $message );
 	}
 
 	/**

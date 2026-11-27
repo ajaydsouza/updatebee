@@ -247,9 +247,8 @@ class Email_Updates_Available extends Email_Report {
 		}
 
 		if ( ! empty( $options['notify_discord'] ) && Discord_Webhook::is_configured() ) {
-			$discord = new Discord_Available_Updates();
-			$discord->send_report( $rows );
-			$sent_discord = true;
+			$discord      = new Discord_Available_Updates();
+			$sent_discord = $discord->send_report( $rows );
 		}
 
 		if ( ! $sent_email && ! $sent_slack && ! $sent_discord ) {

@@ -115,6 +115,91 @@ class DiscordWebhookTest extends TestCase {
 	}
 
 	/**
+	 * Delivery is successful only when Discord responds with a 2xx status.
+	 */
+	public function test_post_reports_2xx_separately_from_transport_and_http_failures(): void {
+		$this->stub_url_helpers();
+		MonkeyFunctions\when( 'wp_parse_args' )->alias(
+			static function ( $args, $defaults ) {
+				return array_merge( (array) $defaults, (array) $args );
+			}
+		);
+		MonkeyFunctions\when( 'apply_filters' )->returnArg( 2 );
+		MonkeyFunctions\when( 'wp_json_encode' )->alias(
+			static function ( $data ) {
+				// phpcs:ignore WordPress.WP.AlternativeFunctions.json_encode_json_encode -- Test double for wp_json_encode().
+				return (string) json_encode( $data );
+			}
+		);
+
+		$options = array();
+		MonkeyFunctions\when( 'get_site_option' )->alias(
+			static function ( $key, $fallback = false ) use ( &$options ) {
+				if ( 'updatebee_options' === $key ) {
+					return $options;
+				}
+				return $fallback;
+			}
+		);
+
+		$calls = 0;
+		MonkeyFunctions\when( 'wp_safe_remote_post' )->alias(
+			static function () use ( &$calls ) {
+				++$calls;
+				return array(
+					'response' => array(
+						'code' => 204,
+					),
+				);
+			}
+		);
+
+		Options::flush_cache();
+		$this->assertFalse( Discord_Webhook::post( array( 'content' => 'hello' ) ) );
+		$this->assertSame( 0, $calls );
+
+		$options = array(
+			'discord_webhook_url' => self::WEBHOOK,
+		);
+		Options::flush_cache();
+		$this->assertFalse( Discord_Webhook::post( array() ) );
+		$this->assertSame( 0, $calls );
+
+		MonkeyFunctions\when( 'wp_safe_remote_post' )->alias(
+			static function () use ( &$calls ) {
+				++$calls;
+				return new \WP_Error( 'http_request_failed', 'Could not reach Discord.' );
+			}
+		);
+		$this->assertFalse( Discord_Webhook::post( array( 'content' => 'hello' ) ) );
+
+		MonkeyFunctions\when( 'wp_safe_remote_post' )->alias(
+			static function () use ( &$calls ) {
+				++$calls;
+				return array(
+					'response' => array(
+						'code' => 400,
+					),
+				);
+			}
+		);
+		$this->assertFalse( Discord_Webhook::post( array( 'content' => 'hello' ) ) );
+
+		MonkeyFunctions\when( 'wp_safe_remote_post' )->alias(
+			static function () use ( &$calls ) {
+				++$calls;
+				return array(
+					'response' => array(
+						'code' => 204,
+					),
+				);
+			}
+		);
+		$this->assertTrue( Discord_Webhook::post( array( 'content' => 'hello' ) ) );
+		$this->assertSame( 3, $calls );
+	}
+
+	/**
 	 * Stub URL helpers used by validation.
 	 */
 	private function stub_url_helpers(): void {

@@ -93,20 +93,24 @@ class Discord_Webhook {
 	/**
 	 * Post a Discord payload when a webhook URL is saved.
 	 *
+	 * A transport error or a non-2xx response is a failed delivery. This method
+	 * does not throw, so automatic-update hooks can ignore the result.
+	 *
 	 * @param array<string, mixed> $message Discord webhook payload.
+	 * @return bool Whether Discord accepted the payload with a 2xx response.
 	 */
-	public static function post( array $message ): void {
+	public static function post( array $message ): bool {
 		if ( ! self::is_configured() || empty( $message ) ) {
-			return;
+			return false;
 		}
 
 		$webhook = Options::get_options( 'discord_webhook_url' );
 		if ( ! is_string( $webhook ) ) {
-			return;
+			return false;
 		}
 
 		// The safe variant rejects loopback and private-network hosts, so an admin-supplied URL cannot reach internal services (SSRF).
-		wp_safe_remote_post(
+		$response = wp_safe_remote_post(
 			esc_url_raw( $webhook ),
 			array(
 				'body'        => wp_json_encode( $message ),
@@ -117,5 +121,12 @@ class Discord_Webhook {
 				),
 			)
 		);
+
+		if ( is_wp_error( $response ) ) {
+			return false;
+		}
+
+		$code = (int) wp_remote_retrieve_response_code( $response );
+		return $code >= 200 && $code < 300;
 	}
 }

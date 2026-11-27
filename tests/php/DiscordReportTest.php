@@ -125,6 +125,25 @@ class DiscordReportTest extends TestCase {
 	}
 
 	/**
+	 * A failed Discord response does not escape the automatic-update hook.
+	 */
+	public function test_automatic_hook_keeps_going_when_discord_rejects_the_payload(): void {
+		$this->stub_helpers();
+		MonkeyFunctions\when( 'wp_safe_remote_post' )->justReturn(
+			array(
+				'response' => array(
+					'code' => 429,
+				),
+			)
+		);
+
+		$report = new Discord_Report();
+		$report->send_automatic_report( $this->sample_rows() );
+
+		$this->assertFalse( $report->send_report( $this->sample_rows(), 'automatic' ) );
+	}
+
+	/**
 	 * Run registers both completion hooks.
 	 */
 	public function test_run_registers_completion_hooks(): void {

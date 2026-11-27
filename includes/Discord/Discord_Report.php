@@ -49,17 +49,20 @@ class Discord_Report {
 	/**
 	 * Post an embed when a webhook is saved and Discord sending is on.
 	 *
+	 * Completion hooks ignore this result. A failed delivery does not interrupt the update batch.
+	 *
 	 * @param array<int, array<string, mixed>> $updates Log rows from this request.
 	 * @param string                           $offer   automatic|manual.
+	 * @return bool Whether Discord accepted the payload.
 	 */
-	public function send_report( array $updates, string $offer ): void {
+	public function send_report( array $updates, string $offer ): bool {
 		if ( ! Discord_Webhook::is_configured() || ! Options::get_options( 'discord_enabled' ) ) {
-			return;
+			return false;
 		}
 
 		$rows = $this->normalize_rows( $updates );
 		if ( empty( $rows ) ) {
-			return;
+			return false;
 		}
 
 		$message = $this->build_message( $rows, $offer );
@@ -73,10 +76,10 @@ class Discord_Report {
 		 */
 		$message = apply_filters( 'updatebee_discord_message', $message, $rows, $offer );
 		if ( ! is_array( $message ) || empty( $message ) ) {
-			return;
+			return false;
 		}
 
-		Discord_Webhook::post( $message );
+		return Discord_Webhook::post( $message );
 	}
 
 	/**

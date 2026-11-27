@@ -23,11 +23,12 @@ class Discord_Available_Updates {
 	 * Send an embed digest for pending updates.
 	 *
 	 * @param array<int, array<string, mixed>> $updates Report rows.
+	 * @return bool Whether Discord accepted the payload.
 	 */
-	public function send_report( array $updates ): void {
+	public function send_report( array $updates ): bool {
 		$rows = $this->normalize_rows( $updates );
 		if ( empty( $rows ) ) {
-			return;
+			return false;
 		}
 
 		$message = $this->build_message( $rows );
@@ -40,10 +41,10 @@ class Discord_Available_Updates {
 		 */
 		$message = apply_filters( 'updatebee_discord_available_updates_message', $message, $rows );
 		if ( ! is_array( $message ) || empty( $message ) ) {
-			return;
+			return false;
 		}
 
-		Discord_Webhook::post( $message );
+		return Discord_Webhook::post( $message );
 	}
 
 	/**
