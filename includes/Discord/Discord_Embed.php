@@ -70,9 +70,36 @@ class Discord_Embed {
 	 * Join grouped lines and stop before the description limit.
 	 *
 	 * @param array<int, array{heading: string, items: array<int, string>}> $groups Grouped lines.
+	 * @param string                                                        $lead   Summary shown above the list.
 	 * @return string
 	 */
-	public static function fit_description( array $groups ): string {
+	public static function fit_description( array $groups, string $lead = '' ): string {
+		$lead      = trim( $lead );
+		$separator = '' === $lead ? '' : "\n\n";
+		$limit     = self::DESCRIPTION_LIMIT - self::length( $lead . $separator );
+		if ( $limit < 1 ) {
+			return self::clip( $lead, self::DESCRIPTION_LIMIT );
+		}
+
+		$body = self::fit_groups( $groups, $limit );
+		if ( '' === $lead ) {
+			return $body;
+		}
+		if ( '' === $body ) {
+			return $lead;
+		}
+
+		return $lead . $separator . $body;
+	}
+
+	/**
+	 * Join grouped lines and stop before a character limit.
+	 *
+	 * @param array<int, array{heading: string, items: array<int, string>}> $groups Grouped lines.
+	 * @param int                                                           $limit  Maximum characters.
+	 * @return string
+	 */
+	private static function fit_groups( array $groups, int $limit ): string {
 		$total = 0;
 		foreach ( $groups as $group ) {
 			$total += count( $group['items'] );
@@ -94,7 +121,7 @@ class Discord_Embed {
 				$trial_parts   = $parts;
 				$trial_parts[] = self::section( $group['heading'], $trial_kept );
 				$trial         = implode( "\n\n", $trial_parts ) . self::more_line( $total - $next_shown );
-				if ( self::length( $trial ) > self::DESCRIPTION_LIMIT ) {
+				if ( self::length( $trial ) > $limit ) {
 					$stopped = true;
 					break;
 				}
@@ -116,9 +143,9 @@ class Discord_Embed {
 		$suffix = self::more_line( '' === $description ? max( 0, $total - 1 ) : $hidden );
 		if ( '' === $description ) {
 			$first  = isset( $groups[0]['items'][0] ) ? (string) $groups[0]['items'][0] : '';
-			$budget = self::DESCRIPTION_LIMIT - self::length( $suffix );
+			$budget = $limit - self::length( $suffix );
 			if ( $budget < 1 ) {
-				return self::clip( $suffix, self::DESCRIPTION_LIMIT );
+				return self::clip( $suffix, $limit );
 			}
 			return self::clip( $first, $budget ) . $suffix;
 		}
@@ -132,19 +159,33 @@ class Discord_Embed {
 	 * @param string                                                        $title       Embed title.
 	 * @param string                                                        $url         Title link.
 	 * @param string                                                        $description Embed description.
-	 * @param array<int, array{name: string, value: string, inline?: bool}> $fields Embed fields.
+	 * @param array<int, array{name: string, value: string, inline?: bool}> $fields      Embed fields.
 	 * @param int                                                           $color       Decimal color.
+	 * @param string                                                        $author_name Site name shown above the title.
+	 * @param string                                                        $author_url  Link for the site name.
 	 * @return array<string, mixed>
 	 */
-	public static function payload( string $title, string $url, string $description, array $fields, int $color ): array {
-		$embed = array(
-			'title'  => self::clip( $title, 256 ),
-			'url'    => $url,
-			'color'  => $color,
-			'fields' => self::fields( $fields ),
+	public static function payload( string $title, string $url, string $description, array $fields, int $color, string $author_name = '', string $author_url = '' ): array {
+		$author_name = trim( $author_name );
+		$embed       = array(
+			'title' => self::clip( $title, 256 ),
+			'url'   => $url,
+			'color' => $color,
 		);
+		if ( '' !== $author_name ) {
+			$embed['author'] = array(
+				'name' => self::clip( $author_name, 256 ),
+			);
+			if ( '' !== $author_url ) {
+				$embed['author']['url'] = $author_url;
+			}
+		}
 		if ( '' !== $description ) {
 			$embed['description'] = self::clip( $description, self::DESCRIPTION_LIMIT );
+		}
+		$clean_fields = self::fields( $fields );
+		if ( ! empty( $clean_fields ) ) {
+			$embed['fields'] = $clean_fields;
 		}
 
 		return array(

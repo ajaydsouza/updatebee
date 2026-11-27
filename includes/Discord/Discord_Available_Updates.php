@@ -57,42 +57,6 @@ class Discord_Available_Updates {
 		$logs_url  = Functions::get_settings_url( 'logs' );
 		$total     = count( $rows );
 
-		$counts = array(
-			'core'        => 0,
-			'plugin'      => 0,
-			'theme'       => 0,
-			'translation' => 0,
-		);
-		foreach ( $rows as $row ) {
-			$type = $row['update_type'];
-			if ( isset( $counts[ $type ] ) ) {
-				++$counts[ $type ];
-			}
-		}
-
-		$fields = array(
-			array(
-				'name'   => __( 'Site', 'updatebee' ),
-				'value'  => $site_name,
-				'inline' => true,
-			),
-			array(
-				'name'   => __( 'Total updates', 'updatebee' ),
-				'value'  => (string) $total,
-				'inline' => true,
-			),
-			array(
-				'name'   => __( 'Plugins', 'updatebee' ),
-				'value'  => (string) $counts['plugin'],
-				'inline' => true,
-			),
-			array(
-				'name'   => __( 'Themes', 'updatebee' ),
-				'value'  => (string) $counts['theme'],
-				'inline' => true,
-			),
-		);
-
 		$groups = Discord_Embed::groups(
 			$rows,
 			static function ( array $row ): string {
@@ -112,11 +76,17 @@ class Discord_Available_Updates {
 		);
 
 		return Discord_Embed::payload(
-			__( 'Available updates', 'updatebee' ),
+			sprintf(
+				/* translators: %d: number of available updates. */
+				_n( '%d update available', '%d updates available', $total, 'updatebee' ),
+				$total
+			),
 			$logs_url,
 			Discord_Embed::fit_description( $groups ),
-			$fields,
-			Discord_Embed::COLOR_INFO
+			array(),
+			Discord_Embed::COLOR_INFO,
+			$site_name,
+			home_url( '/' )
 		);
 	}
 

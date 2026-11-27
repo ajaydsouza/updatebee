@@ -314,7 +314,9 @@ class EmailFatalsTest extends TestCase {
 		$this->assertStringContainsString( '"embeds"', $this->posted_bodies[0] );
 		$this->assertStringNotContainsString( '"blocks"', $this->posted_bodies[0] );
 		$this->assertStringContainsString( 'Hello Dolly', $this->posted_bodies[0] );
-		$this->assertStringContainsString( 'Fatal error after automatic updates', $this->posted_bodies[0] );
+		$this->assertStringContainsString( 'fatal after automatic updates', $this->posted_bodies[0] );
+		$this->assertStringContainsString( 'Example Site', $this->posted_bodies[0] );
+		$this->assertStringNotContainsString( '"fields"', $this->posted_bodies[0] );
 	}
 
 	/**

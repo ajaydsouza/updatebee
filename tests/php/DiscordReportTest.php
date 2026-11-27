@@ -225,6 +225,7 @@ class DiscordReportTest extends TestCase {
 			}
 		);
 		MonkeyFunctions\when( 'get_bloginfo' )->justReturn( 'Example Site' );
+		MonkeyFunctions\when( 'home_url' )->justReturn( 'https://example.com/' );
 		MonkeyFunctions\when( 'esc_url_raw' )->returnArg();
 		MonkeyFunctions\when( 'wp_json_encode' )->alias(
 			static function ( $data ) {

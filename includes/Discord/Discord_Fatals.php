@@ -57,31 +57,10 @@ class Discord_Fatals {
 		$site_name = (string) get_bloginfo( 'name' );
 		$logs_url  = Functions::get_settings_url( 'logs' );
 		$total     = count( $rows );
-
-		$fields = array(
-			array(
-				'name'   => __( 'Site', 'updatebee' ),
-				'value'  => $site_name,
-				'inline' => true,
-			),
-			array(
-				'name'   => __( 'Trigger', 'updatebee' ),
-				'value'  => __( 'Automatic', 'updatebee' ),
-				'inline' => true,
-			),
-			array(
-				'name'   => __( 'Fatals', 'updatebee' ),
-				'value'  => (string) $total,
-				'inline' => true,
-			),
-			array(
-				'name'  => __( 'Note', 'updatebee' ),
-				'value' => sprintf(
-					/* translators: %s: Plugin name. */
-					__( 'This is a fatal detection alert. %s did not deactivate any plugins. WordPress Recovery Mode may still email a login link separately. WordPress may have restored a previous plugin version on its own.', 'updatebee' ),
-					Functions::get_plugin_name()
-				),
-			),
+		$note      = sprintf(
+			/* translators: %s: Plugin name. */
+			__( 'This is a fatal detection alert. %s did not deactivate any plugins. WordPress Recovery Mode may still email a login link separately. WordPress may have restored a previous plugin version on its own.', 'updatebee' ),
+			Functions::get_plugin_name()
 		);
 
 		$groups = Discord_Embed::groups(
@@ -105,11 +84,17 @@ class Discord_Fatals {
 		);
 
 		return Discord_Embed::payload(
-			__( 'Fatal error after automatic updates', 'updatebee' ),
+			sprintf(
+				/* translators: %d: fatal count. */
+				_n( '%d fatal after automatic updates', '%d fatals after automatic updates', $total, 'updatebee' ),
+				$total
+			),
 			$logs_url,
-			Discord_Embed::fit_description( $groups ),
-			$fields,
-			Discord_Embed::COLOR_ALERT
+			Discord_Embed::fit_description( $groups, $note ),
+			array(),
+			Discord_Embed::COLOR_ALERT,
+			$site_name,
+			home_url( '/' )
 		);
 	}
 

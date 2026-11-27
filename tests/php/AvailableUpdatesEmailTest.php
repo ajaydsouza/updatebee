@@ -302,6 +302,7 @@ class AvailableUpdatesEmailTest extends TestCase {
 		);
 		MonkeyFunctions\when( 'apply_filters' )->returnArg( 2 );
 		MonkeyFunctions\when( 'get_bloginfo' )->justReturn( 'Example' );
+		MonkeyFunctions\when( 'home_url' )->justReturn( 'https://example.com/' );
 		MonkeyFunctions\when( 'esc_url_raw' )->returnArg( 1 );
 		MonkeyFunctions\when( 'wp_json_encode' )->alias(
 			static function ( $data ) {
@@ -352,7 +353,9 @@ class AvailableUpdatesEmailTest extends TestCase {
 		$this->assertStringContainsString( '"embeds"', $posted[0] );
 		$this->assertStringNotContainsString( '"blocks"', $posted[0] );
 		$this->assertStringContainsString( 'Akismet', $posted[0] );
-		$this->assertStringContainsString( 'Available updates', $posted[0] );
+		$this->assertStringContainsString( 'update available', $posted[0] );
+		$this->assertStringContainsString( 'Example', $posted[0] );
+		$this->assertStringNotContainsString( '"fields"', $posted[0] );
 	}
 
 	/**

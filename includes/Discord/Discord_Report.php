@@ -88,6 +88,7 @@ class Discord_Report {
 	 */
 	public function build_message( array $rows, string $offer ): array {
 		$site_name = (string) get_bloginfo( 'name' );
+		$site_url  = home_url( '/' );
 		$logs_url  = Functions::get_settings_url( 'logs' );
 		$successes = 0;
 		$failures  = 0;
@@ -107,43 +108,22 @@ class Discord_Report {
 			? __( 'Manual', 'updatebee' )
 			: __( 'Automatic', 'updatebee' );
 
-		$fields = array(
-			array(
-				'name'   => __( 'Site', 'updatebee' ),
-				'value'  => $site_name,
-				'inline' => true,
-			),
-			array(
-				'name'   => __( 'Trigger', 'updatebee' ),
-				'value'  => $trigger,
-				'inline' => true,
-			),
-			array(
-				'name'   => __( 'Succeeded', 'updatebee' ),
-				'value'  => (string) $successes,
-				'inline' => true,
-			),
-			array(
-				'name'   => __( 'Failed', 'updatebee' ),
-				'value'  => (string) $failures,
-				'inline' => true,
-			),
+		$summary = sprintf(
+			/* translators: 1: Automatic or Manual, 2: success count, 3: failure count. */
+			__( '%1$s · %2$d succeeded · %3$d failed', 'updatebee' ),
+			$trigger,
+			$successes,
+			$failures
 		);
-
 		if ( $fatals > 0 ) {
-			$fields[] = array(
-				'name'   => __( 'Fatals', 'updatebee' ),
-				'value'  => (string) $fatals,
-				'inline' => true,
+			$summary .= ' · ' . sprintf(
+				/* translators: %d: fatal count. */
+				_n( '%d fatal', '%d fatals', $fatals, 'updatebee' ),
+				$fatals
 			);
 		}
-
 		if ( 'manual' === $offer ) {
-			$fields[] = array(
-				'name'   => __( 'User', 'updatebee' ),
-				'value'  => $this->manual_user_label( $rows ),
-				'inline' => true,
-			);
+			$summary .= ' · ' . $this->manual_user_label( $rows );
 		}
 
 		$groups = Discord_Embed::groups(
@@ -166,9 +146,11 @@ class Discord_Report {
 		return Discord_Embed::payload(
 			__( 'Updates finished', 'updatebee' ),
 			$logs_url,
-			Discord_Embed::fit_description( $groups ),
-			$fields,
-			( $failures > 0 || $fatals > 0 ) ? Discord_Embed::COLOR_ALERT : Discord_Embed::COLOR_OK
+			Discord_Embed::fit_description( $groups, $summary ),
+			array(),
+			( $failures > 0 || $fatals > 0 ) ? Discord_Embed::COLOR_ALERT : Discord_Embed::COLOR_OK,
+			$site_name,
+			$site_url
 		);
 	}
 
