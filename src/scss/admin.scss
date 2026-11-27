@@ -45,6 +45,9 @@ body {
 		padding-bottom: var(--wpds-dimension-size-xs, 1rem);
 
 		&__title {
+			flex: 0 1 auto;
+			width: fit-content;
+			max-width: 100%;
 			margin: 0;
 			min-width: 0;
 
@@ -55,8 +58,9 @@ body {
 
 			img {
 				display: block;
+				width: 450px;
 				height: auto;
-				max-width: 450px;
+				max-width: 100%;
 			}
 		}
 
@@ -78,6 +82,20 @@ body {
 			max-width: 100%;
 			min-width: 0;
 			margin-left: auto;
+		}
+
+		@media screen and (max-width: 782px) {
+			box-sizing: border-box;
+			flex-direction: column;
+			align-items: flex-start;
+			padding-right: 1rem;
+			padding-left: 1rem;
+
+			&__links {
+				width: 100%;
+				margin-left: 0;
+				justify-content: flex-start;
+			}
 		}
 	}
 
@@ -151,6 +169,7 @@ body {
 
 .updatebee-settings-tabs .nav-tab-wrapper {
 	position: relative;
+	z-index: 2;
 
 	&:after {
 		content: '';
@@ -168,7 +187,9 @@ body {
 .updatebee-settings-tabs .nav-tab-wrapper .nav-tab {
 	display: flex;
 	align-items: center;
+	position: relative;
 	float: none;
+	min-width: 0;
 	margin: 0 0 0.25rem;
 	padding: 0.55rem 0.75rem;
 	border: 1px solid transparent;
@@ -177,6 +198,74 @@ body {
 	box-shadow: none;
 	white-space: nowrap;
 	transition: background-color 0.4s ease-in-out;
+}
+
+.updatebee-settings-tab__label {
+	flex: 1 1 0;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+@media screen and (max-width: 782px) {
+	.updatebee-settings-tabs {
+		box-sizing: border-box;
+		padding-right: 1rem;
+		padding-left: 1rem;
+	}
+
+	.updatebee-settings-tabs .nav-tab-wrapper {
+		flex-basis: 6.5rem;
+		width: 6.5rem;
+	}
+}
+
+@media screen and (max-width: 480px) {
+	.updatebee-settings-tabs .nav-tab-wrapper {
+		flex-basis: 3.75rem;
+		width: 3.75rem;
+	}
+
+	.updatebee-settings-tabs .nav-tab-wrapper .nav-tab {
+		justify-content: center;
+	}
+
+	.updatebee-settings-tabs .updatebee-icon-tab {
+		margin-right: 0;
+	}
+
+	.updatebee-settings-tab__label {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		margin: -1px;
+		padding: 0;
+		overflow: hidden;
+		clip-path: inset(50%);
+		white-space: nowrap;
+		border: 0;
+	}
+}
+
+.updatebee-settings-tabs .nav-tab-wrapper .nav-tab:hover::after,
+.updatebee-settings-tabs .nav-tab-wrapper .nav-tab:focus-visible::after {
+	content: attr(data-label);
+	position: absolute;
+	z-index: 2;
+	top: 50%;
+	left: calc(100% + 0.5rem);
+	transform: translateY(-50%);
+	padding: 0.5rem 0.75rem;
+	border: 1px solid transparent;
+	border-radius: 4px;
+	background-color: var(--wpds-color-background-interactive-neutral-strong-active);
+	color: var(--wpds-color-background-interactive-neutral);
+	font-size: 13px;
+	font-weight: 500;
+	line-height: 1.4;
+	white-space: nowrap;
+	pointer-events: none;
 }
 
 .updatebee-settings-tabs .nav-tab-wrapper .nav-tab:hover,
@@ -440,8 +529,9 @@ h3.updatebee-panel-heading {
 
 .updatebee-settings-header__title img {
 	display: block;
+	width: 450px;
 	height: auto;
-	max-width: 450px;
+	max-width: 100%;
 }
 
 .updatebee-settings-header__wordmark {

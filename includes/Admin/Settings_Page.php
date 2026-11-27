@@ -174,10 +174,11 @@ class Settings_Page {
 			}
 
 			$tab_html .= sprintf(
-				'<a href="%s" class="%s" id="updatebee-%s">%s<span>%s</span></a>',
+				'<a href="%1$s" class="%2$s" id="updatebee-%3$s" data-label="%4$s">%5$s<span class="updatebee-settings-tab__label">%6$s</span></a>',
 				esc_url( $tab_url ),
 				esc_attr( implode( ' ', $classes ) ),
 				esc_attr( $tab_get ),
+				esc_attr( $tab_label ),
 				$icon_html,
 				esc_html( $tab_label )
 			);
@@ -185,8 +186,10 @@ class Settings_Page {
 		$tab_html .= '</nav>';
 
 		if ( $tabs_count > 0 ) {
+			$allowed_html                    = Functions::get_kses_allowed_html();
+			$allowed_html['a']['data-label'] = array();
 			echo '<div class="updatebee-settings-layout">';
-			echo wp_kses( $tab_html, Functions::get_kses_allowed_html() );
+			echo wp_kses( $tab_html, $allowed_html );
 			echo '<div class="updatebee-settings-content">';
 			if ( in_array( $active_tab, array( 'dashboard', 'upcoming', 'plugins', 'themes', 'translations', 'cron', 'tools', 'advanced' ), true ) ) {
 				self::show_update_configuration_notices();
