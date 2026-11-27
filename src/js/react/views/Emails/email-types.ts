@@ -23,6 +23,7 @@ export type EmailReportFormValues = {
 	sendSchedule: SendSchedule;
 	scheduleOptions: ScheduleOptions;
 	notifySlack: boolean;
+	notifyDiscord: boolean;
 	logCutoffDays: number;
 };
 

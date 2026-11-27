@@ -55,7 +55,7 @@ class Registry {
 		self::register(
 			'get-update-policy',
 			__( 'Get Update Policy', 'updatebee' ),
-			__( 'Returns the site-wide automatic-update policy for core, plugins, themes, and translations, including delay days, untested-update blocking, upgrade-notice keywords, fatal detection, and whether core update emails are enabled. slack_configured is true when a Slack webhook is saved. The webhook URL and branding fields are not returned.', 'updatebee' ),
+			__( 'Returns the site-wide automatic-update policy for core, plugins, themes, and translations, including delay days, untested-update blocking, upgrade-notice keywords, fatal detection, and whether core update emails are enabled. slack_configured is true when a Slack webhook is saved. discord_configured is true when a Discord webhook is saved. The webhook URLs and branding fields are not returned.', 'updatebee' ),
 			array( Read::class, 'get_update_policy' ),
 			self::annotations( true, false, true ),
 			self::policy_schema()
@@ -411,6 +411,7 @@ class Registry {
 		$properties['fatal_error_detection']           = self::bool_property( __( 'Whether post-update fatal detection is enabled.', 'updatebee' ) );
 		$properties['enable_core_emails']              = self::bool_property( __( 'Whether WordPress core update emails are enabled.', 'updatebee' ) );
 		$properties['slack_configured']                = self::bool_property( __( 'Whether a Slack webhook URL is saved. The URL itself is not returned.', 'updatebee' ) );
+		$properties['discord_configured']              = self::bool_property( __( 'Whether a Discord webhook URL is saved. The URL itself is not returned.', 'updatebee' ) );
 
 		return self::object_schema( $properties, array_keys( $properties ) );
 	}

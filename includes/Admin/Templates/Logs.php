@@ -94,15 +94,18 @@ class Logs {
 			'updatebee-logs',
 			'updatebeeLogs',
 			array(
-				'retrieveNonce'          => wp_create_nonce( 'updatebee-retrieve-logs' ),
-				'detailNonce'            => wp_create_nonce( 'updatebee-retrieve-log-detail' ),
-				'exportNonce'            => wp_create_nonce( 'updatebee-export-logs' ),
-				'clearNonce'             => wp_create_nonce( 'updatebee-clear-logs' ),
-				'saveNonce'              => wp_create_nonce( 'updatebee-save-logs-settings' ),
-				'clearLogsDays'          => absint( $clear_logs_days ),
-				'slackEnabled'           => (bool) Options::get_options( 'slack_enabled' ),
-				'slackSkipDelayed'       => (bool) Options::get_options( 'slack_skip_delayed' ),
-				'slackWebhookConfigured' => \UpdateBee\Slack\Slack_Webhook::is_configured(),
+				'retrieveNonce'            => wp_create_nonce( 'updatebee-retrieve-logs' ),
+				'detailNonce'              => wp_create_nonce( 'updatebee-retrieve-log-detail' ),
+				'exportNonce'              => wp_create_nonce( 'updatebee-export-logs' ),
+				'clearNonce'               => wp_create_nonce( 'updatebee-clear-logs' ),
+				'saveNonce'                => wp_create_nonce( 'updatebee-save-logs-settings' ),
+				'clearLogsDays'            => absint( $clear_logs_days ),
+				'slackEnabled'             => (bool) Options::get_options( 'slack_enabled' ),
+				'slackSkipDelayed'         => (bool) Options::get_options( 'slack_skip_delayed' ),
+				'slackWebhookConfigured'   => \UpdateBee\Slack\Slack_Webhook::is_configured(),
+				'discordEnabled'           => (bool) Options::get_options( 'discord_enabled' ),
+				'discordSkipDelayed'       => (bool) Options::get_options( 'discord_skip_delayed' ),
+				'discordWebhookConfigured' => \UpdateBee\Discord\Discord_Webhook::is_configured(),
 			)
 		);
 

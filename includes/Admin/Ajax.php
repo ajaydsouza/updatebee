@@ -12,6 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+use UpdateBee\Discord\Discord_Webhook;
 use UpdateBee\Branding;
 use UpdateBee\Cron\Clear_Logs;
 use UpdateBee\Emails\Available_Updates;
@@ -1416,12 +1417,26 @@ class Ajax {
 			$slack_skip_delayed = Functions::sanitize_rest_boolean( wp_unslash( $_POST['slack_skip_delayed'] ) );
 		}
 
+		$discord_enabled = false;
+		if ( isset( $_POST['discord_enabled'] ) ) {
+			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Boolean is sanitized below.
+			$discord_enabled = Functions::sanitize_rest_boolean( wp_unslash( $_POST['discord_enabled'] ) );
+		}
+
+		$discord_skip_delayed = false;
+		if ( isset( $_POST['discord_skip_delayed'] ) ) {
+			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Boolean is sanitized below.
+			$discord_skip_delayed = Functions::sanitize_rest_boolean( wp_unslash( $_POST['discord_skip_delayed'] ) );
+		}
+
 		$updated = Options::update_options(
 			'',
 			array(
-				'clear_logs_days'    => $days,
-				'slack_enabled'      => $slack_enabled,
-				'slack_skip_delayed' => $slack_skip_delayed,
+				'clear_logs_days'      => $days,
+				'slack_enabled'        => $slack_enabled,
+				'slack_skip_delayed'   => $slack_skip_delayed,
+				'discord_enabled'      => $discord_enabled,
+				'discord_skip_delayed' => $discord_skip_delayed,
 			)
 		);
 		if ( null === $updated ) {
@@ -1436,10 +1451,12 @@ class Ajax {
 
 		wp_send_json_success(
 			array(
-				'message'            => __( 'Log settings have been saved.', 'updatebee' ),
-				'clear_logs_days'    => $days,
-				'slack_enabled'      => $slack_enabled,
-				'slack_skip_delayed' => $slack_skip_delayed,
+				'message'              => __( 'Log settings have been saved.', 'updatebee' ),
+				'clear_logs_days'      => $days,
+				'slack_enabled'        => $slack_enabled,
+				'slack_skip_delayed'   => $slack_skip_delayed,
+				'discord_enabled'      => $discord_enabled,
+				'discord_skip_delayed' => $discord_skip_delayed,
 			)
 		);
 	}
@@ -2690,9 +2707,10 @@ class Ajax {
 
 		check_ajax_referer( 'updatebee-save-fatal-email-settings', 'nonce' );
 
-		$enabled      = $this->get_posted_enabled();
-		$recipients   = $this->get_posted_email_recipients();
-		$notify_slack = $this->get_posted_notify_slack();
+		$enabled        = $this->get_posted_enabled();
+		$recipients     = $this->get_posted_email_recipients();
+		$notify_slack   = $this->get_posted_notify_slack();
+		$notify_discord = $this->get_posted_notify_discord();
 
 		if ( $enabled && empty( $recipients ) ) {
 			wp_send_json_error(
@@ -2706,12 +2724,17 @@ class Ajax {
 			$notify_slack = false;
 		}
 
+		if ( $notify_discord && ! Discord_Webhook::is_configured() ) {
+			$notify_discord = false;
+		}
+
 		$updated = Options::update_options(
 			'',
 			array(
 				'fatal_error_detection'  => $enabled,
 				'fatal_email_recipients' => $recipients,
 				'fatal_notify_slack'     => $notify_slack,
+				'fatal_notify_discord'   => $notify_discord,
 			)
 		);
 
@@ -2724,6 +2747,7 @@ class Ajax {
 				'fatal_error_detection'  => Fatal_Detection::is_enabled(),
 				'fatal_email_recipients' => Email_Fatals::get_recipients_for_display(),
 				'fatal_notify_slack'     => (bool) Options::get_options( 'fatal_notify_slack' ),
+				'fatal_notify_discord'   => (bool) Options::get_options( 'fatal_notify_discord' ),
 				'message'                => __( 'Fatal error report settings saved.', 'updatebee' ),
 			)
 		);
@@ -2767,6 +2791,19 @@ class Ajax {
 		if ( isset( $_POST['slack_webhook_url'] ) ) {
 			$raw                          = sanitize_text_field( wp_unslash( $_POST['slack_webhook_url'] ) );
 			$to_save['slack_webhook_url'] = '' !== $raw ? esc_url_raw( $raw ) : '';
+		}
+
+		if ( isset( $_POST['discord_webhook_url'] ) ) {
+			$raw       = sanitize_text_field( wp_unslash( $_POST['discord_webhook_url'] ) );
+			$validated = Discord_Webhook::sanitize_url( $raw );
+			if ( is_wp_error( $validated ) ) {
+				wp_send_json_error(
+					array(
+						'message' => $validated->get_error_message(),
+					)
+				);
+			}
+			$to_save['discord_webhook_url'] = $validated;
 		}
 
 		$admin_bar_keys = array(
@@ -2816,6 +2853,7 @@ class Ajax {
 			&& ! isset( $to_save['delay_updates'] )
 			&& ! isset( $to_save['block_untested_updates'] )
 			&& ! isset( $to_save['slack_webhook_url'] )
+			&& ! isset( $to_save['discord_webhook_url'] )
 		) {
 			$message = __( 'Admin bar menu has been saved.', 'updatebee' );
 		} elseif (
@@ -2823,12 +2861,15 @@ class Ajax {
 			&& ! isset( $to_save['delay_updates'] )
 			&& ! isset( $to_save['block_untested_updates'] )
 			&& ! isset( $to_save['slack_webhook_url'] )
+			&& ! isset( $to_save['discord_webhook_url'] )
 		) {
 			$message = __( 'Upgrade notice keywords have been saved.', 'updatebee' );
-		} elseif ( isset( $to_save['block_untested_updates'] ) && ! isset( $to_save['delay_updates'] ) && ! isset( $to_save['slack_webhook_url'] ) ) {
+		} elseif ( isset( $to_save['block_untested_updates'] ) && ! isset( $to_save['delay_updates'] ) && ! isset( $to_save['slack_webhook_url'] ) && ! isset( $to_save['discord_webhook_url'] ) ) {
 			$message = __( 'Untested updates setting has been saved.', 'updatebee' );
-		} elseif ( isset( $to_save['slack_webhook_url'] ) && ! isset( $to_save['delay_updates'] ) && ! isset( $to_save['block_untested_updates'] ) && ! isset( $to_save['upgrade_notice_keywords'] ) && ! isset( $to_save['upgrade_notice_keywords_enabled'] ) ) {
+		} elseif ( isset( $to_save['slack_webhook_url'] ) && ! isset( $to_save['delay_updates'] ) && ! isset( $to_save['block_untested_updates'] ) && ! isset( $to_save['upgrade_notice_keywords'] ) && ! isset( $to_save['upgrade_notice_keywords_enabled'] ) && ! isset( $to_save['discord_webhook_url'] ) ) {
 			$message = __( 'Slack webhook has been saved.', 'updatebee' );
+		} elseif ( isset( $to_save['discord_webhook_url'] ) && ! isset( $to_save['delay_updates'] ) && ! isset( $to_save['block_untested_updates'] ) && ! isset( $to_save['upgrade_notice_keywords'] ) && ! isset( $to_save['upgrade_notice_keywords_enabled'] ) && ! isset( $to_save['slack_webhook_url'] ) ) {
+			$message = __( 'Discord webhook has been saved.', 'updatebee' );
 		} else {
 			$message = __( 'Update delay has been saved.', 'updatebee' );
 		}
@@ -2857,6 +2898,10 @@ class Ajax {
 			$response['slack_webhook_url'] = $to_save['slack_webhook_url'];
 		}
 
+		if ( isset( $to_save['discord_webhook_url'] ) ) {
+			$response['discord_webhook_url'] = $to_save['discord_webhook_url'];
+		}
+
 		foreach ( $admin_bar_keys as $admin_bar_key ) {
 			if ( isset( $to_save[ $admin_bar_key ] ) ) {
 				$response[ $admin_bar_key ] = (bool) $to_save[ $admin_bar_key ];
@@ -2872,14 +2917,33 @@ class Ajax {
 	 * @return bool True when Slack should be notified.
 	 */
 	private function get_posted_notify_slack(): bool {
-		// Callers verify a nonce before reading the Slack flag.
+		return $this->get_posted_notify_flag( 'notifySlack' );
+	}
+
+	/**
+	 * Sanitize a posted Discord notification flag.
+	 *
+	 * @return bool True when Discord should be notified.
+	 */
+	private function get_posted_notify_discord(): bool {
+		return $this->get_posted_notify_flag( 'notifyDiscord' );
+	}
+
+	/**
+	 * Sanitize a posted chat-notification flag.
+	 *
+	 * @param string $key Posted field name.
+	 * @return bool True when that channel should be notified.
+	 */
+	private function get_posted_notify_flag( string $key ): bool {
+		// Callers verify a nonce before reading the notification flag.
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing
-		if ( ! isset( $_POST['notifySlack'] ) ) {
+		if ( ! isset( $_POST[ $key ] ) ) {
 			return false;
 		}
 
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-		$value = wp_unslash( $_POST['notifySlack'] );
+		$value = wp_unslash( $_POST[ $key ] );
 		if ( is_array( $value ) ) {
 			return false;
 		}

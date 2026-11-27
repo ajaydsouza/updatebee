@@ -10,6 +10,7 @@ namespace UpdateBee\Tests;
 use Brain\Monkey\Functions as MonkeyFunctions;
 use ReflectionClass;
 use UpdateBee\Admin\Ajax;
+use UpdateBee\Discord\Discord_Available_Updates;
 use UpdateBee\Emails\Available_Updates;
 use UpdateBee\Emails\Email_Updates_Available;
 use UpdateBee\Emails\Emails;
@@ -277,6 +278,81 @@ class AvailableUpdatesEmailTest extends TestCase {
 		);
 
 		$this->assertStringContainsString( 'Updates available', $message['blocks'][0]['text']['text'] );
+	}
+
+	/**
+	 * Discord available digest posts an embed, not Slack blocks.
+	 */
+	public function test_discord_available_send_posts_embed(): void {
+		MonkeyFunctions\when( 'get_site_option' )->alias(
+			static function ( $key, $fallback = false ) {
+				if ( 'updatebee_options' === $key ) {
+					return array(
+						'discord_webhook_url' => 'https://discord.com/api/webhooks/123456789012345678/abcdefghijklmnopqrstuvwxyz',
+						'discord_enabled'     => true,
+					);
+				}
+				return $fallback;
+			}
+		);
+		MonkeyFunctions\when( 'wp_parse_args' )->alias(
+			static function ( $args, $defaults ) {
+				return array_merge( (array) $defaults, (array) $args );
+			}
+		);
+		MonkeyFunctions\when( 'apply_filters' )->returnArg( 2 );
+		MonkeyFunctions\when( 'get_bloginfo' )->justReturn( 'Example' );
+		MonkeyFunctions\when( 'esc_url_raw' )->returnArg( 1 );
+		MonkeyFunctions\when( 'wp_json_encode' )->alias(
+			static function ( $data ) {
+				// phpcs:ignore WordPress.WP.AlternativeFunctions.json_encode_json_encode -- Test double for wp_json_encode().
+				return (string) json_encode( $data );
+			}
+		);
+		MonkeyFunctions\when( 'admin_url' )->justReturn( 'https://example.com/wp-admin/tools.php?page=updatebee' );
+		MonkeyFunctions\when( 'is_multisite' )->justReturn( false );
+		MonkeyFunctions\when( 'add_query_arg' )->returnArg( 2 );
+		MonkeyFunctions\when( 'sanitize_title' )->returnArg( 1 );
+		MonkeyFunctions\when( 'wp_parse_url' )->alias(
+			static function ( $url ) {
+				$parts = parse_url( (string) $url ); // phpcs:ignore WordPress.WP.AlternativeFunctions.parse_url_parse_url -- Stub for wp_parse_url().
+				return false === $parts ? false : $parts;
+			}
+		);
+		MonkeyFunctions\when( '_n' )->alias(
+			static function ( $single, $plural, $number ) {
+				unset( $plural );
+				return sprintf( $single, $number );
+			}
+		);
+
+		$posted = array();
+		MonkeyFunctions\when( 'wp_safe_remote_post' )->alias(
+			static function ( $url, $args = array() ) use ( &$posted ) {
+				unset( $url );
+				$posted[] = isset( $args['body'] ) ? (string) $args['body'] : '';
+				return array();
+			}
+		);
+
+		$discord = new Discord_Available_Updates();
+		$discord->send_report(
+			array(
+				array(
+					'name'          => 'Akismet',
+					'update_type'   => 'plugin',
+					'from_version'  => '5.0',
+					'to_version'    => '5.1',
+					'update_status' => 'available',
+				),
+			)
+		);
+
+		$this->assertCount( 1, $posted );
+		$this->assertStringContainsString( '"embeds"', $posted[0] );
+		$this->assertStringNotContainsString( '"blocks"', $posted[0] );
+		$this->assertStringContainsString( 'Akismet', $posted[0] );
+		$this->assertStringContainsString( 'Available updates', $posted[0] );
 	}
 
 	/**

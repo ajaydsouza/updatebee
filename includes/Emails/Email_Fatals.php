@@ -12,6 +12,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+use UpdateBee\Discord\Discord_Fatals;
+use UpdateBee\Discord\Discord_Webhook;
 use UpdateBee\Functions;
 use UpdateBee\Logs;
 use UpdateBee\Options;
@@ -60,6 +62,7 @@ class Email_Fatals {
 		}
 
 		$this->maybe_send_slack_report( $filtered );
+		$this->maybe_send_discord_report( $filtered );
 	}
 
 	/**
@@ -78,6 +81,24 @@ class Email_Fatals {
 
 		$slack = new Slack_Fatals();
 		$slack->send_report( $updates );
+	}
+
+	/**
+	 * Post a dedicated Discord fatal alert when enabled and a webhook is saved.
+	 *
+	 * @param array<int, array<string, mixed>> $updates Fatal log rows.
+	 */
+	private function maybe_send_discord_report( array $updates ): void {
+		if ( ! Options::get_options( 'fatal_notify_discord' ) ) {
+			return;
+		}
+
+		if ( ! Discord_Webhook::is_configured() ) {
+			return;
+		}
+
+		$discord = new Discord_Fatals();
+		$discord->send_report( $updates );
 	}
 
 	/**

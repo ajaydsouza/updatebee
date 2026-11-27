@@ -23,6 +23,7 @@ type AdvancedMessagePayload = {
 	block_untested_updates?: boolean;
 	upgrade_notice_keywords?: string;
 	slack_webhook_url?: string;
+	discord_webhook_url?: string;
 	admin_bar_enabled?: boolean;
 	admin_bar_show_admin?: boolean;
 	admin_bar_show_frontend?: boolean;
@@ -57,6 +58,7 @@ const AdvancedMain = () => {
 	const [ isSavingAdminBar, setIsSavingAdminBar ] = useState( false );
 	const [ isSavingBranding, setIsSavingBranding ] = useState( false );
 	const [ isSavingSlack, setIsSavingSlack ] = useState( false );
+	const [ isSavingDiscord, setIsSavingDiscord ] = useState( false );
 	const [ isResetting, setIsResetting ] = useState( false );
 	const [ isDeactivating, setIsDeactivating ] = useState( false );
 	const [ snackbar, setSnackbar ] = useState< SnackbarState >( {
@@ -69,6 +71,11 @@ const AdvancedMain = () => {
 			? updatebeeAdvanced.slackWebhookUrl
 			: ''
 	);
+	const [ discordWebhookUrl, setDiscordWebhookUrl ] = useState(
+		'string' === typeof updatebeeAdvanced.discordWebhookUrl
+			? updatebeeAdvanced.discordWebhookUrl
+			: ''
+	);
 
 	const isBusy =
 		isSaving ||
@@ -77,6 +84,7 @@ const AdvancedMain = () => {
 		isSavingAdminBar ||
 		isSavingBranding ||
 		isSavingSlack ||
+		isSavingDiscord ||
 		isResetting ||
 		isDeactivating;
 
@@ -227,6 +235,52 @@ const AdvancedMain = () => {
 				setIsSavingSlack( false );
 			} );
 	}, [ slackWebhookUrl, isBusy, showSnackbar ] );
+
+	/**
+	 * Persist the Discord webhook URL.
+	 */
+	const handleSaveDiscord = useCallback( () => {
+		if ( isBusy ) {
+			return;
+		}
+
+		setIsSavingDiscord( true );
+
+		sendCommand< AdvancedMessagePayload >(
+			'updatebee_save_advanced_settings',
+			{
+				nonce: updatebeeAdvanced.saveNonce,
+				discord_webhook_url: discordWebhookUrl.trim(),
+			}
+		)
+			.then( ( response ) => {
+				const payload = response.data.data;
+				setDiscordWebhookUrl(
+					'string' === typeof payload.discord_webhook_url
+						? payload.discord_webhook_url
+						: discordWebhookUrl.trim()
+				);
+				showSnackbar(
+					payload.message ||
+						__( 'Discord webhook has been saved.', 'updatebee' ),
+					'success'
+				);
+			} )
+			.catch( ( error: unknown ) => {
+				const fallback = __(
+					'Discord webhook could not be saved.',
+					'updatebee'
+				);
+				const message =
+					error instanceof Error && '' !== error.message
+						? error.message
+						: fallback;
+				showSnackbar( message, 'error' );
+			} )
+			.finally( () => {
+				setIsSavingDiscord( false );
+			} );
+	}, [ discordWebhookUrl, isBusy, showSnackbar ] );
 
 	/**
 	 * Reset selected option groups.
@@ -483,11 +537,60 @@ const AdvancedMain = () => {
 					</Card.Content>
 				</Card.Root>
 
+				<Card.Root className="updatebee-advanced-card">
+					<Card.Header>
+						<Card.Title>
+							{ __( 'Discord Notifications', 'updatebee' ) }
+						</Card.Title>
+					</Card.Header>
+					<Card.Content className="updatebee-advanced-card-content">
+						<p className="updatebee-advanced-card-description">
+							{ __(
+								'Incoming webhook URL for Discord. Used by update completion reports and optional email digests.',
+								'updatebee'
+							) }
+						</p>
+						<div className="updatebee-advanced-card-field">
+							<TextControl
+								label={ __(
+									'Discord webhook URL',
+									'updatebee'
+								) }
+								type="url"
+								value={ discordWebhookUrl }
+								onChange={ ( value ) => {
+									setDiscordWebhookUrl( value );
+								} }
+								help={ __(
+									'Save an incoming webhook URL to enable Discord notifications across the plugin.',
+									'updatebee'
+								) }
+								disabled={ isBusy }
+							/>
+						</div>
+						<p className="updatebee-advanced-card-actions">
+							<Button
+								variant="solid"
+								loading={ isSavingDiscord }
+								loadingAnnouncement={ __(
+									'Saving Discord webhook…',
+									'updatebee'
+								) }
+								disabled={ isBusy }
+								onClick={ handleSaveDiscord }
+							>
+								{ __( 'Save webhook', 'updatebee' ) }
+							</Button>
+						</p>
+					</Card.Content>
+				</Card.Root>
+
 				<UpgradeNoticeKeywordsDrawer
 					disabled={
 						isSaving ||
 						isSavingUntested ||
 						isSavingSlack ||
+						isSavingDiscord ||
 						isSavingAdminBar ||
 						isSavingBranding ||
 						isResetting ||
@@ -503,6 +606,7 @@ const AdvancedMain = () => {
 						isSavingUntested ||
 						isSavingKeywords ||
 						isSavingSlack ||
+						isSavingDiscord ||
 						isSavingBranding ||
 						isResetting ||
 						isDeactivating
@@ -519,6 +623,7 @@ const AdvancedMain = () => {
 							isSavingKeywords ||
 							isSavingAdminBar ||
 							isSavingSlack ||
+							isSavingDiscord ||
 							isResetting ||
 							isDeactivating
 						}

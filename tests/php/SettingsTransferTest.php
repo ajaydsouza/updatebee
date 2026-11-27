@@ -63,6 +63,65 @@ class SettingsTransferTest extends TestCase {
 	}
 
 	/**
+	 * Export omits the Discord webhook even when one is stored.
+	 */
+	public function test_export_omits_discord_webhook(): void {
+		$webhook = 'https://discord.com/api/webhooks/123456789012345678/abcdefghijklmnopqrstuvwxyz';
+		$this->stub_export_environment(
+			array(
+				'discord_webhook_url' => $webhook,
+				'discord_enabled'     => true,
+				'delay_updates'       => 4,
+			)
+		);
+
+		$document = Settings_Transfer::build_document();
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.json_encode_json_encode -- Unit tests run without WordPress loaded.
+		$encoded = json_encode( $document );
+
+		$this->assertIsArray( $document['options'] );
+		$this->assertArrayNotHasKey( 'discord_webhook_url', $document['options'] );
+		$this->assertTrue( $document['options']['discord_enabled'] );
+		$this->assertIsString( $encoded );
+		$this->assertStringNotContainsString( 'discord.com/api/webhooks', $encoded );
+		$this->assertStringNotContainsString( 'discord_webhook_url', $encoded );
+	}
+
+	/**
+	 * Import leaves a stored Discord webhook unchanged.
+	 */
+	public function test_import_preserves_discord_webhook(): void {
+		$webhook = 'https://discord.com/api/webhooks/123456789012345678/abcdefghijklmnopqrstuvwxyz';
+		$saved   = $this->stub_option_store(
+			array(
+				'discord_webhook_url' => $webhook,
+				'delay_updates'       => 1,
+			)
+		);
+
+		$result = Settings_Transfer::import_json(
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.json_encode_json_encode -- Unit tests run without WordPress loaded.
+			(string) json_encode(
+				array(
+					'format'  => 'updatebee-settings',
+					'version' => 1,
+					'options' => array(
+						'delay_updates'       => 9,
+						'discord_webhook_url' => 'https://discord.com/api/webhooks/999/evil-token',
+						'discord_enabled'     => true,
+					),
+				)
+			)
+		);
+
+		$this->assertTrue( $result );
+		$this->assertIsArray( $saved->value );
+		$this->assertSame( $webhook, $saved->value['discord_webhook_url'] );
+		$this->assertTrue( $saved->value['discord_enabled'] );
+		$this->assertSame( 9, $saved->value['delay_updates'] );
+	}
+
+	/**
 	 * A valid file updates an allowlisted option and leaves the webhook unchanged.
 	 */
 	public function test_import_updates_allowlisted_option_and_preserves_webhook(): void {

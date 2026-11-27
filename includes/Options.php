@@ -49,40 +49,43 @@ class Options {
 	 */
 	private static function get_defaults(): array {
 		$defaults = array(
-			'major_auto_updates'               => 'off',
-			'minor_auto_updates'               => 'on',
-			'plugin_auto_updates'              => 'off',
-			'plugin_auto_updates_custom'       => 'off', /* choose per plugin */
-			'plugin_manual_updates_only'       => 'off',
-			'plugin_auto_updates_patches_only' => 'off',
-			'plugin_updates_disabled'          => 'off', /* all plugin updates disabled */
-			'theme_auto_updates'               => 'off',
-			'theme_auto_updates_custom'        => 'off', /* choose per theme */
-			'theme_manual_updates_only'        => 'off',
-			'theme_auto_updates_patches_only'  => 'off',
-			'theme_updates_disabled'           => 'off', /* all theme updates disabled */
-			'translation_auto_updates'         => 'on',
-			'translation_auto_updates_custom'  => 'off', /* choose per translation */
-			'translation_manual_updates_only'  => 'off',
-			'translation_updates_disabled'     => 'off', /* all translation updates disabled */
-			'auto_update_plugins'              => array(),
-			'auto_update_plugins_patches'      => array(), /* plugin files limited to patch auto-updates. */
-			'blocked_plugins'                  => array(),
-			'skipped_plugin_versions'          => array(),
-			'auto_update_themes'               => array(),
-			'auto_update_themes_patches'       => array(), /* theme slugs limited to patch auto-updates. */
-			'blocked_themes'                   => array(),
-			'skipped_theme_versions'           => array(),
-			'auto_update_translations'         => array(),
-			'blocked_translations'             => array(),
-			'enable_core_emails'               => true,
-			'core_email_recipients'            => array(),
-			'clear_logs_days'                  => 0,
-			'slack_webhook_url'                => '',
-			'slack_enabled'                    => false,
-			'slack_skip_delayed'               => false,
-			'delay_updates'                    => 0,
-			'upgrade_notice_keywords'          => implode(
+			'major_auto_updates'                  => 'off',
+			'minor_auto_updates'                  => 'on',
+			'plugin_auto_updates'                 => 'off',
+			'plugin_auto_updates_custom'          => 'off', /* choose per plugin */
+			'plugin_manual_updates_only'          => 'off',
+			'plugin_auto_updates_patches_only'    => 'off',
+			'plugin_updates_disabled'             => 'off', /* all plugin updates disabled */
+			'theme_auto_updates'                  => 'off',
+			'theme_auto_updates_custom'           => 'off', /* choose per theme */
+			'theme_manual_updates_only'           => 'off',
+			'theme_auto_updates_patches_only'     => 'off',
+			'theme_updates_disabled'              => 'off', /* all theme updates disabled */
+			'translation_auto_updates'            => 'on',
+			'translation_auto_updates_custom'     => 'off', /* choose per translation */
+			'translation_manual_updates_only'     => 'off',
+			'translation_updates_disabled'        => 'off', /* all translation updates disabled */
+			'auto_update_plugins'                 => array(),
+			'auto_update_plugins_patches'         => array(), /* plugin files limited to patch auto-updates. */
+			'blocked_plugins'                     => array(),
+			'skipped_plugin_versions'             => array(),
+			'auto_update_themes'                  => array(),
+			'auto_update_themes_patches'          => array(), /* theme slugs limited to patch auto-updates. */
+			'blocked_themes'                      => array(),
+			'skipped_theme_versions'              => array(),
+			'auto_update_translations'            => array(),
+			'blocked_translations'                => array(),
+			'enable_core_emails'                  => true,
+			'core_email_recipients'               => array(),
+			'clear_logs_days'                     => 0,
+			'slack_webhook_url'                   => '',
+			'slack_enabled'                       => false,
+			'slack_skip_delayed'                  => false,
+			'discord_webhook_url'                 => '',
+			'discord_enabled'                     => false,
+			'discord_skip_delayed'                => false,
+			'delay_updates'                       => 0,
+			'upgrade_notice_keywords'             => implode(
 				"\n",
 				array(
 					'security',
@@ -92,14 +95,15 @@ class Options {
 					'SSRF',
 				)
 			),
-			'upgrade_notice_keywords_enabled'  => false,
-			'block_untested_updates'           => 'off',
-			'fatal_error_detection'            => true,
-			'fatal_email_recipients'           => array(),
-			'fatal_notify_slack'               => false,
-			'admin_bar_enabled'                => false,
-			'admin_bar_show_admin'             => true,
-			'admin_bar_show_frontend'          => true,
+			'upgrade_notice_keywords_enabled'     => false,
+			'block_untested_updates'              => 'off',
+			'fatal_error_detection'               => true,
+			'fatal_email_recipients'              => array(),
+			'fatal_notify_slack'                  => false,
+			'fatal_notify_discord'                => false,
+			'admin_bar_enabled'                   => false,
+			'admin_bar_show_admin'                => true,
+			'admin_bar_show_frontend'             => true,
 			'automatic_updater_disabled_override' => false,
 		);
 

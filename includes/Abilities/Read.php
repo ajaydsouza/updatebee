@@ -12,6 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+use UpdateBee\Discord\Discord_Webhook;
 use UpdateBee\Functions;
 use UpdateBee\Options;
 use UpdateBee\Slack\Slack_Webhook;
@@ -31,7 +32,7 @@ class Read {
 	/**
 	 * Site-wide update policy, without secrets or branding.
 	 *
-	 * @return array<string, mixed> Policy flags and slack_configured.
+	 * @return array<string, mixed> Policy flags and webhook configured flags.
 	 */
 	public static function get_update_policy(): array {
 		$options = Options::get_options();
@@ -50,6 +51,7 @@ class Read {
 		$policy['fatal_error_detection']           = self::bool_value( $options['fatal_error_detection'] ?? false );
 		$policy['enable_core_emails']              = self::bool_value( $options['enable_core_emails'] ?? false );
 		$policy['slack_configured']                = Slack_Webhook::is_configured();
+		$policy['discord_configured']              = Discord_Webhook::is_configured();
 
 		return $policy;
 	}

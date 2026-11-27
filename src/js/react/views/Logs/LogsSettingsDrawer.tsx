@@ -1,6 +1,6 @@
 /**
- * Logs settings drawer for retention days and Slack notifications.
- * Delayed updates can be left out of Slack without removing them from the logs.
+ * Logs settings drawer for retention days and Slack and Discord notifications.
+ * Delayed updates can be left out of those messages without removing them from the logs.
  */
 import { TextControl, ToggleControl } from '@wordpress/components';
 import { useCallback, useState } from '@wordpress/element';
@@ -19,12 +19,16 @@ type LogsSettingsPayload = {
 	clear_logs_days?: number;
 	slack_enabled?: boolean;
 	slack_skip_delayed?: boolean;
+	discord_enabled?: boolean;
+	discord_skip_delayed?: boolean;
 };
 
 type LogsSettings = {
 	clearLogsDays: number;
 	slackEnabled: boolean;
 	slackSkipDelayed: boolean;
+	discordEnabled: boolean;
+	discordSkipDelayed: boolean;
 };
 
 /**
@@ -51,6 +55,8 @@ const getInitialSettings = (): LogsSettings => ( {
 	clearLogsDays: normalizeDays( updatebeeLogs.clearLogsDays ),
 	slackEnabled: Boolean( updatebeeLogs.slackEnabled ),
 	slackSkipDelayed: Boolean( updatebeeLogs.slackSkipDelayed ),
+	discordEnabled: Boolean( updatebeeLogs.discordEnabled ),
+	discordSkipDelayed: Boolean( updatebeeLogs.discordSkipDelayed ),
 } );
 
 /**
@@ -97,6 +103,8 @@ const LogsSettingsDrawer = ( props: LogsSettingsDrawerProps ) => {
 		const nextDays = normalizeDays( draftSettings.clearLogsDays );
 		const nextEnabled = draftSettings.slackEnabled;
 		const nextSkipDelayed = draftSettings.slackSkipDelayed;
+		const nextDiscordEnabled = draftSettings.discordEnabled;
+		const nextDiscordSkipDelayed = draftSettings.discordSkipDelayed;
 
 		setIsSaving( true );
 
@@ -105,6 +113,8 @@ const LogsSettingsDrawer = ( props: LogsSettingsDrawerProps ) => {
 			clear_logs_days: nextDays,
 			slack_enabled: nextEnabled,
 			slack_skip_delayed: nextSkipDelayed,
+			discord_enabled: nextDiscordEnabled,
+			discord_skip_delayed: nextDiscordSkipDelayed,
 		} )
 			.then( ( response ) => {
 				const payload = response.data.data;
@@ -118,6 +128,14 @@ const LogsSettingsDrawer = ( props: LogsSettingsDrawerProps ) => {
 						'boolean' === typeof payload.slack_skip_delayed
 							? payload.slack_skip_delayed
 							: nextSkipDelayed,
+					discordEnabled:
+						'boolean' === typeof payload.discord_enabled
+							? payload.discord_enabled
+							: nextDiscordEnabled,
+					discordSkipDelayed:
+						'boolean' === typeof payload.discord_skip_delayed
+							? payload.discord_skip_delayed
+							: nextDiscordSkipDelayed,
 				};
 
 				setSavedSettings( nextSettings );
@@ -172,7 +190,7 @@ const LogsSettingsDrawer = ( props: LogsSettingsDrawerProps ) => {
 				<Drawer.Content>
 					<Drawer.Description>
 						{ __(
-							'Choose how long logs are kept, whether to enable Slack notifications, and whether those messages include delayed updates.',
+							'Choose how long logs are kept, whether finished updates are sent to Slack or Discord, and whether those messages include delayed updates.',
 							'updatebee'
 						) }
 					</Drawer.Description>
@@ -238,6 +256,50 @@ const LogsSettingsDrawer = ( props: LogsSettingsDrawerProps ) => {
 							} }
 							help={ __(
 								'Delayed updates stay in the logs and are left out of Slack messages if enabled.',
+								'updatebee'
+							) }
+						/>
+						<ToggleControl
+							label={ __( 'Send to Discord', 'updatebee' ) }
+							checked={ draftSettings.discordEnabled }
+							disabled={
+								isSaving ||
+								! updatebeeLogs.discordWebhookConfigured
+							}
+							onChange={ ( checked: boolean ) => {
+								setDraftSettings( ( current ) => ( {
+									...current,
+									discordEnabled: checked,
+								} ) );
+							} }
+							help={
+								updatebeeLogs.discordWebhookConfigured
+									? __(
+											'Post a summary to Discord when automatic or manual updates finish.',
+											'updatebee'
+										)
+									: __(
+											'Add a Discord webhook URL in Advanced settings to enable this.',
+											'updatebee'
+										)
+							}
+						/>
+						<ToggleControl
+							label={ __( 'Skip delayed updates', 'updatebee' ) }
+							checked={ draftSettings.discordSkipDelayed }
+							disabled={
+								isSaving ||
+								! updatebeeLogs.discordWebhookConfigured ||
+								! draftSettings.discordEnabled
+							}
+							onChange={ ( checked: boolean ) => {
+								setDraftSettings( ( current ) => ( {
+									...current,
+									discordSkipDelayed: checked,
+								} ) );
+							} }
+							help={ __(
+								'Delayed updates stay in the logs and are left out of Discord messages if enabled.',
 								'updatebee'
 							) }
 						/>

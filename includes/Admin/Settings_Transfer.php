@@ -50,9 +50,14 @@ class Settings_Transfer {
 	private const VERSION = 1;
 
 	/**
-	 * Option key that must never be transferred.
+	 * Option keys that must never be transferred.
+	 *
+	 * @var array<int, string>
 	 */
-	private const EXCLUDED_OPTION = 'slack_webhook_url';
+	private const EXCLUDED_OPTIONS = array(
+		'slack_webhook_url',
+		'discord_webhook_url',
+	);
 
 	/**
 	 * Maximum uploaded file size in bytes.
@@ -336,7 +341,7 @@ class Settings_Transfer {
 	private static function apply_document( array $document ) {
 		if ( isset( $document['options'] ) && is_array( $document['options'] ) ) {
 			foreach ( $document['options'] as $key => $value ) {
-				if ( ! is_string( $key ) || self::EXCLUDED_OPTION === $key ) {
+				if ( ! is_string( $key ) || self::is_excluded_option( $key ) ) {
 					continue;
 				}
 
@@ -445,7 +450,9 @@ class Settings_Transfer {
 			}
 		}
 
-		unset( $exported[ self::EXCLUDED_OPTION ] );
+		foreach ( self::EXCLUDED_OPTIONS as $excluded_option ) {
+			unset( $exported[ $excluded_option ] );
+		}
 
 		return $exported;
 	}
@@ -578,7 +585,7 @@ class Settings_Transfer {
 		$clean = array();
 		$types = self::option_types();
 		foreach ( $section as $key => $value ) {
-			if ( ! is_string( $key ) || self::EXCLUDED_OPTION === $key || ! isset( $types[ $key ] ) ) {
+			if ( ! is_string( $key ) || self::is_excluded_option( $key ) || ! isset( $types[ $key ] ) ) {
 				continue;
 			}
 
@@ -589,7 +596,9 @@ class Settings_Transfer {
 			$clean[ $key ] = $parsed;
 		}
 
-		unset( $clean[ self::EXCLUDED_OPTION ] );
+		foreach ( self::EXCLUDED_OPTIONS as $excluded_option ) {
+			unset( $clean[ $excluded_option ] );
+		}
 
 		return $clean;
 	}
@@ -1013,6 +1022,16 @@ class Settings_Transfer {
 	}
 
 	/**
+	 * Whether an option key is a webhook URL that must stay on this site.
+	 *
+	 * @param string $key Option key.
+	 * @return bool
+	 */
+	private static function is_excluded_option( string $key ): bool {
+		return in_array( $key, self::EXCLUDED_OPTIONS, true );
+	}
+
+	/**
 	 * Option keys that can be transferred, with their value types.
 	 *
 	 * @return array<string, string> Option key => type.
@@ -1050,6 +1069,8 @@ class Settings_Transfer {
 			'clear_logs_days'                  => 'days',
 			'slack_enabled'                    => 'bool',
 			'slack_skip_delayed'               => 'bool',
+			'discord_enabled'                  => 'bool',
+			'discord_skip_delayed'             => 'bool',
 			'delay_updates'                    => 'days',
 			'upgrade_notice_keywords'          => 'keywords',
 			'upgrade_notice_keywords_enabled'  => 'bool',
@@ -1057,6 +1078,7 @@ class Settings_Transfer {
 			'fatal_error_detection'            => 'bool',
 			'fatal_email_recipients'           => 'email_list',
 			'fatal_notify_slack'               => 'bool',
+			'fatal_notify_discord'             => 'bool',
 			'branding_name'                    => 'text',
 			'branding_description'             => 'description',
 			'branding_author'                  => 'text',

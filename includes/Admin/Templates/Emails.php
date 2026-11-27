@@ -101,6 +101,7 @@ class Emails {
 				'fatalErrorDetection'           => Fatal_Detection::is_enabled(),
 				'fatalEmailRecipients'          => Email_Fatals::get_recipients_for_display(),
 				'fatalNotifySlack'              => (bool) Options::get_options( 'fatal_notify_slack' ),
+				'fatalNotifyDiscord'            => (bool) Options::get_options( 'fatal_notify_discord' ),
 				'fatalSaveNonce'                => wp_create_nonce( 'updatebee-save-fatal-email-settings' ),
 				'fatalPreviewUrl'               => esc_url_raw(
 					add_query_arg(
@@ -122,6 +123,7 @@ class Emails {
 				'updatesAvailableResetNonce'    => wp_create_nonce( 'updatebee-reset-email-updates-available-settings' ),
 				'updatesAvailableSendNowNonce'  => wp_create_nonce( 'updatebee-send-email-updates-available-now' ),
 				'slackWebhookConfigured'        => \UpdateBee\Slack\Slack_Webhook::is_configured(),
+				'discordWebhookConfigured'      => \UpdateBee\Discord\Discord_Webhook::is_configured(),
 			)
 		);
 
