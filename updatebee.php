@@ -3,7 +3,7 @@
  * Plugin Name:       UpdateBee
  * Plugin URI:        https://updatebee.com
  * Description:       Take complete control over your automatic updates.
- * Version:           1.3.7
+ * Version:           1.3.9
  * Requires at least: 7.0
  * Requires PHP:      8.2
  * Author:            MediaRon LLC
@@ -20,7 +20,7 @@
 defined( 'ABSPATH' ) || exit;
 
 define( 'UPDATEBEE_FILE', __FILE__ );
-define( 'UPDATEBEE_VERSION', '1.3.7' );
+define( 'UPDATEBEE_VERSION', '1.3.9' );
 
 $updatebee_autoload = __DIR__ . '/vendor/autoload.php';
 
