@@ -4,6 +4,7 @@ interface UpdateBeeDashboard {
 	retrieveNonce: string;
 	saveNonce: string;
 	resetNonce: string;
+	showTranslations: boolean;
 }
 
 declare const updatebeeDashboard: UpdateBeeDashboard;

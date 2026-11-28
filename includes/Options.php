@@ -295,6 +295,7 @@ class Options {
 	 */
 	public static function reset_options(): void {
 		self::update_options( '', self::get_defaults() );
+		self::update_options( 'hidden_features', array() );
 		// Branding lives in its own option. A locked license keeps that option.
 		if ( ! Branding::is_locked() ) {
 			Branding::reset_stored();

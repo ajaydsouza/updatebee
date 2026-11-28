@@ -169,10 +169,11 @@ class OptionsTest extends TestCase {
 			->andReturn(
 				array(
 					'major_auto_updates' => 'on',
+					'hidden_features'    => array( 'tools', 'translations' ),
 				)
 			);
 		MonkeyFunctions\expect( 'update_site_option' )
-			->twice()
+			->times( 3 )
 			->andReturn( true );
 		MonkeyFunctions\expect( 'delete_site_option' )
 			->once()
@@ -186,6 +187,7 @@ class OptionsTest extends TestCase {
 		Options::reset_options();
 
 		$this->assertSame( 'off', Options::get_options( 'major_auto_updates' ) );
+		$this->assertSame( array(), Options::get_options( 'hidden_features' ) );
 	}
 
 	/**
