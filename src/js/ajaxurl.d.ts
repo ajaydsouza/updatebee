@@ -13,6 +13,7 @@ interface UpdateBeeUpcoming {
 	saveDelayNonce: string;
 	refreshNonce: string;
 	schedulesUrl: string;
+	showSchedules: boolean;
 }
 
 declare const updatebeeUpcoming: UpdateBeeUpcoming;
@@ -53,6 +54,7 @@ interface UpdateBeeLogs {
 	discordEnabled: boolean;
 	discordSkipDelayed: boolean;
 	discordWebhookConfigured: boolean;
+	showWebhooks: boolean;
 }
 
 declare const updatebeeLogs: UpdateBeeLogs;
@@ -108,6 +110,7 @@ interface UpdateBeeEmails {
 	updatesAvailableSendNowNonce: string;
 	slackWebhookConfigured: boolean;
 	discordWebhookConfigured: boolean;
+	showWebhooks: boolean;
 }
 
 declare const updatebeeEmails: UpdateBeeEmails;
@@ -147,6 +150,7 @@ interface UpdateBeeAdvanced {
 	adminBarEnabled: boolean;
 	adminBarShowAdmin: boolean;
 	adminBarShowFrontend: boolean;
+	hiddenFeatures: string[];
 	pluginName: string;
 	brandingLocked?: boolean;
 	brandingSaveNonce?: string;
